@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Plus, 
@@ -68,6 +68,8 @@ export function BannerManagement() {
   const [editingBanner, setEditingBanner] = useState<Banner | null>(null);
   const [activePosition, setActivePosition] = useState<string>('all');
   const [uploading, setUploading] = useState(false);
+  const desktopInputRef = useRef<HTMLInputElement>(null);
+  const mobileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     image_url: '',
@@ -109,7 +111,11 @@ export function BannerManagement() {
 
       const { error: uploadError } = await supabase.storage
         .from('banners')
-        .upload(filePath, file);
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true,
+          contentType: file.type || 'image/*',
+        });
 
       if (uploadError) throw uploadError;
 
@@ -420,19 +426,27 @@ export function BannerManagement() {
                         </Button>
                       </div>
                     ) : (
-                      <label className="cursor-pointer block">
-                        <Upload className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
-                        <span className="text-sm text-muted-foreground">
-                          {uploading ? 'Enviando...' : 'Clique para enviar imagem (PC)'}
-                        </span>
+                      <div className="space-y-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => desktopInputRef.current?.click()}
+                          disabled={uploading}
+                          className="mx-auto"
+                        >
+                          <Upload className="w-4 h-4 mr-2" />
+                          {uploading ? 'Enviando...' : 'Enviar imagem (PC)'}
+                        </Button>
                         <input
+                          ref={desktopInputRef}
                           type="file"
                           accept="image/*"
                           onChange={(e) => handleFileUpload(e, 'image_url')}
                           className="hidden"
                           disabled={uploading}
                         />
-                      </label>
+                      </div>
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground">Ou cole a URL da imagem (PC):</p>
@@ -462,19 +476,27 @@ export function BannerManagement() {
                         </Button>
                       </div>
                     ) : (
-                      <label className="cursor-pointer block">
-                        <Upload className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
-                        <span className="text-sm text-muted-foreground">
-                          {uploading ? 'Enviando...' : 'Clique para enviar imagem (Celular)'}
-                        </span>
+                      <div className="space-y-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => mobileInputRef.current?.click()}
+                          disabled={uploading}
+                          className="mx-auto"
+                        >
+                          <Upload className="w-4 h-4 mr-2" />
+                          {uploading ? 'Enviando...' : 'Enviar imagem (Celular)'}
+                        </Button>
                         <input
+                          ref={mobileInputRef}
                           type="file"
                           accept="image/*"
                           onChange={(e) => handleFileUpload(e, 'image_mobile_url')}
                           className="hidden"
                           disabled={uploading}
                         />
-                      </label>
+                      </div>
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground">Ou cole a URL da imagem (Celular):</p>
