@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { useCart } from '@/contexts/CartContext';
@@ -66,6 +66,11 @@ const CartPage = () => {
     state: profile?.state || ''
   });
   const [errors, setErrors] = useState<CustomerDataErrors>({});
+  useEffect(() => {
+    if (showCheckoutForm) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [showCheckoutForm]);
 
   const formatPrice = (price: number) => {
     return price.toLocaleString('pt-BR', {
@@ -695,21 +700,6 @@ const CartPage = () => {
 
               <div className="space-y-3">
                 <Button
-                  onClick={handleWhatsAppCheckout}
-                  disabled={isProcessing}
-                  variant="outline"
-                  className="w-full gap-2"
-                  size="lg"
-                >
-                  {isProcessing ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <MessageCircle className="w-5 h-5" />
-                  )}
-                  Finalizar via WhatsApp
-                </Button>
-                
-                <Button
                   onClick={handleOnlinePayment}
                   disabled={isProcessing || currentStep < 6}
                   className="w-full gap-2"
@@ -879,7 +869,9 @@ const CartPage = () => {
 
               <Button
                 onClick={() => {
+                  setCurrentStep(1);
                   setShowCheckoutForm(true);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
                 className="w-full gap-2"
                 size="lg"
