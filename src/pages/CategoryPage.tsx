@@ -115,10 +115,10 @@ const CategoryPage = () => {
         { name: 'Home', url: 'https://www.balaodainformatica.com.br' },
         { name: pageTitle, url: categoryUrl }
       ]} />
-      <div className="container-balao py-4 sm:py-6">
+      <div className="container-balao pt-0 pb-6 sm:pb-8">
         {/* Header */}
-        <div className="mb-4">
-          <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-2">
+        <div className="mb-2 sm:mb-3">
+          <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-1">
             {pageTitle}
           </h1>
           <p className="text-muted-foreground">
@@ -126,7 +126,7 @@ const CategoryPage = () => {
           </p>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-6">
+        <div className="flex flex-col lg:flex-row gap-4">
           {/* Filters Sidebar */}
           <DynamicFilters
             products={rawProducts}

@@ -438,7 +438,7 @@ const CartPage = () => {
   if (items.length === 0) {
     return (
       <Layout>
-        <div className="container-balao py-6">
+        <div className="container-balao pt-0 pb-6">
           <div className="max-w-md mx-auto text-center">
             <ShoppingBag className="w-20 h-20 mx-auto text-muted-foreground mb-6" />
             <h1 className="text-2xl font-bold text-foreground mb-4">
@@ -461,17 +461,17 @@ const CartPage = () => {
 
     return (
       <Layout>
-        <div className="container-balao py-4 sm:py-6">
+        <div className="container-balao pt-0 pb-6 sm:pb-8">
           <Button
             variant="ghost"
             onClick={() => setShowCheckoutForm(false)}
-            className="mb-6 gap-2"
+            className="mb-3 gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
             Voltar ao carrinho
           </Button>
 
-          <div className="grid lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-4 max-w-5xl mx-auto">
             {/* Customer Form - Etapas */}
             <Card>
               <CardHeader>
@@ -731,12 +731,12 @@ const CartPage = () => {
 
   return (
     <Layout>
-      <div className="container-balao py-4 sm:py-6">
-        <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-8">
+      <div className="container-balao pt-0 pb-6 sm:pb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-3">
           Carrinho de Compras
         </h1>
 
-        <div className="grid lg:grid-cols-3 gap-8">
+        <div className="grid lg:grid-cols-3 gap-4">
           {/* Cart Items */}
           <div className="lg:col-span-2 space-y-4">
             {items.map(item => (
