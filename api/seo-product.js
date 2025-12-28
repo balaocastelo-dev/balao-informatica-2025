@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 
 // Initialize Supabase
-const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "https://pfnqchbzimrtohyvbqjq.supabase.co";
+const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBmbnFjaGJ6aW1ydG9oeXZicWpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyMDA3NTMsImV4cCI6MjA4MDc3Njc1M30.riWwDKNyKojTIKRcAKBNUh5eLyAnxpurWJ5eVoyTDaU";
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -10,6 +10,15 @@ export default async function handler(req, res) {
   const { id } = req.query;
   const userAgent = req.headers['user-agent'] || '';
   
+  // Helper to fetch index.html
+  const getIndexHtml = async () => {
+    const protocol = req.headers['x-forwarded-proto'] || 'https';
+    const host = req.headers.host;
+    const appUrl = `${protocol}://${host}`;
+    const response = await fetch(`${appUrl}/index.html`);
+    return await response.text();
+  };
+
   try {
     // 1. Fetch product
     const { data: product } = await supabase
@@ -18,13 +27,10 @@ export default async function handler(req, res) {
       .eq('id', id)
       .single();
 
-    // 2. Fetch the base HTML (index.html)
+    let html = await getIndexHtml();
     const protocol = req.headers['x-forwarded-proto'] || 'https';
     const host = req.headers.host;
     const appUrl = `${protocol}://${host}`;
-    
-    const indexResponse = await fetch(`${appUrl}/index.html`);
-    let html = await indexResponse.text();
 
     if (product) {
       const title = `${product.name} | Balão da Informática`;
@@ -81,6 +87,13 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('Error in SEO function:', error);
-    res.redirect('/');
+    // Fallback: serve original index.html so client-side routing still works
+    try {
+      const html = await getIndexHtml();
+      res.setHeader('Content-Type', 'text/html');
+      res.status(200).send(html);
+    } catch (e) {
+      res.redirect('/');
+    }
   }
 }
