@@ -19,6 +19,7 @@ interface Message {
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-assistant`;
 const STORAGE_KEY = 'balao-chat-messages';
 const STORAGE_SESSION = 'balao-chat-session';
+const ASSISTANT_ENABLED = false;
 
 const ChatBot = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -41,13 +42,7 @@ const ChatBot = () => {
         return;
       } catch {}
     }
-    setMessages([
-      {
-        role: 'assistant',
-        content:
-          'E aí! 👋 Sou o BalãoBot Expert, especialista em vendas de tecnologia da Balão da Informática. Me diz pra que você precisa — jogos, trabalho, estudo — e seu orçamento aproximado. Vou buscar em nosso estoque e te mostrar até 10 opções com link, foto e preço.'
-      }
-    ]);
+    setMessages([]);
     if (!localStorage.getItem(STORAGE_SESSION)) {
       localStorage.setItem(STORAGE_SESSION, crypto.randomUUID());
     }
@@ -109,6 +104,9 @@ const ChatBot = () => {
     setIsLoading(true);
     let assistantContent = '';
     try {
+      if (!ASSISTANT_ENABLED) {
+        return;
+      }
       const response = await fetch(CHAT_URL, {
         method: 'POST',
         headers: {
