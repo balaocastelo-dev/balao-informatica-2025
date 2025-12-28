@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Send, User, Loader2 } from 'lucide-react';
+import { X, Send, User, Loader2, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -13,6 +13,7 @@ import type { Product } from '@/types/product';
 interface Message {
   role: 'user' | 'assistant';
   content: string;
+  products?: Product[];
 }
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-assistant`;
@@ -28,6 +29,8 @@ const ChatBot = () => {
   const { products } = useProducts();
   const { addToCart } = useCart();
   const navigate = useNavigate();
+  const formatPrice = (price: number) =>
+    price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -95,12 +98,10 @@ const ChatBot = () => {
     try {
       const suggestions = searchLocalProducts(userMessage.content);
       if (suggestions.length > 0) {
-        const previewText =
-          'Aqui estão 10 opções do nosso estoque. Clique para ver mais detalhes: ' +
-          suggestions
-            .map(p => `/produto/${p.id}`)
-            .join('  ');
-        setMessages(prev => [...prev, { role: 'assistant', content: previewText }]);
+        setMessages(prev => [
+          ...prev,
+          { role: 'assistant', content: 'cards', products: suggestions }
+        ]);
       }
     } catch {}
 
@@ -230,15 +231,57 @@ const ChatBot = () => {
                         : 'bg-muted rounded-bl-md'
                     }`}
                   >
-                    <p className="text-sm whitespace-pre-wrap">
-                      <RenderMessageContent
-                        content={message.content}
-                        onNavigate={(path) => {
-                          setIsOpen(false);
-                          navigate(path);
-                        }}
-                      />
-                    </p>
+                    {message.products && message.products.length > 0 ? (
+                      <div className="grid grid-cols-2 gap-2">
+                        {message.products.map((p) => (
+                          <div
+                            key={p.id}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setIsOpen(false);
+                              navigate(`/produto/${p.id}`);
+                            }}
+                            className="cursor-pointer text-left border rounded-lg p-2 bg-white hover:shadow-sm transition"
+                          >
+                            <div className="w-full h-24 flex items-center justify-center">
+                              <img
+                                src={p.image}
+                                alt={p.name}
+                                className="w-full h-24 object-contain"
+                              />
+                            </div>
+                            <div className="mt-2">
+                              <p className="text-xs font-medium line-clamp-2">{p.name}</p>
+                              <p className="text-sm font-bold text-primary mt-1">
+                                {formatPrice(p.price)}
+                              </p>
+                              <Button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  addToCart(p);
+                                  toast({ title: 'Adicionado ao carrinho!' });
+                                }}
+                                className="mt-2 w-full"
+                                size="sm"
+                              >
+                                <ShoppingCart className="w-4 h-4 mr-2" />
+                                Adicionar ao carrinho
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm whitespace-pre-wrap">
+                        <RenderMessageContent
+                          content={message.content}
+                          onNavigate={(path) => {
+                            setIsOpen(false);
+                            navigate(path);
+                          }}
+                        />
+                      </p>
+                    )}
                   </div>
                   {message.role === 'user' && (
                     <div className="bg-primary rounded-full p-1.5 h-fit">
