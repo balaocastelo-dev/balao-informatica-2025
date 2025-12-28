@@ -47,14 +47,12 @@ const CartPage = () => {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<'pix' | 'credit_card'>('pix');
+  const [paymentMethod, setPaymentMethod] = useState<'pix' | 'credit_card'>('credit_card');
   const [isLoadingCep, setIsLoadingCep] = useState(false);
   const [showCheckoutForm, setShowCheckoutForm] = useState(false);
-  const [showPixModal, setShowPixModal] = useState(false);
-  const [pixData, setPixData] = useState<{ qr_code_base64?: string; qr_code?: string; ticket_url?: string } | null>(null);
+  // PIX removido do checkout
   const [currentStep, setCurrentStep] = useState<number>(1);
-  const PIX_FALLBACK_KEY = '3f5eee98-f346-4a08-b4e8-85550670f9bf';
-  const PIX_MERCHANT_NAME = 'CASTELO DISTRIBUICAO LTDA';
+  // PIX removido do checkout
   const [showConfetti, setShowConfetti] = useState(false);
   const [customerData, setCustomerData] = useState<CustomerData>({
     name: profile?.full_name || '',
@@ -325,7 +323,7 @@ const CartPage = () => {
           user_id: user?.id || null,
           items: orderItems,
           total: total,
-          payment_method: paymentMethod === 'pix' ? 'pix' : 'credit_card',
+          payment_method: 'credit_card',
           payment_status: 'pending',
           status: 'pending',
           customer_name: customerData.name.trim(),
@@ -345,11 +343,6 @@ const CartPage = () => {
       const providerRaw = localStorage.getItem('payment_provider_settings');
       const provider = providerRaw ? JSON.parse(providerRaw) : { provider: 'mercadopago' };
       let fnName = 'mercadopago-payment';
-      if (provider?.provider === 'digitalmanager') {
-        fnName = 'digitalmanager-payment';
-      } else if (provider?.provider === 'cora') {
-        fnName = 'cora-payment';
-      }
       const { data: paymentData, error: paymentError } = await supabase.functions.invoke(fnName, {
         body: {
           items: orderItems,
@@ -358,7 +351,7 @@ const CartPage = () => {
           customer_phone: customerData.phone.trim(),
           customer_address: fullAddress,
           order_id: order.id,
-          payment_method: paymentMethod,
+          payment_method: 'credit_card',
         },
       });
 
@@ -372,54 +365,7 @@ const CartPage = () => {
         return;
       }
 
-      if (paymentMethod === 'pix') {
-        if (!paymentData?.pix) {
-          setPixData(null);
-          setShowPixModal(true);
-          // Send email with fallback PIX key
-          try {
-            await supabase.functions.invoke('notify-order', {
-              body: {
-                customer_email: customerData.email.trim(),
-                customer_name: customerData.name.trim(),
-                order_id: order.id,
-                items: orderItems,
-                total: total,
-                payment_method: 'pix',
-                payment_status: 'pending',
-                shipping_address: fullAddress,
-                pix_key: PIX_FALLBACK_KEY,
-              }
-            });
-          } catch (_) {}
-          toast({ title: 'PIX indisponível', description: 'Use a chave fixa abaixo para concluir o pagamento.', variant: 'destructive' });
-          return;
-        }
-        setPixData({
-          qr_code_base64: paymentData.pix.qr_code_base64,
-          qr_code: paymentData.pix.qr_code,
-          ticket_url: paymentData.pix.ticket_url,
-        });
-        // Send email including PIX key from Mercado Pago
-        try {
-          await supabase.functions.invoke('notify-order', {
-            body: {
-              customer_email: customerData.email.trim(),
-              customer_name: customerData.name.trim(),
-              order_id: order.id,
-              items: orderItems,
-              total: total,
-              payment_method: 'pix',
-              payment_status: 'pending',
-              shipping_address: fullAddress,
-              pix_key: paymentData.pix.qr_code,
-            }
-          });
-        } catch (_) {}
-        toast({ title: 'Pedido criado!', description: 'Escaneie o QR Code ou use Copia e Cola' });
-        setShowPixModal(true);
-        return;
-      }
+      // PIX removido do checkout
 
       // Send email notification
       try {
@@ -735,32 +681,13 @@ const CartPage = () => {
                   <CardTitle className="text-base">Forma de Pagamento</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <RadioGroup
-                    value={paymentMethod}
-                    onValueChange={(value) => setPaymentMethod(value as 'pix' | 'credit_card')}
-                    className="space-y-3"
-                  >
-                    <div className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors cursor-pointer">
-                      <RadioGroupItem value="pix" id="pix" />
-                      <Label htmlFor="pix" className="flex items-center gap-2 cursor-pointer flex-1">
-                        <QrCode className="w-5 h-5 text-primary" />
-                        <div>
-                          <p className="font-medium">PIX</p>
-                          <p className="text-xs text-muted-foreground">Pagamento instantâneo</p>
-                        </div>
-                      </Label>
+                  <div className="flex items-center space-x-3 p-3 rounded-lg border border-border">
+                    <CreditCard className="w-5 h-5 text-primary" />
+                    <div>
+                      <p className="font-medium">Cartão de Crédito</p>
+                      <p className="text-xs text-muted-foreground">Em até 12x sem juros (Mercado Pago)</p>
                     </div>
-                    <div className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors cursor-pointer">
-                      <RadioGroupItem value="credit_card" id="credit_card" />
-                      <Label htmlFor="credit_card" className="flex items-center gap-2 cursor-pointer flex-1">
-                        <CreditCard className="w-5 h-5 text-primary" />
-                        <div>
-                          <p className="font-medium">Cartão de Crédito</p>
-                          <p className="text-xs text-muted-foreground">Em até 12x sem juros</p>
-                        </div>
-                      </Label>
-                    </div>
-                  </RadioGroup>
+                  </div>
                 </CardContent>
               </Card>
 
@@ -773,12 +700,10 @@ const CartPage = () => {
                 >
                   {isProcessing ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : paymentMethod === 'pix' ? (
-                    <QrCode className="w-5 h-5" />
                   ) : (
                     <CreditCard className="w-5 h-5" />
                   )}
-                  Pagar com {paymentMethod === 'pix' ? 'PIX' : 'Cartão'}
+                  Pagar com Cartão (Mercado Pago)
                 </Button>
               </div>
 
@@ -788,53 +713,7 @@ const CartPage = () => {
             </div>
           </div>
         </div>
-        <Dialog open={showPixModal} onOpenChange={setShowPixModal}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Pagamento PIX</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              {pixData?.qr_code_base64 && (
-                <img
-                  src={`data:image/png;base64,${pixData.qr_code_base64}`}
-                  alt="QR Code PIX"
-                  className="w-64 h-64 mx-auto"
-                />
-              )}
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Valor</p>
-                <p className="text-lg font-bold">{formatPrice(total)}</p>
-              </div>
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">Copia e Cola</p>
-                <Textarea readOnly value={(pixData?.qr_code && pixData.qr_code.trim() !== '' ? pixData.qr_code : PIX_FALLBACK_KEY)} />
-                <UiButton
-                  onClick={() => {
-                    const code = (pixData?.qr_code && pixData.qr_code.trim() !== '' ? pixData.qr_code : PIX_FALLBACK_KEY);
-                    navigator.clipboard.writeText(code);
-                    toast({ title: 'Chave PIX copiada!' });
-                    toast({ title: 'Pedido registrado', description: 'A identificação do pagamento via PIX será automática em alguns instantes.' });
-                    clearCart();
-                    setShowPixModal(false);
-                    navigate('/obrigado');
-                  }}
-                  className="w-full"
-                >
-                  Copiar código PIX
-                </UiButton>
-                <div className="pt-2 text-sm">
-                  <p className="text-muted-foreground">Nome</p>
-                  <p className="font-medium">{PIX_MERCHANT_NAME}</p>
-                </div>
-              </div>
-              {pixData?.ticket_url && (
-                <a href={pixData.ticket_url} target="_blank" rel="noopener noreferrer" className="btn-primary w-full inline-flex">
-                  Abrir comprovante
-                </a>
-              )}
-            </div>
-          </DialogContent>
-        </Dialog>
+        {/* PIX removido do checkout */}
       </Layout>
     );
   }
