@@ -95,3 +95,71 @@ export function BreadcrumbSchema({ items }: { items: { name: string; url: string
     </Helmet>
   );
 }
+
+export function LocalBusinessSchema() {
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "ComputerStore",
+    name: "Balão da Informática Castelo",
+    image: "https://www.balao.info/media/wysiwyg/balao500.png",
+    "@id": "https://www.balao.info",
+    url: "https://www.balao.info",
+    telephone: "+55-19-3255-1661",
+    priceRange: "$$",
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: "Av. Anchieta, 789",
+      addressLocality: "Campinas",
+      addressRegion: "SP",
+      postalCode: "13015-102",
+      addressCountry: "BR",
+    },
+    geo: {
+      "@type": "GeoCoordinates",
+      latitude: -22.9025,
+      longitude: -47.0553,
+    },
+    areaServed: [
+      "Campinas",
+      "Cambuí",
+      "Castelo",
+      "Taquaral",
+      "Barão Geraldo",
+      "Centro",
+      "Indaiatuba",
+      "Valinhos",
+      "Vinhedo",
+      "Sumaré",
+      "Orosimbo Maia",
+      "Guanabara",
+    ],
+    openingHoursSpecification: {
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+      opens: "09:00",
+      closes: "18:00",
+    },
+    sameAs: [
+      "https://www.instagram.com/balaodainformatica_castelo/",
+      "https://www.facebook.com/balaodainformaticacampinas",
+    ],
+    contactPoint: {
+      "@type": "ContactPoint",
+      telephone: "+55-19-98751-0267",
+      contactType: "sales",
+      contactOption: "WhatsApp",
+      areaServed: "BR",
+      availableLanguage: "Portuguese",
+    },
+    description:
+      "Loja de Informática em Campinas (Cambuí). Especialista em PC Gamer, Hardware e Assistência Técnica. Alternativa de qualidade à Kalunga e InBrasil.",
+  };
+
+  return (
+    <Helmet>
+      <script type="application/ld+json">
+        {JSON.stringify(schema)}
+      </script>
+    </Helmet>
+  );
+}
