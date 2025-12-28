@@ -74,7 +74,7 @@ const Index = () => {
       <Layout>
         <div className="container-balao py-8 space-y-12">
           <div className="h-[400px] bg-zinc-100 rounded-2xl animate-pulse" />
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[...Array(4)].map((_, i) => (
               <div key={i} className="h-20 bg-zinc-100 rounded-lg animate-pulse" />
             ))}

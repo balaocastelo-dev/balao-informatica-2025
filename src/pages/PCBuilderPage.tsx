@@ -240,8 +240,8 @@ export default function PCBuilderPage() {
     // Scroll ajustado para garantir visibilidade
     if (contentRef.current && !showSummary) {
       setTimeout(() => {
-        // Pega a posição do elemento e subtrai a altura aproximada do header (que agora é variável)
-        const headerOffset = 240; // Valor seguro para header multilinha
+        const headerEl = document.querySelector("header");
+        const headerOffset = headerEl ? headerEl.getBoundingClientRect().height + 24 : 96;
         const elementPosition = contentRef.current!.getBoundingClientRect().top + window.scrollY;
         const offsetPosition = elementPosition - headerOffset;
 
@@ -425,7 +425,7 @@ export default function PCBuilderPage() {
     <Layout>
       <div className="bg-zinc-50 min-h-screen pb-10">
         {/* === HEADER FIXO (TOPO) === */}
-        <div className="bg-white border-b sticky top-36 md:top-24 z-40 shadow-sm">
+        <div className="bg-white border-b sticky top-16 sm:top-20 z-40 shadow-sm">
           <div className="container-balao pt-2 pb-2">
             {/* LINHA 1: Título e Preço */}
             <div className="flex justify-between items-center mb-2">
@@ -528,7 +528,7 @@ export default function PCBuilderPage() {
 
         {/* === CONTEÚDO === */}
         {/* Ajuste de scroll-margin para compensar o header maior */}
-        <div ref={contentRef} className="container-balao py-6 px-4 scroll-mt-[280px]">
+        <div ref={contentRef} className="container-balao py-6 px-4 scroll-mt-16 sm:scroll-mt-20">
           {showSummary ? (
             <div className="grid md:grid-cols-3 gap-8 animate-in fade-in">
               <div className="md:col-span-2 space-y-4">
@@ -584,7 +584,7 @@ export default function PCBuilderPage() {
                 })}
               </div>
 
-              <Card className="h-fit sticky top-[280px] shadow-xl border-green-100">
+              <Card className="h-fit sticky top-16 sm:top-20 shadow-xl border-green-100">
                 <CardHeader className="bg-zinc-900 text-white py-4 rounded-t-xl">
                   <CardTitle>Investimento</CardTitle>
                 </CardHeader>
@@ -653,7 +653,7 @@ export default function PCBuilderPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
                 {filteredProducts.map((product) => {
                   const stepId = BUILD_STEPS[currentStep].id;
                   const currentList = selectedParts[stepId] || [];
