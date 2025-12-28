@@ -335,17 +335,29 @@ const Index = () => {
                       <Link to={banner.link}>
                         <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-all z-10" />
                         <img
+                          src={getResolvedImageUrl(banner.image_mobile_url || banner.image_url)}
+                          alt={banner.title || "Promoção"}
+                          className="block md:hidden w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                        />
+                        <img
                           src={getResolvedImageUrl(banner.image_url)}
                           alt={banner.title || "Promoção"}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                          className="hidden md:block w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                         />
                       </Link>
                     ) : (
-                      <img
-                        src={getResolvedImageUrl(banner.image_url)}
-                        alt={banner.title || "Promoção"}
-                        className="w-full h-full object-cover"
-                      />
+                      <>
+                        <img
+                          src={getResolvedImageUrl(banner.image_mobile_url || banner.image_url)}
+                          alt={banner.title || "Promoção"}
+                          className="block md:hidden w-full h-full object-cover"
+                        />
+                        <img
+                          src={getResolvedImageUrl(banner.image_url)}
+                          alt={banner.title || "Promoção"}
+                          className="hidden md:block w-full h-full object-cover"
+                        />
+                      </>
                     )}
                   </div>
                 ))}

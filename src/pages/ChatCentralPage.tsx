@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Settings } from 'lucide-react';
-import { LoginGate } from '@/components/chat-central/LoginGate';
+import { AdminGate } from '@/components/chat-central/AdminGate';
 import { SidebarContacts } from '@/components/chat-central/SidebarContacts';
 import { ChatWindow } from '@/components/chat-central/ChatWindow';
 import { QRCodeModal } from '@/components/chat-central/QRCodeModal';
@@ -79,10 +79,10 @@ function ChatCentralShell() {
 
 export default function ChatCentralPage() {
   return (
-    <LoginGate>
+    <AdminGate>
       <ChatCentralProvider>
         <ChatCentralShell />
       </ChatCentralProvider>
-    </LoginGate>
+    </AdminGate>
   );
 }

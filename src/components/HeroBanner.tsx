@@ -30,6 +30,7 @@ const bannerImageMap: Record<string, string> = {
 interface Banner {
   id: string;
   image_url: string;
+  image_mobile_url?: string | null;
   title: string | null;
   link: string | null;
   position: string;
@@ -111,23 +112,33 @@ export function HeroBanner({ singleBanner = false }: HeroBannerProps) {
                 {banner.link ? (
                   <Link to={banner.link} className="block w-full h-full md:h-auto">
                     <img
+                      src={getResolvedImageUrl(banner.image_mobile_url || banner.image_url)}
+                      alt={banner.title || "Banner Balão da Informática"}
+                      className="block md:hidden w-full h-full object-fill transition-transform duration-700 group-hover:scale-[1.01]"
+                      loading="eager"
+                    />
+                    <img
                       src={getResolvedImageUrl(banner.image_url)}
                       alt={banner.title || "Banner Balão da Informática"}
-                      // CORREÇÃO NA IMAGEM PARA PREENCHER SEM CORTAR:
-                      // Mobile/Tablet: h-full + object-fill -> Força a imagem a esticar para preencher a altura de 250px/350px sem cortar.
-                      // Desktop (md:): h-auto -> A imagem assume sua altura natural baseada na largura, sem distorção.
-                      className="w-full h-full md:h-auto object-fill md:object-contain transition-transform duration-700 group-hover:scale-[1.01]"
+                      className="hidden md:block w-full h-auto object-contain transition-transform duration-700 group-hover:scale-[1.01]"
                       loading="eager"
                     />
                   </Link>
                 ) : (
-                  <img
-                    src={getResolvedImageUrl(banner.image_url)}
-                    alt={banner.title || "Banner Balão da Informática"}
-                    // Mesma lógica aplicada aqui se não houver link
-                    className="w-full h-full md:h-auto object-fill md:object-contain"
-                    loading="eager"
-                  />
+                  <>
+                    <img
+                      src={getResolvedImageUrl(banner.image_mobile_url || banner.image_url)}
+                      alt={banner.title || "Banner Balão da Informática"}
+                      className="block md:hidden w-full h-full object-fill"
+                      loading="eager"
+                    />
+                    <img
+                      src={getResolvedImageUrl(banner.image_url)}
+                      alt={banner.title || "Banner Balão da Informática"}
+                      className="hidden md:block w-full h-auto object-contain"
+                      loading="eager"
+                    />
+                  </>
                 )}
 
                 {/* Sombra sutil */}

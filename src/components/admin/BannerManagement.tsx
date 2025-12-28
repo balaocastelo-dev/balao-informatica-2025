@@ -37,6 +37,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 interface Banner {
   id: string;
   image_url: string;
+  image_mobile_url?: string | null;
   title: string | null;
   link: string | null;
   order_index: number;
@@ -70,6 +71,7 @@ export function BannerManagement() {
 
   const [formData, setFormData] = useState({
     image_url: '',
+    image_mobile_url: '',
     title: '',
     link: '',
     position: 'hero',
@@ -95,7 +97,7 @@ export function BannerManagement() {
     setLoading(false);
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'image_url' | 'image_mobile_url') => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -112,7 +114,7 @@ export function BannerManagement() {
       if (uploadError) throw uploadError;
 
       const { data } = supabase.storage.from('banners').getPublicUrl(filePath);
-      setFormData(prev => ({ ...prev, image_url: data.publicUrl }));
+      setFormData(prev => ({ ...prev, [field]: data.publicUrl } as typeof prev));
       toast({ title: 'Imagem enviada!' });
     } catch (error) {
       toast({ title: 'Erro ao enviar imagem', variant: 'destructive' });
@@ -134,6 +136,7 @@ export function BannerManagement() {
           .from('banners')
           .update({
             image_url: formData.image_url,
+            image_mobile_url: formData.image_mobile_url || null,
             title: formData.title || null,
             link: formData.link || null,
             position: formData.position,
@@ -149,6 +152,7 @@ export function BannerManagement() {
           .from('banners')
           .insert({
             image_url: formData.image_url,
+            image_mobile_url: formData.image_mobile_url || null,
             title: formData.title || null,
             link: formData.link || null,
             position: formData.position,
@@ -169,7 +173,7 @@ export function BannerManagement() {
   };
 
   const resetForm = () => {
-    setFormData({ image_url: '', title: '', link: '', position: 'hero' });
+    setFormData({ image_url: '', image_mobile_url: '', title: '', link: '', position: 'hero' });
     setEditingBanner(null);
   };
 
@@ -177,6 +181,7 @@ export function BannerManagement() {
     setEditingBanner(banner);
     setFormData({
       image_url: banner.image_url,
+      image_mobile_url: banner.image_mobile_url || '',
       title: banner.title || '',
       link: banner.link || '',
       position: banner.position,
@@ -382,48 +387,104 @@ export function BannerManagement() {
               </Select>
             </div>
 
-            {/* Image Upload */}
             <div className="space-y-2">
-              <Label>Imagem *</Label>
-              <div className="border-2 border-dashed border-border rounded-lg p-4 text-center">
-                {formData.image_url ? (
-                  <div className="space-y-2">
-                    <img 
-                      src={formData.image_url} 
-                      alt="Preview" 
-                      className="max-h-40 mx-auto rounded"
-                    />
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => setFormData(prev => ({ ...prev, image_url: '' }))}
-                    >
-                      Remover
-                    </Button>
+              <Label>Imagens *</Label>
+              <Tabs defaultValue="desktop">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="desktop" className="gap-2">
+                    <Monitor className="w-4 h-4" />
+                    PC
+                  </TabsTrigger>
+                  <TabsTrigger value="mobile" className="gap-2">
+                    <Sidebar className="w-4 h-4" />
+                    Celular
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="desktop" className="space-y-3 mt-3">
+                  <div className="border-2 border-dashed border-border rounded-lg p-4 text-center">
+                    {formData.image_url ? (
+                      <div className="space-y-2">
+                        <img
+                          src={formData.image_url}
+                          alt="Preview PC"
+                          className="max-h-40 mx-auto rounded"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setFormData(prev => ({ ...prev, image_url: '' }))}
+                        >
+                          Remover
+                        </Button>
+                      </div>
+                    ) : (
+                      <label className="cursor-pointer block">
+                        <Upload className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
+                        <span className="text-sm text-muted-foreground">
+                          {uploading ? 'Enviando...' : 'Clique para enviar imagem (PC)'}
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleFileUpload(e, 'image_url')}
+                          className="hidden"
+                          disabled={uploading}
+                        />
+                      </label>
+                    )}
                   </div>
-                ) : (
-                  <label className="cursor-pointer block">
-                    <Upload className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
-                    <span className="text-sm text-muted-foreground">
-                      {uploading ? 'Enviando...' : 'Clique para enviar imagem'}
-                    </span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleFileUpload}
-                      className="hidden"
-                      disabled={uploading}
-                    />
-                  </label>
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground">Ou cole a URL da imagem:</p>
-              <Input
-                placeholder="https://exemplo.com/imagem.jpg"
-                value={formData.image_url}
-                onChange={(e) => setFormData(prev => ({ ...prev, image_url: e.target.value }))}
-              />
+                  <p className="text-xs text-muted-foreground">Ou cole a URL da imagem (PC):</p>
+                  <Input
+                    placeholder="https://exemplo.com/banner-pc.jpg"
+                    value={formData.image_url}
+                    onChange={(e) => setFormData(prev => ({ ...prev, image_url: e.target.value }))}
+                  />
+                </TabsContent>
+
+                <TabsContent value="mobile" className="space-y-3 mt-3">
+                  <div className="border-2 border-dashed border-border rounded-lg p-4 text-center">
+                    {formData.image_mobile_url ? (
+                      <div className="space-y-2">
+                        <img
+                          src={formData.image_mobile_url}
+                          alt="Preview Celular"
+                          className="max-h-40 mx-auto rounded"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setFormData(prev => ({ ...prev, image_mobile_url: '' }))}
+                        >
+                          Remover
+                        </Button>
+                      </div>
+                    ) : (
+                      <label className="cursor-pointer block">
+                        <Upload className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
+                        <span className="text-sm text-muted-foreground">
+                          {uploading ? 'Enviando...' : 'Clique para enviar imagem (Celular)'}
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleFileUpload(e, 'image_mobile_url')}
+                          className="hidden"
+                          disabled={uploading}
+                        />
+                      </label>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Ou cole a URL da imagem (Celular):</p>
+                  <Input
+                    placeholder="https://exemplo.com/banner-mobile.jpg"
+                    value={formData.image_mobile_url}
+                    onChange={(e) => setFormData(prev => ({ ...prev, image_mobile_url: e.target.value }))}
+                  />
+                </TabsContent>
+              </Tabs>
             </div>
 
             {/* Title */}

@@ -12,6 +12,13 @@ export default async function handler(req, res) {
   const { id } = req.query;
   const userAgent = req.headers['user-agent'] || '';
   const supabase = getSupabaseClient();
+
+  const buildOgImage = (raw) => {
+    if (!raw || typeof raw !== 'string') return raw;
+    if (!raw.startsWith('http://') && !raw.startsWith('https://')) return raw;
+    const noProto = raw.replace(/^https?:\/\//, '');
+    return `https://images.weserv.nl/?url=${encodeURIComponent(noProto)}&w=1200&h=630&fit=contain&bg=ffffff`;
+  };
   
   // Helper to fetch index.html
   const getIndexHtml = async () => {
@@ -55,7 +62,8 @@ export default async function handler(req, res) {
         ? product.description.replace(/<[^>]*>?/gm, '').substring(0, 200).replace(/"/g, '&quot;') 
         : `Compre ${product.name} na Balão da Informática.`;
       
-      const image = product.image || 'https://www.balaodainformatica.com.br/media/wysiwyg/balao500.png';
+      const rawImage = product.image || 'https://www.balaodainformatica.com.br/media/wysiwyg/balao500.png';
+      const image = buildOgImage(rawImage);
       const url = `${appUrl}/produto/${id}`;
       const price = product.price ? product.price.toString() : '0';
 

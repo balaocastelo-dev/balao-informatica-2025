@@ -19,6 +19,8 @@ interface AuthContextType {
   profile: Profile | null;
   isLoading: boolean;
   signInWithGoogle: () => Promise<{ error: Error | null }>;
+  signInWithPhoneOtp: (phone: string, channel: 'sms' | 'whatsapp') => Promise<{ error: Error | null }>;
+  verifyPhoneOtp: (phone: string, token: string, channel: 'sms' | 'whatsapp') => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   updateProfile: (data: Partial<Profile>) => Promise<{ error: Error | null }>;
 }
@@ -91,6 +93,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error };
   };
 
+  const signInWithPhoneOtp = async (phone: string, channel: 'sms' | 'whatsapp') => {
+    const { error } = await supabase.auth.signInWithOtp({
+      phone,
+      options: {
+        channel,
+      },
+    });
+    return { error };
+  };
+
+  const verifyPhoneOtp = async (phone: string, token: string, channel: 'sms' | 'whatsapp') => {
+    const { error } = await supabase.auth.verifyOtp({
+      phone,
+      token,
+      type: channel,
+    });
+    return { error };
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
     setProfile(null);
@@ -118,6 +139,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       profile,
       isLoading,
       signInWithGoogle,
+      signInWithPhoneOtp,
+      verifyPhoneOtp,
       signOut,
       updateProfile
     }}>

@@ -425,7 +425,7 @@ export default function PCBuilderPage() {
     <Layout>
       <div className="bg-zinc-50 min-h-screen pb-10">
         {/* === HEADER FIXO (TOPO) === */}
-        <div className="bg-white border-b sticky top-0 z-50 shadow-sm transition-all">
+        <div className="bg-white border-b sticky top-36 md:top-24 z-40 shadow-sm">
           <div className="container-balao pt-2 pb-2">
             {/* LINHA 1: Título e Preço */}
             <div className="flex justify-between items-center mb-2">

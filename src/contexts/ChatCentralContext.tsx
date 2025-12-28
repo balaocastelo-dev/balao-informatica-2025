@@ -1,5 +1,4 @@
 import { createContext, ReactNode, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
 import { ChatCentralConversation, ChatCentralMessage, WhatsAppConnectionStatus } from '@/types/chatCentral';
 
 type GatewayInstanceStatusResponse = {
@@ -69,16 +68,21 @@ function upsertMessage(existing: ChatCentralMessage[], incoming: ChatCentralMess
 }
 
 export function ChatCentralProvider({ children }: { children: ReactNode }) {
-  const { user, profile, session } = useAuth();
-
   const agentName = useMemo(() => {
-    const name = profile?.full_name?.trim();
-    if (name) return name;
-    return user?.email || 'Atendente';
-  }, [profile?.full_name, user?.email]);
+    try {
+      const stored = sessionStorage.getItem('admin_user');
+      if (stored) {
+        const parsed = JSON.parse(stored) as { name?: string } | null;
+        const name = parsed?.name?.trim();
+        if (name) return name;
+      }
+    } catch {
+      // ignore
+    }
+    return 'Atendente';
+  }, []);
 
   const gatewayEnabled = !!GATEWAY_BASE_URL;
-  const accessToken = session?.access_token || null;
 
   const fetchGatewayJson = async <T,>(path: string, init?: RequestInit): Promise<T> => {
     if (!GATEWAY_BASE_URL) {
@@ -88,7 +92,6 @@ export function ChatCentralProvider({ children }: { children: ReactNode }) {
       ...init,
       headers: {
         'Content-Type': 'application/json',
-        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
         ...(init?.headers || {}),
       },
     });
@@ -211,7 +214,7 @@ export function ChatCentralProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!gatewayEnabled) return;
 
-    const eventsUrl = `${GATEWAY_BASE_URL}/events${accessToken ? `?access_token=${encodeURIComponent(accessToken)}` : ''}`;
+    const eventsUrl = `${GATEWAY_BASE_URL}/events`;
     try {
       const sse = new EventSource(eventsUrl);
       sseRef.current = sse;

@@ -1,19 +1,41 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+const DEFAULT_ALLOWED_ORIGINS = [
+  "https://www.balaodainformatica.com.br",
+  "http://localhost:8080",
+  "http://127.0.0.1:8080",
+];
+
+function getAllowedOrigins() {
+  const env = Deno.env.get("WHATSAPP_GATEWAY_ALLOWED_ORIGINS");
+  if (!env) return DEFAULT_ALLOWED_ORIGINS;
+  return env
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+function corsHeadersFor(req: Request) {
+  const origin = req.headers.get("origin") || "";
+  const allowed = getAllowedOrigins();
+  const allowOrigin =
+    allowed.includes("*") ? "*" : allowed.includes(origin) ? origin : "null";
+
+  return {
+    "Access-Control-Allow-Origin": allowOrigin,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "GET,POST,DELETE,OPTIONS",
+  };
+}
 
 const EVOLUTION_BASE_URL = Deno.env.get("EVOLUTION_BASE_URL");
 const EVOLUTION_API_KEY = Deno.env.get("EVOLUTION_API_KEY");
 const EVOLUTION_INSTANCE = Deno.env.get("EVOLUTION_INSTANCE");
 
-function jsonResponse(data: unknown, status = 200, extraHeaders?: Record<string, string>) {
+function jsonResponse(req: Request, data: unknown, status = 200, extraHeaders?: Record<string, string>) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { ...corsHeaders, "Content-Type": "application/json", ...(extraHeaders || {}) },
+    headers: { ...corsHeadersFor(req), "Content-Type": "application/json", ...(extraHeaders || {}) },
   });
 }
 
@@ -24,20 +46,11 @@ function requiredEnv() {
   return true;
 }
 
-async function requireAuth(req: Request) {
-  const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
-  const authHeader = req.headers.get("authorization");
-
-  if (!supabaseUrl || !supabaseAnonKey || !authHeader) return null;
-
-  const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-    global: { headers: { Authorization: authHeader } },
-  });
-
-  const { data, error } = await supabase.auth.getUser();
-  if (error || !data?.user) return null;
-  return data.user;
+function originIsAllowed(req: Request) {
+  const origin = req.headers.get("origin") || "";
+  const allowed = getAllowedOrigins();
+  if (allowed.includes("*")) return true;
+  return !!origin && allowed.includes(origin);
 }
 
 async function evoFetch(path: string, init?: RequestInit) {
@@ -169,16 +182,19 @@ function mapMessagesToUi(conversationId: string, raw: any): any[] {
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    if (!originIsAllowed(req)) {
+      return new Response(null, { status: 403, headers: corsHeadersFor(req) });
+    }
+    return new Response(null, { headers: corsHeadersFor(req) });
   }
 
-  const user = await requireAuth(req);
-  if (!user) {
-    return jsonResponse({ error: "Unauthorized" }, 401);
+  if (!originIsAllowed(req)) {
+    return jsonResponse(req, { error: "Forbidden" }, 403);
   }
 
   if (!requiredEnv()) {
     return jsonResponse(
+      req,
       { error: "Missing EVOLUTION_* env vars (EVOLUTION_BASE_URL, EVOLUTION_API_KEY, EVOLUTION_INSTANCE)" },
       500,
     );
@@ -193,17 +209,17 @@ serve(async (req) => {
   try {
     if (route === "/instance/status" && req.method === "GET") {
       const res = await evoFetch(`/instance/connectionState/${EVOLUTION_INSTANCE}`, { method: "GET" });
-      if (!res.ok) return jsonResponse({ status: "disconnected" }, 200);
+      if (!res.ok) return jsonResponse(req, { status: "disconnected" }, 200);
       const data = await res.json();
       const state = data?.instance?.state || data?.state || data?.connectionState || data?.instance?.connectionState;
       const status = mapConnectionStateToStatus(state);
-      return jsonResponse({ status });
+      return jsonResponse(req, { status });
     }
 
     if (route === "/instance/qr" && req.method === "POST") {
       const res = await evoFetch(`/instance/connect/${EVOLUTION_INSTANCE}`, { method: "GET" });
       if (!res.ok) {
-        return jsonResponse({ status: "qr", qrCodeImageUrl: null }, 200);
+        return jsonResponse(req, { status: "qr", qrCodeImageUrl: null }, 200);
       }
       const data = await res.json();
       const base64 =
@@ -213,7 +229,7 @@ serve(async (req) => {
         data?.qrCode ||
         data?.qrCodeBase64 ||
         null;
-      return jsonResponse({
+      return jsonResponse(req, {
         status: "qr",
         qrCodeImageUrl: typeof base64 === "string" && base64.trim() ? normalizeBase64ToDataUrl(base64) : null,
       });
@@ -221,14 +237,14 @@ serve(async (req) => {
 
     if (route === "/instance/disconnect" && req.method === "POST") {
       await evoFetch(`/instance/logout/${EVOLUTION_INSTANCE}`, { method: "DELETE" });
-      return jsonResponse({ ok: true });
+      return jsonResponse(req, { ok: true });
     }
 
     if (route === "/conversations" && req.method === "GET") {
       const res = await evoFetch(`/chat/findChats/${EVOLUTION_INSTANCE}`, { method: "GET" });
-      if (!res.ok) return jsonResponse([]);
+      if (!res.ok) return jsonResponse(req, []);
       const data = await res.json();
-      return jsonResponse(mapChatsToConversations(data));
+      return jsonResponse(req, mapChatsToConversations(data));
     }
 
     const convMessagesMatch = route.match(/^\/conversations\/([^/]+)\/messages$/);
@@ -244,16 +260,16 @@ serve(async (req) => {
         method: "POST",
         body: JSON.stringify(body),
       });
-      if (!res.ok) return jsonResponse([]);
+      if (!res.ok) return jsonResponse(req, []);
       const data = await res.json();
-      return jsonResponse(mapMessagesToUi(conversationId, data));
+      return jsonResponse(req, mapMessagesToUi(conversationId, data));
     }
 
     if (convMessagesMatch && req.method === "POST") {
       const conversationId = decodeURIComponent(convMessagesMatch[1]);
       const payload = await req.json().catch(() => ({}));
       const text = String(payload?.text || "").trim();
-      if (!text) return jsonResponse({ error: "Missing text" }, 400);
+      if (!text) return jsonResponse(req, { error: "Missing text" }, 400);
 
       const body = {
         number: conversationId,
@@ -268,15 +284,14 @@ serve(async (req) => {
 
       if (!res.ok) {
         const errText = await res.text().catch(() => "");
-        return jsonResponse({ ok: false, error: errText || `Evolution error: ${res.status}` }, 502);
+        return jsonResponse(req, { ok: false, error: errText || `Evolution error: ${res.status}` }, 502);
       }
 
-      return jsonResponse({ ok: true });
+      return jsonResponse(req, { ok: true });
     }
 
-    return jsonResponse({ error: "Not found" }, 404);
+    return jsonResponse(req, { error: "Not found" }, 404);
   } catch (error) {
-    return jsonResponse({ error: String(error?.message || error) }, 500);
+    return jsonResponse(req, { error: String(error?.message || error) }, 500);
   }
 });
-
