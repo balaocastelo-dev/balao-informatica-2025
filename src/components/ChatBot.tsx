@@ -102,6 +102,7 @@ const ChatBot = () => {
           ...prev,
           { role: 'assistant', content: 'cards', products: suggestions }
         ]);
+        return;
       }
     } catch {}
 
