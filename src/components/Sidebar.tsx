@@ -270,14 +270,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             </nav>
           </div>
 
-          {/* Banner Space */}
-          <div className="mt-6">
-            <div className="bg-secondary/50 border-2 border-dashed border-border rounded-lg p-4 text-center min-h-[200px] flex items-center justify-center">
-              <span className="text-xs text-muted-foreground">
-                ESPAÇO PARA<br />BANNER LATERAL
-              </span>
-            </div>
-          </div>
+          {/* Removido espaço para banner lateral */}
         </div>
       </aside>
     </>
