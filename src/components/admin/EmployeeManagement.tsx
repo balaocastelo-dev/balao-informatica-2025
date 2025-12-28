@@ -122,13 +122,15 @@ export function EmployeeManagement() {
       
       let description = error.message;
       if (error.message?.includes('Could not find the table') || error.code === '42P01') {
-        description = "A tabela 'admin_users' não foi encontrada. Você rodou o script SQL de configuração no Supabase?";
+        const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID || 'DESCONHECIDO';
+        description = `A tabela 'admin_users' não existe no projeto Supabase (ID: ${projectId}). Verifique se você rodou o SQL no projeto correto.`;
       }
 
       toast({
         title: "Erro ao salvar",
         description: description,
-        variant: "destructive"
+        variant: "destructive",
+        duration: 10000, // Show for 10 seconds
       });
     }
   };
