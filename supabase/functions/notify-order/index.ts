@@ -24,6 +24,7 @@ interface OrderNotificationRequest {
   payment_status?: string;
   transaction_id?: string;
   shipping_address?: string;
+  pix_key?: string;
 }
 
 const formatPrice = (price: number) => {
@@ -60,6 +61,7 @@ const generateOrderEmailHtml = (data: OrderNotificationRequest, isAdmin: boolean
       <p style="margin: 4px 0; color: #333;"><strong>Método:</strong> ${data.payment_method}</p>
       <p style="margin: 4px 0; color: #333;"><strong>Status:</strong> ${data.payment_status || 'Pendente'}</p>
       ${data.transaction_id ? `<p style="margin: 4px 0; color: #333;"><strong>ID da Transação:</strong> ${data.transaction_id}</p>` : ''}
+      ${data.pix_key ? `<p style="margin: 4px 0; color: #333;"><strong>Chave PIX (Copia e Cola):</strong> ${data.pix_key}</p>` : ''}
     </div>
   ` : '';
 

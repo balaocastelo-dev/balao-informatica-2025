@@ -371,6 +371,22 @@ const CartPage = () => {
         if (!paymentData?.pix) {
           setPixData(null);
           setShowPixModal(true);
+          // Send email with fallback PIX key
+          try {
+            await supabase.functions.invoke('notify-order', {
+              body: {
+                customer_email: customerData.email.trim(),
+                customer_name: customerData.name.trim(),
+                order_id: order.id,
+                items: orderItems,
+                total: total,
+                payment_method: 'pix',
+                payment_status: 'pending',
+                shipping_address: fullAddress,
+                pix_key: PIX_FALLBACK_KEY,
+              }
+            });
+          } catch (_) {}
           toast({ title: 'PIX indisponível', description: 'Use a chave fixa abaixo para concluir o pagamento.', variant: 'destructive' });
           return;
         }
@@ -379,6 +395,22 @@ const CartPage = () => {
           qr_code: paymentData.pix.qr_code,
           ticket_url: paymentData.pix.ticket_url,
         });
+        // Send email including PIX key from Mercado Pago
+        try {
+          await supabase.functions.invoke('notify-order', {
+            body: {
+              customer_email: customerData.email.trim(),
+              customer_name: customerData.name.trim(),
+              order_id: order.id,
+              items: orderItems,
+              total: total,
+              payment_method: 'pix',
+              payment_status: 'pending',
+              shipping_address: fullAddress,
+              pix_key: paymentData.pix.qr_code,
+            }
+          });
+        } catch (_) {}
         toast({ title: 'Pedido criado!', description: 'Escaneie o QR Code ou use Copia e Cola' });
         setShowPixModal(true);
         return;
@@ -779,7 +811,7 @@ const CartPage = () => {
                     toast({ title: 'Pedido registrado', description: 'A identificação do pagamento via PIX será automática em alguns instantes.' });
                     clearCart();
                     setShowPixModal(false);
-                    navigate('/pedidos');
+                    navigate('/');
                   }}
                   className="w-full"
                 >
