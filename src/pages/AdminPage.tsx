@@ -18,8 +18,6 @@ import {
   Image,
   Grid,
   LogOut,
-  Eye,
-  EyeOff,
   Search,
   AlertTriangle,
   FileImage,
@@ -29,10 +27,6 @@ import {
   ShoppingBag,
   Loader2,
   FolderEdit,
-  MessageSquare,
-  Users,
-  Copy,
-  ExternalLink,
   CopyPlus
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
@@ -44,9 +38,6 @@ import { BannerManagement } from '@/components/admin/BannerManagement';
 import { CategoryProductManager } from '@/components/admin/CategoryProductManager';
 import { BrandManagement } from '@/components/admin/BrandManagement';
 import { MercadoPagoConfig } from '@/components/admin/MercadoPagoConfig';
-import { EmployeeManagement } from '@/components/admin/EmployeeManagement';
-import { AdminChat } from '@/components/admin/AdminChat';
-import { Progress } from '@/components/ui/progress';
 
 const ADMIN_CREDENTIALS = {
   username: 'balao2025',
@@ -61,11 +52,10 @@ const AdminPage = () => {
   const { runBatchPriceIncrease, runBatchPriceDiscount, runBatchDelete, runBatchCategoryChange, isRunning } = useBatchOperations();
   
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [currentUser, setCurrentUser] = useState<{ name: string; role: 'admin' | 'employee' } | null>(null);
   const [loginForm, setLoginForm] = useState({ username: '', password: '' });
   const [loginError, setLoginError] = useState('');
 
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'banners' | 'categories' | 'brands' | 'layout' | 'email' | 'orders' | 'payments' | 'employees' | 'chat'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'banners' | 'categories' | 'brands' | 'layout' | 'email' | 'orders' | 'payments'>('dashboard');
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
@@ -123,17 +113,6 @@ const AdminPage = () => {
   // Batch category change state
   const [showCategoryChangeModal, setShowCategoryChangeModal] = useState(false);
   const [newBatchCategory, setNewBatchCategory] = useState('');
-
-  const copyText = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      toast({ title: 'Copiado!' });
-    } catch {
-      toast({ title: 'Não foi possível copiar', variant: 'destructive' });
-    }
-  };
-
-  const getProductLink = (id: string) => `https://www.balaodainformatica.com.br/produto/${id}`;
 
   const handleDuplicateProduct = async (product: Product) => {
     await addProduct({
@@ -193,16 +172,9 @@ const AdminPage = () => {
   // Check session
   useEffect(() => {
     const adminSession = sessionStorage.getItem('admin_authenticated');
-    const storedUser = sessionStorage.getItem('admin_user');
     
     if (adminSession === 'true') {
       setIsAuthenticated(true);
-      if (storedUser) {
-        setCurrentUser(JSON.parse(storedUser));
-      } else {
-        // Fallback for old sessions or master admin
-        setCurrentUser({ name: 'Administrador', role: 'admin' });
-      }
     }
   }, []);
 
@@ -213,11 +185,8 @@ const AdminPage = () => {
     // 1. Check Master Credentials (Hardcoded)
     if (loginForm.username === ADMIN_CREDENTIALS.username && 
         loginForm.password === ADMIN_CREDENTIALS.password) {
-      const masterUser = { name: 'Master Admin', role: 'admin' as const };
       setIsAuthenticated(true);
-      setCurrentUser(masterUser);
       sessionStorage.setItem('admin_authenticated', 'true');
-      sessionStorage.setItem('admin_user', JSON.stringify(masterUser));
       return;
     } 
     
@@ -234,11 +203,8 @@ const AdminPage = () => {
         throw new Error('Usuário ou senha incorretos');
       }
 
-      const user = { name: data.name, role: data.role as 'admin' | 'employee' };
       setIsAuthenticated(true);
-      setCurrentUser(user);
       sessionStorage.setItem('admin_authenticated', 'true');
-      sessionStorage.setItem('admin_user', JSON.stringify(user));
     } catch (err) {
       setLoginError('Usuário ou senha incorretos');
     }
@@ -246,9 +212,7 @@ const AdminPage = () => {
 
   const handleLogout = () => {
     setIsAuthenticated(false);
-    setCurrentUser(null);
     sessionStorage.removeItem('admin_authenticated');
-    sessionStorage.removeItem('admin_user');
     navigate('/');
   };
 
@@ -1036,49 +1000,10 @@ const AdminPage = () => {
             <Settings className="w-4 h-4" />
             Pagamentos
           </button>
-          <button
-            onClick={() => setActiveTab('chat')}
-            className={`px-3 py-2 font-medium transition-colors border-b-2 -mb-px flex items-center gap-2 whitespace-nowrap ${
-              activeTab === 'chat' 
-                ? 'text-primary border-primary' 
-                : 'text-muted-foreground border-transparent hover:text-foreground'
-            }`}
-          >
-            <MessageSquare className="w-4 h-4" />
-            Equipe
-          </button>
-          
-          {currentUser?.role === 'admin' && (
-            <button
-              onClick={() => setActiveTab('employees')}
-              className={`px-3 py-2 font-medium transition-colors border-b-2 -mb-px flex items-center gap-2 whitespace-nowrap ${
-                activeTab === 'employees' 
-                  ? 'text-primary border-primary' 
-                  : 'text-muted-foreground border-transparent hover:text-foreground'
-              }`}
-            >
-              <Users className="w-4 h-4" />
-              Funcionários
-            </button>
-          )}
         </div>
 
         {/* Dashboard Tab */}
         {activeTab === 'dashboard' && <Dashboard />}
-
-        {/* Chat Tab */}
-        {activeTab === 'chat' && (
-          <div className="w-full">
-            <AdminChat currentUser={currentUser?.name || 'Admin'} />
-          </div>
-        )}
-
-        {/* Employees Tab */}
-        {activeTab === 'employees' && (
-          <div className="w-full">
-            <EmployeeManagement />
-          </div>
-        )}
 
         {/* Email Marketing Tab */}
         {activeTab === 'email' && <EmailMarketing />}
@@ -1325,20 +1250,6 @@ const AdminPage = () => {
                         </td>
                         <td className="p-2">
                           <div className="flex items-center gap-1">
-                            <button
-                              onClick={() => window.open(getProductLink(product.id), '_blank', 'noopener,noreferrer')}
-                              className="p-1.5 hover:bg-secondary rounded-lg transition-colors"
-                              title="Abrir na loja"
-                            >
-                              <ExternalLink className="w-4 h-4 text-muted-foreground" />
-                            </button>
-                            <button
-                              onClick={() => copyText(getProductLink(product.id))}
-                              className="p-1.5 hover:bg-secondary rounded-lg transition-colors"
-                              title="Copiar link"
-                            >
-                              <Copy className="w-4 h-4 text-muted-foreground" />
-                            </button>
                             <button
                               onClick={() => handleDuplicateProduct(product)}
                               className="p-1.5 hover:bg-secondary rounded-lg transition-colors"
