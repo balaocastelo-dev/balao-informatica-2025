@@ -53,6 +53,8 @@ const CartPage = () => {
   const [showPixModal, setShowPixModal] = useState(false);
   const [pixData, setPixData] = useState<{ qr_code_base64?: string; qr_code?: string; ticket_url?: string } | null>(null);
   const [currentStep, setCurrentStep] = useState<number>(1);
+  const PIX_FALLBACK_KEY = '3f5eee98-f346-4a08-b4e8-85550670f9bf';
+  const PIX_MERCHANT_NAME = 'CASTELO DISTRIBUICAO LTDA';
   const [customerData, setCustomerData] = useState<CustomerData>({
     name: profile?.full_name || '',
     email: profile?.email || user?.email || '',
@@ -702,21 +704,24 @@ const CartPage = () => {
                   className="w-64 h-64 mx-auto"
                 />
               )}
-              {pixData?.qr_code && (
-                <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground">Copia e Cola</p>
-                  <Textarea readOnly value={pixData.qr_code} />
-                  <UiButton
-                    onClick={() => {
-                      navigator.clipboard.writeText(pixData.qr_code || '');
-                      toast({ title: 'Copiado!' });
-                    }}
-                    className="w-full"
-                  >
-                    Copiar código PIX
-                  </UiButton>
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">Copia e Cola</p>
+                <Textarea readOnly value={(pixData?.qr_code && pixData.qr_code.trim() !== '' ? pixData.qr_code : PIX_FALLBACK_KEY)} />
+                <UiButton
+                  onClick={() => {
+                    const code = (pixData?.qr_code && pixData.qr_code.trim() !== '' ? pixData.qr_code : PIX_FALLBACK_KEY);
+                    navigator.clipboard.writeText(code);
+                    toast({ title: 'Copiado!' });
+                  }}
+                  className="w-full"
+                >
+                  Copiar código PIX
+                </UiButton>
+                <div className="pt-2 text-sm">
+                  <p className="text-muted-foreground">Nome</p>
+                  <p className="font-medium">{PIX_MERCHANT_NAME}</p>
                 </div>
-              )}
+              </div>
               {pixData?.ticket_url && (
                 <a href={pixData.ticket_url} target="_blank" rel="noopener noreferrer" className="btn-primary w-full inline-flex">
                   Abrir comprovante
