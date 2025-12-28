@@ -31,6 +31,12 @@ interface MercadoPagoSettings {
   testMode: boolean;
 }
 
+interface PaymentProviderSettings {
+  provider: 'mercadopago' | 'digitalmanager';
+  dmgApiUrl: string;
+  dmgApiKey: string;
+}
+
 export function MercadoPagoConfig() {
   const [settings, setSettings] = useState<MercadoPagoSettings>({
     publicKey: '',
@@ -38,6 +44,11 @@ export function MercadoPagoConfig() {
     pixEnabled: true,
     cardEnabled: true,
     testMode: true,
+  });
+  const [providerSettings, setProviderSettings] = useState<PaymentProviderSettings>({
+    provider: 'mercadopago',
+    dmgApiUrl: 'https://digitalmanager.guru',
+    dmgApiKey: '',
   });
   const [showAccessToken, setShowAccessToken] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -51,13 +62,21 @@ export function MercadoPagoConfig() {
   const loadSettings = async () => {
     setIsLoading(true);
     try {
-      // Try to load settings from localStorage for now
-      // In production, this should come from the database
       const saved = localStorage.getItem('mercadopago_settings');
       if (saved) {
         const parsed = JSON.parse(saved);
         setSettings(parsed);
-        setIsConnected(!!parsed.accessToken && !!parsed.publicKey);
+        if (providerSettings.provider === 'mercadopago') {
+          setIsConnected(!!parsed.accessToken && !!parsed.publicKey);
+        }
+      }
+      const prov = localStorage.getItem('payment_provider_settings');
+      if (prov) {
+        const parsedProv = JSON.parse(prov);
+        setProviderSettings(parsedProv);
+        if (parsedProv.provider === 'digitalmanager') {
+          setIsConnected(!!parsedProv.dmgApiKey);
+        }
       }
     } catch (error) {
       console.error('Error loading settings:', error);
@@ -67,24 +86,34 @@ export function MercadoPagoConfig() {
   };
 
   const handleSaveSettings = async () => {
-    if (!settings.publicKey || !settings.accessToken) {
-      toast({
-        title: 'Campos obrigatórios',
-        description: 'Preencha a Public Key e o Access Token',
-        variant: 'destructive',
-      });
-      return;
+    if (providerSettings.provider === 'mercadopago') {
+      if (!settings.publicKey || !settings.accessToken) {
+        toast({
+          title: 'Campos obrigatórios',
+          description: 'Preencha a Public Key e o Access Token',
+          variant: 'destructive',
+        });
+        return;
+      }
+    } else {
+      if (!providerSettings.dmgApiKey) {
+        toast({
+          title: 'Campos obrigatórios',
+          description: 'Informe a chave da Digital Manager',
+          variant: 'destructive',
+        });
+        return;
+      }
     }
 
     setIsSaving(true);
     try {
-      // Save to localStorage for now
-      // In production, save to Supabase secrets
       localStorage.setItem('mercadopago_settings', JSON.stringify(settings));
+      localStorage.setItem('payment_provider_settings', JSON.stringify(providerSettings));
       setIsConnected(true);
       toast({
         title: 'Configurações salvas!',
-        description: 'Mercado Pago configurado com sucesso.',
+        description: 'Configurações de pagamento atualizadas.',
       });
     } catch (error) {
       console.error('Error saving settings:', error);
@@ -100,6 +129,7 @@ export function MercadoPagoConfig() {
 
   const handleDisconnect = () => {
     localStorage.removeItem('mercadopago_settings');
+    localStorage.removeItem('payment_provider_settings');
     setSettings({
       publicKey: '',
       accessToken: '',
@@ -107,10 +137,15 @@ export function MercadoPagoConfig() {
       cardEnabled: true,
       testMode: true,
     });
+    setProviderSettings({
+      provider: 'mercadopago',
+      dmgApiUrl: 'https://digitalmanager.guru',
+      dmgApiKey: '',
+    });
     setIsConnected(false);
     toast({
       title: 'Desconectado',
-      description: 'Mercado Pago foi desconectado.',
+      description: 'Integrações de pagamento foram desconectadas.',
     });
   };
 
@@ -170,6 +205,52 @@ export function MercadoPagoConfig() {
 
         {/* Configuration Tab */}
         <TabsContent value="config" className="space-y-4 mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Provedor de Pagamento</CardTitle>
+              <CardDescription>Escolha o provedor para o checkout</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-3">
+                <button
+                  className={`px-3 py-2 rounded border ${providerSettings.provider === 'mercadopago' ? 'bg-primary text-primary-foreground border-primary' : 'bg-card border-border'}`}
+                  onClick={() => setProviderSettings(prev => ({ ...prev, provider: 'mercadopago' }))}
+                >
+                  Mercado Pago
+                </button>
+                <button
+                  className={`px-3 py-2 rounded border ${providerSettings.provider === 'digitalmanager' ? 'bg-primary text-primary-foreground border-primary' : 'bg-card border-border'}`}
+                  onClick={() => setProviderSettings(prev => ({ ...prev, provider: 'digitalmanager' }))}
+                >
+                  Digital Manager Guru
+                </button>
+              </div>
+              {providerSettings.provider === 'digitalmanager' && (
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="dmgUrl">URL</Label>
+                    <Input
+                      id="dmgUrl"
+                      type="text"
+                      value={providerSettings.dmgApiUrl}
+                      onChange={(e) => setProviderSettings({ ...providerSettings, dmgApiUrl: e.target.value })}
+                      placeholder="https://digitalmanager.guru"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="dmgKey">Chave API</Label>
+                    <Input
+                      id="dmgKey"
+                      type="text"
+                      value={providerSettings.dmgApiKey}
+                      onChange={(e) => setProviderSettings({ ...providerSettings, dmgApiKey: e.target.value })}
+                      placeholder="Cole sua chave API"
+                    />
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

@@ -50,95 +50,146 @@ serve(async (req) => {
     // Calculate total
     const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
-    // Create Mercado Pago preference
-    const preferenceData = {
-      items: items.map(item => ({
-        id: item.id,
-        title: item.name.substring(0, 256),
-        description: item.name.substring(0, 256),
-        picture_url: item.image || '',
-        quantity: item.quantity,
-        currency_id: 'BRL',
-        unit_price: Number(item.price.toFixed(2)),
-      })),
-      payer: {
-        name: customer_name.split(' ')[0] || customer_name,
-        surname: customer_name.split(' ').slice(1).join(' ') || '',
-        email: customer_email,
-        phone: {
-          area_code: customer_phone.replace(/\D/g, '').substring(0, 2),
-          number: customer_phone.replace(/\D/g, '').substring(2),
+    if (payment_method === 'pix') {
+      const pixBody = {
+        transaction_amount: Number(total.toFixed(2)),
+        description: `Pedido ${order_id || ''}`,
+        payment_method_id: 'pix',
+        payer: {
+          email: customer_email,
+          first_name: customer_name.split(' ')[0] || customer_name,
+          last_name: customer_name.split(' ').slice(1).join(' ') || '',
         },
-        address: {
-          street_name: customer_address.split(',')[0] || '',
-          zip_code: customer_address.match(/CEP:\s*(\d{5}-?\d{3})/)?.[1]?.replace('-', '') || '',
+        external_reference: order_id || crypto.randomUUID(),
+        notification_url: `${Deno.env.get('SUPABASE_URL')}/functions/v1/mercadopago-webhook`,
+      };
+
+      const pixRes = await fetch('https://api.mercadopago.com/v1/payments', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
         },
-      },
-      back_urls: {
-        success: `${req.headers.get('origin')}/pedidos?status=success`,
-        failure: `${req.headers.get('origin')}/carrinho?status=failure`,
-        pending: `${req.headers.get('origin')}/pedidos?status=pending`,
-      },
-      auto_return: 'approved',
-      external_reference: order_id || crypto.randomUUID(),
-      notification_url: `${Deno.env.get('SUPABASE_URL')}/functions/v1/mercadopago-webhook`,
-      statement_descriptor: 'BALAO INFO',
-      payment_methods: payment_method === 'pix' 
-        ? {
-            excluded_payment_types: [{ id: 'credit_card' }, { id: 'debit_card' }, { id: 'ticket' }],
-          }
-        : {
-            excluded_payment_types: [{ id: 'ticket' }],
-            installments: 12,
-          },
-    };
+        body: JSON.stringify(pixBody),
+      });
 
-    console.log('Creating preference:', JSON.stringify(preferenceData));
+      const pixData = await pixRes.json();
 
-    const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(preferenceData),
-    });
+      if (!pixRes.ok) {
+        console.error('Mercado Pago PIX error:', JSON.stringify(pixData));
+        return new Response(
+          JSON.stringify({ error: 'Erro ao criar pagamento PIX', details: pixData }),
+          { status: pixRes.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
 
-    const responseData = await response.json();
+      if (order_id) {
+        const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+        const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+        const supabase = createClient(supabaseUrl, supabaseKey);
+        await supabase
+          .from('orders')
+          .update({ 
+            transaction_id: String(pixData.id),
+            payment_status: 'pending'
+          })
+          .eq('id', order_id);
+      }
 
-    if (!response.ok) {
-      console.error('Mercado Pago error:', JSON.stringify(responseData));
+      const qr = pixData?.point_of_interaction?.transaction_data || {};
       return new Response(
-        JSON.stringify({ error: 'Erro ao criar preferência de pagamento', details: responseData }),
-        { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({
+          pix: {
+            payment_id: pixData.id,
+            qr_code_base64: qr.qr_code_base64 || '',
+            qr_code: qr.qr_code || '',
+            ticket_url: qr.ticket_url || '',
+            date_of_expiration: pixData.date_of_expiration || null,
+            status: pixData.status || 'pending',
+          }
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } else {
+      const preferenceData = {
+        items: items.map(item => ({
+          id: item.id,
+          title: item.name.substring(0, 256),
+          description: item.name.substring(0, 256),
+          picture_url: item.image || '',
+          quantity: item.quantity,
+          currency_id: 'BRL',
+          unit_price: Number(item.price.toFixed(2)),
+        })),
+        payer: {
+          name: customer_name.split(' ')[0] || customer_name,
+          surname: customer_name.split(' ').slice(1).join(' ') || '',
+          email: customer_email,
+          phone: {
+            area_code: customer_phone.replace(/\D/g, '').substring(0, 2),
+            number: customer_phone.replace(/\D/g, '').substring(2),
+          },
+          address: {
+            street_name: customer_address.split(',')[0] || '',
+            zip_code: customer_address.match(/CEP:\s*(\d{5}-?\d{3})/)?.[1]?.replace('-', '') || '',
+          },
+        },
+        back_urls: {
+          success: `${req.headers.get('origin')}/pedidos?status=success`,
+          failure: `${req.headers.get('origin')}/carrinho?status=failure`,
+          pending: `${req.headers.get('origin')}/pedidos?status=pending`,
+        },
+        auto_return: 'approved',
+        external_reference: order_id || crypto.randomUUID(),
+        notification_url: `${Deno.env.get('SUPABASE_URL')}/functions/v1/mercadopago-webhook`,
+        statement_descriptor: 'BALAO INFO',
+        payment_methods: {
+          excluded_payment_types: [{ id: 'ticket' }],
+          installments: 12,
+        },
+      };
+
+      const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(preferenceData),
+      });
+
+      const responseData = await response.json();
+
+      if (!response.ok) {
+        console.error('Mercado Pago error:', JSON.stringify(responseData));
+        return new Response(
+          JSON.stringify({ error: 'Erro ao criar preferência de pagamento', details: responseData }),
+          { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (order_id) {
+        const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+        const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+        const supabase = createClient(supabaseUrl, supabaseKey);
+        await supabase
+          .from('orders')
+          .update({ 
+            transaction_id: responseData.id,
+            payment_status: 'pending'
+          })
+          .eq('id', order_id);
+      }
+
+      return new Response(
+        JSON.stringify({
+          preference_id: responseData.id,
+          init_point: responseData.init_point,
+          sandbox_init_point: responseData.sandbox_init_point,
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-
-    console.log('Preference created successfully:', responseData.id);
-
-    // Update order with preference id if we have an order_id
-    if (order_id) {
-      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-      const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-      const supabase = createClient(supabaseUrl, supabaseKey);
-
-      await supabase
-        .from('orders')
-        .update({ 
-          transaction_id: responseData.id,
-          payment_status: 'pending'
-        })
-        .eq('id', order_id);
-    }
-
-    return new Response(
-      JSON.stringify({
-        preference_id: responseData.id,
-        init_point: responseData.init_point,
-        sandbox_init_point: responseData.sandbox_init_point,
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
 
   } catch (error) {
     console.error('Error in mercadopago-payment:', error);

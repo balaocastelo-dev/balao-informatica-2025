@@ -12,6 +12,8 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trash2, Plus, Minus, ShoppingBag, MessageCircle, CreditCard, Loader2, User, ArrowLeft, ArrowRight, MapPin, QrCode } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button as UiButton } from '@/components/ui/button';
 
 const WHATSAPP_NUMBER = '5519987510267';
 
@@ -48,6 +50,9 @@ const CartPage = () => {
   const [paymentMethod, setPaymentMethod] = useState<'pix' | 'credit_card'>('pix');
   const [isLoadingCep, setIsLoadingCep] = useState(false);
   const [showCheckoutForm, setShowCheckoutForm] = useState(false);
+  const [showPixModal, setShowPixModal] = useState(false);
+  const [pixData, setPixData] = useState<{ qr_code_base64?: string; qr_code?: string; ticket_url?: string } | null>(null);
+  const [currentStep, setCurrentStep] = useState<number>(1);
   const [customerData, setCustomerData] = useState<CustomerData>({
     name: profile?.full_name || '',
     email: profile?.email || user?.email || '',
@@ -156,7 +161,8 @@ const CartPage = () => {
             state: data.uf || ''
           }));
           setErrors(prev => ({ ...prev, cep: undefined, street: undefined, neighborhood: undefined, city: undefined, state: undefined }));
-          toast({ title: 'Endereço encontrado!', description: 'Complete com o número e complemento.' });
+          toast({ title: 'Endereço encontrado!', description: 'Agora informe o número.' });
+          setCurrentStep(4);
         } else {
           setErrors(prev => ({ ...prev, cep: 'CEP não encontrado' }));
         }
@@ -167,6 +173,27 @@ const CartPage = () => {
         setIsLoadingCep(false);
       }
     }
+  };
+
+  const canGoNextFromStep = (step: number): boolean => {
+    if (step === 1) return !!customerData.name.trim();
+    if (step === 2) return !!customerData.phone.trim() && customerData.phone.replace(/\D/g, '').length >= 10;
+    if (step === 3) return !!customerData.cep.trim() && customerData.cep.replace(/\D/g, '').length === 8 && !!customerData.street;
+    if (step === 4) return !!customerData.number.trim();
+    if (step === 5) return !!customerData.email.trim() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerData.email);
+    return true;
+  };
+
+  const nextStep = () => {
+    if (!canGoNextFromStep(currentStep)) {
+      toast({ title: 'Campo obrigatório', variant: 'destructive' });
+      return;
+    }
+    setCurrentStep(prev => Math.min(prev + 1, 6));
+  };
+
+  const prevStep = () => {
+    setCurrentStep(prev => Math.max(prev - 1, 1));
   };
 
   const formatPhoneNumber = (value: string) => {
@@ -340,8 +367,10 @@ const CartPage = () => {
         throw new Error('Erro ao criar pedido');
       }
 
-      // Now call Mercado Pago payment function
-      const { data: paymentData, error: paymentError } = await supabase.functions.invoke('mercadopago-payment', {
+      const providerRaw = localStorage.getItem('payment_provider_settings');
+      const provider = providerRaw ? JSON.parse(providerRaw) : { provider: 'mercadopago' };
+      const fnName = provider?.provider === 'digitalmanager' ? 'digitalmanager-payment' : 'mercadopago-payment';
+      const { data: paymentData, error: paymentError } = await supabase.functions.invoke(fnName, {
         body: {
           items: orderItems,
           customer_name: customerData.name.trim(),
@@ -363,13 +392,18 @@ const CartPage = () => {
         return;
       }
 
-      if (!paymentData?.init_point) {
-        console.error('No init_point in response:', paymentData);
-        toast({ 
-          title: 'Erro no pagamento', 
-          description: 'Resposta inválida do processador de pagamento.', 
-          variant: 'destructive' 
+      if (provider?.provider === 'mercadopago' && paymentMethod === 'pix') {
+        if (!paymentData?.pix) {
+          toast({ title: 'Erro no pagamento', description: 'PIX indisponível', variant: 'destructive' });
+          return;
+        }
+        setPixData({
+          qr_code_base64: paymentData.pix.qr_code_base64,
+          qr_code: paymentData.pix.qr_code,
+          ticket_url: paymentData.pix.ticket_url,
         });
+        toast({ title: 'Pedido criado!', description: 'Escaneie o QR Code para pagar' });
+        setShowPixModal(true);
         return;
       }
 
@@ -397,13 +431,24 @@ const CartPage = () => {
         console.error('Error sending notification:', emailError);
       }
 
+      if (provider?.provider === 'digitalmanager') {
+        if (!paymentData?.checkout_url) {
+          toast({ title: 'Erro no pagamento', description: 'Checkout indisponível', variant: 'destructive' });
+          return;
+        }
+        clearCart();
+        toast({ title: 'Pedido criado!', description: 'Redirecionando para o pagamento...' });
+        window.location.href = paymentData.checkout_url;
+        return;
+      }
+
+      if (!paymentData?.init_point) {
+        toast({ title: 'Erro no pagamento', description: 'Resposta inválida', variant: 'destructive' });
+        return;
+      }
+
       clearCart();
-      toast({ 
-        title: 'Pedido criado!', 
-        description: 'Redirecionando para o pagamento...' 
-      });
-      
-      // Redirect to Mercado Pago checkout
+      toast({ title: 'Pedido criado!', description: 'Redirecionando para o pagamento...' });
       window.location.href = paymentData.init_point;
 
     } catch (error) {
@@ -455,143 +500,117 @@ const CartPage = () => {
           </Button>
 
           <div className="grid lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            {/* Customer Form */}
+            {/* Customer Form - Etapas */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <User className="w-5 h-5 text-primary" />
-                  Dados para Entrega
+                  Finalização em etapas
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Nome Completo *</Label>
-                  <Input
-                    id="name"
-                    placeholder="Seu nome completo"
-                    value={customerData.name}
-                    onChange={(e) => setCustomerData(prev => ({ ...prev, name: e.target.value }))}
-                    className={errors.name ? 'border-destructive' : ''}
-                  />
-                  {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email *</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="seu@email.com"
-                    value={customerData.email}
-                    onChange={(e) => setCustomerData(prev => ({ ...prev, email: e.target.value }))}
-                    className={errors.email ? 'border-destructive' : ''}
-                  />
-                  {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Telefone / WhatsApp *</Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="(00) 00000-0000"
-                    value={customerData.phone}
-                    onChange={handlePhoneChange}
-                    className={errors.phone ? 'border-destructive' : ''}
-                  />
-                  {errors.phone && <p className="text-sm text-destructive">{errors.phone}</p>}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="cep">CEP *</Label>
-                  <div className="relative">
-                    <Input
-                      id="cep"
-                      placeholder="00000-000"
-                      value={customerData.cep}
-                      onChange={handleCepChange}
-                      className={errors.cep ? 'border-destructive' : ''}
-                      maxLength={9}
-                    />
-                    {isLoadingCep && (
-                      <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-muted-foreground" />
-                    )}
-                  </div>
-                  {errors.cep && <p className="text-sm text-destructive">{errors.cep}</p>}
-                </div>
-
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="col-span-2 space-y-2">
-                    <Label htmlFor="street">Rua *</Label>
-                    <Input
-                      id="street"
-                      placeholder="Nome da rua"
-                      value={customerData.street}
-                      onChange={(e) => setCustomerData(prev => ({ ...prev, street: e.target.value }))}
-                      className={errors.street ? 'border-destructive' : ''}
-                    />
-                    {errors.street && <p className="text-sm text-destructive">{errors.street}</p>}
-                  </div>
+                {currentStep === 1 && (
                   <div className="space-y-2">
-                    <Label htmlFor="number">Número *</Label>
+                    <Label htmlFor="name">Qual seu nome? *</Label>
                     <Input
-                      id="number"
-                      placeholder="123"
-                      value={customerData.number}
-                      onChange={(e) => setCustomerData(prev => ({ ...prev, number: e.target.value }))}
-                      className={errors.number ? 'border-destructive' : ''}
+                      id="name"
+                      placeholder="Seu nome"
+                      value={customerData.name}
+                      onChange={(e) => setCustomerData(prev => ({ ...prev, name: e.target.value }))}
                     />
-                    {errors.number && <p className="text-sm text-destructive">{errors.number}</p>}
+                    <div className="flex gap-2">
+                      <Button onClick={nextStep} className="flex-1">Continuar</Button>
+                    </div>
                   </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="complement">Complemento</Label>
-                  <Input
-                    id="complement"
-                    placeholder="Apto, Bloco, etc. (opcional)"
-                    value={customerData.complement}
-                    onChange={(e) => setCustomerData(prev => ({ ...prev, complement: e.target.value }))}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="neighborhood">Bairro *</Label>
-                  <Input
-                    id="neighborhood"
-                    placeholder="Bairro"
-                    value={customerData.neighborhood}
-                    onChange={(e) => setCustomerData(prev => ({ ...prev, neighborhood: e.target.value }))}
-                    className={errors.neighborhood ? 'border-destructive' : ''}
-                  />
-                  {errors.neighborhood && <p className="text-sm text-destructive">{errors.neighborhood}</p>}
-                </div>
-
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="col-span-2 space-y-2">
-                    <Label htmlFor="city">Cidade *</Label>
-                    <Input
-                      id="city"
-                      placeholder="Cidade"
-                      value={customerData.city}
-                      onChange={(e) => setCustomerData(prev => ({ ...prev, city: e.target.value }))}
-                      className={errors.city ? 'border-destructive' : ''}
-                    />
-                    {errors.city && <p className="text-sm text-destructive">{errors.city}</p>}
-                  </div>
+                )}
+                {currentStep === 2 && (
                   <div className="space-y-2">
-                    <Label htmlFor="state">UF *</Label>
+                    <Label htmlFor="phone">Telefone / WhatsApp *</Label>
                     <Input
-                      id="state"
-                      placeholder="SP"
-                      value={customerData.state}
-                      onChange={(e) => setCustomerData(prev => ({ ...prev, state: e.target.value.toUpperCase() }))}
-                      className={errors.state ? 'border-destructive' : ''}
-                      maxLength={2}
+                      id="phone"
+                      type="tel"
+                      placeholder="(00) 00000-0000"
+                      value={customerData.phone}
+                      onChange={handlePhoneChange}
                     />
-                    {errors.state && <p className="text-sm text-destructive">{errors.state}</p>}
+                    <div className="flex gap-2">
+                      <Button variant="outline" onClick={prevStep}>Voltar</Button>
+                      <Button onClick={nextStep} className="flex-1">Continuar</Button>
+                    </div>
                   </div>
-                </div>
+                )}
+                {currentStep === 3 && (
+                  <div className="space-y-2">
+                    <Label htmlFor="cep">CEP de entrega *</Label>
+                    <div className="relative">
+                      <Input
+                        id="cep"
+                        placeholder="00000-000"
+                        value={customerData.cep}
+                        onChange={handleCepChange}
+                        maxLength={9}
+                      />
+                      {isLoadingCep && (
+                        <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-muted-foreground" />
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" onClick={prevStep}>Voltar</Button>
+                      <Button onClick={nextStep} className="flex-1">Continuar</Button>
+                    </div>
+                  </div>
+                )}
+                {currentStep === 4 && (
+                  <div className="space-y-4">
+                    <div className="p-3 bg-secondary/50 rounded">
+                      <p className="text-sm text-muted-foreground">
+                        {customerData.street && (
+                          <>
+                            {customerData.street}, {customerData.neighborhood} — {customerData.city}/{customerData.state}
+                          </>
+                        )}
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="number">Número *</Label>
+                      <Input
+                        id="number"
+                        placeholder="Número"
+                        value={customerData.number}
+                        onChange={(e) => setCustomerData(prev => ({ ...prev, number: e.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="complement">Complemento</Label>
+                      <Input
+                        id="complement"
+                        placeholder="Apartamento, bloco, referência (opcional)"
+                        value={customerData.complement}
+                        onChange={(e) => setCustomerData(prev => ({ ...prev, complement: e.target.value }))}
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" onClick={prevStep}>Voltar</Button>
+                      <Button onClick={nextStep} className="flex-1">Continuar</Button>
+                    </div>
+                  </div>
+                )}
+                {currentStep === 5 && (
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email para envio do pedido *</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="seu@email.com"
+                      value={customerData.email}
+                      onChange={(e) => setCustomerData(prev => ({ ...prev, email: e.target.value }))}
+                    />
+                    <div className="flex gap-2">
+                      <Button variant="outline" onClick={prevStep}>Voltar</Button>
+                      <Button onClick={() => setCurrentStep(6)} className="flex-1">Continuar</Button>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -692,7 +711,7 @@ const CartPage = () => {
                 
                 <Button
                   onClick={handleOnlinePayment}
-                  disabled={isProcessing}
+                  disabled={isProcessing || currentStep < 6}
                   className="w-full gap-2"
                   size="lg"
                 >
@@ -713,6 +732,42 @@ const CartPage = () => {
             </div>
           </div>
         </div>
+        <Dialog open={showPixModal} onOpenChange={setShowPixModal}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Pagamento PIX</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              {pixData?.qr_code_base64 && (
+                <img
+                  src={`data:image/png;base64,${pixData.qr_code_base64}`}
+                  alt="QR Code PIX"
+                  className="w-64 h-64 mx-auto"
+                />
+              )}
+              {pixData?.qr_code && (
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">Copia e Cola</p>
+                  <Textarea readOnly value={pixData.qr_code} />
+                  <UiButton
+                    onClick={() => {
+                      navigator.clipboard.writeText(pixData.qr_code || '');
+                      toast({ title: 'Copiado!' });
+                    }}
+                    className="w-full"
+                  >
+                    Copiar código PIX
+                  </UiButton>
+                </div>
+              )}
+              {pixData?.ticket_url && (
+                <a href={pixData.ticket_url} target="_blank" rel="noopener noreferrer" className="btn-primary w-full inline-flex">
+                  Abrir comprovante
+                </a>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </Layout>
     );
   }
