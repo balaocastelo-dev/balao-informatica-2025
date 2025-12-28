@@ -811,7 +811,7 @@ const CartPage = () => {
                     toast({ title: 'Pedido registrado', description: 'A identificação do pagamento via PIX será automática em alguns instantes.' });
                     clearCart();
                     setShowPixModal(false);
-                    navigate('/');
+                    navigate('/obrigado');
                   }}
                   className="w-full"
                 >
