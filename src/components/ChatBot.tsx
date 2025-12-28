@@ -30,8 +30,10 @@ const ChatBot = () => {
   const { products } = useProducts();
   const { addToCart } = useCart();
   const navigate = useNavigate();
+  const [hasGreeted, setHasGreeted] = useState(false);
   const formatPrice = (price: number) =>
     price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const clarifyText = 'Me diz rapidinho: é para jogos, trabalho ou estudo? E qual faixa de preço?';
 
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -42,7 +44,13 @@ const ChatBot = () => {
         return;
       } catch {}
     }
-    setMessages([]);
+    setMessages([
+      {
+        role: 'assistant',
+        content: 'Olá! Sou o Balão Expert. ' + clarifyText
+      }
+    ]);
+    setHasGreeted(true);
     if (!localStorage.getItem(STORAGE_SESSION)) {
       localStorage.setItem(STORAGE_SESSION, crypto.randomUUID());
     }
@@ -100,6 +108,11 @@ const ChatBot = () => {
         return;
       }
     } catch {}
+
+    setMessages(prev => [
+      ...prev,
+      { role: 'assistant', content: clarifyText }
+    ]);
 
     setIsLoading(true);
     let assistantContent = '';

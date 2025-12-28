@@ -104,50 +104,83 @@ export default function ProductPage() {
           { name: product.name, url: productUrl },
         ]}
       />
-      <div className="container mx-auto px-4 py-4">
-        <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4">
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Voltar
-        </Button>
+      
+      {/* ALTERAÇÃO PRINCIPAL AQUI:
+         Usamos 'h-[calc(100dvh-theme(spacing.32))]' para calcular a altura exata da tela 
+         menos o cabeçalho (aprox), evitando rolagem no mobile.
+      */}
+      <div className="container mx-auto px-4 pb-4 h-[calc(100dvh-80px)] md:h-auto flex flex-col md:block">
+        
+        {/* Botão de voltar (oculto em telas muito pequenas se necessário, ou mantido compacto) */}
+        <div className="shrink-0 py-2">
+            <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="h-8">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Voltar
+            </Button>
+        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center md:min-h-[calc(100vh-220px)]">
-          <div className="bg-card rounded-lg p-3 flex items-center justify-center">
-            <img src={product.image} alt={product.name} className="w-full h-auto max-h-[45vh] md:max-h-[60vh] object-contain" />
+        <div className="flex-1 flex flex-col md:grid md:grid-cols-2 md:gap-8 md:items-start min-h-0">
+          
+          {/* ÁREA DA IMAGEM:
+             Mobile: basis-5/12 (aprox 40% da altura disponível) e bg-card para destaque.
+             Desktop: Comportamento normal.
+          */}
+          <div className="basis-5/12 md:basis-auto bg-card rounded-lg p-4 flex items-center justify-center mb-4 md:mb-0 shrink-0 relative">
+            <img 
+              src={product.image} 
+              alt={product.name} 
+              className="w-full h-full object-contain max-h-full" 
+            />
           </div>
 
-          <div className="space-y-4">
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-foreground">{product.name}</h1>
-              {product.category && <span className="text-sm text-muted-foreground">Categoria: {product.category}</span>}
+          {/* ÁREA DE TEXTO E BOTÕES:
+             Mobile: basis-7/12, flex-col para distribuir o conteúdo.
+             Overflow-y-auto permite rolar SÓ o texto se for muito grande, mas mantém botões visíveis.
+          */}
+          <div className="basis-7/12 md:basis-auto flex flex-col md:block justify-between min-h-0 space-y-2 md:space-y-6">
+            
+            {/* Bloco de Informações (Título, Descrição) */}
+            <div className="overflow-y-auto px-1">
+              <div>
+                <h1 className="text-lg md:text-3xl font-bold text-foreground leading-tight">{product.name}</h1>
+                {product.category && <span className="text-xs text-muted-foreground">Ref: {product.category}</span>}
+              </div>
+
+              {/* line-clamp-3 limita o texto a 3 linhas no mobile para não ocupar tudo */}
+              {product.description && (
+                <p className="text-muted-foreground text-xs md:text-base mt-2 line-clamp-3 md:line-clamp-none">
+                  {product.description}
+                </p>
+              )}
             </div>
 
-            {product.description && <p className="text-muted-foreground text-sm md:text-base">{product.description}</p>}
+            {/* Bloco de Preço e Ação (Sempre visível no fundo do container mobile) */}
+            <div className="space-y-3 pt-2 shrink-0 bg-background md:bg-transparent">
+              <div className="space-y-1">
+                <p className="text-2xl md:text-4xl font-bold text-primary">{formatPrice(product.price)}</p>
+                <p className="text-xs md:text-sm text-muted-foreground">ou 12x de {formatPrice(product.price / 12)} sem juros</p>
+              </div>
 
-            <div className="space-y-2">
-              <p className="text-3xl md:text-4xl font-bold text-primary">{formatPrice(product.price)}</p>
-              <p className="text-sm text-muted-foreground">ou 12x de {formatPrice(product.price / 12)} sem juros</p>
-            </div>
+              {product.stock !== undefined && (
+                <p className={`text-xs md:text-sm font-medium ${product.stock > 0 ? "text-green-600" : "text-destructive"}`}>
+                  {product.stock > 0 ? `${product.stock} un. disponíveis` : "Indisponível"}
+                </p>
+              )}
 
-            {product.stock !== undefined && (
-              <p className={`text-sm font-medium ${product.stock > 0 ? "text-green-600" : "text-destructive"}`}>
-                {product.stock > 0 ? `${product.stock} unidades em estoque` : "Produto indisponível"}
-              </p>
-            )}
-
-            <div className="flex flex-col sm:flex-row gap-3 pt-2">
-              <Button
-                onClick={handleAddToCart}
-                className="flex-1 h-12 md:h-14 text-lg font-bold shadow-md"
-                size="lg"
-                disabled={product.stock !== undefined && product.stock <= 0}
-              >
-                <ShoppingCart className="w-6 h-6 mr-2" />
-                Adicionar ao Carrinho
-              </Button>
-              <Button variant="outline" onClick={handleShare} size="lg" className="h-12 md:h-14">
-                <Share2 className="w-5 h-5 mr-2" />
-                Compartilhar
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleAddToCart}
+                  className="flex-1 h-10 md:h-14 text-sm md:text-lg font-bold shadow-md"
+                  size="default"
+                  disabled={product.stock !== undefined && product.stock <= 0}
+                >
+                  <ShoppingCart className="w-4 h-4 md:w-6 md:h-6 mr-2" />
+                  Comprar
+                </Button>
+                <Button variant="outline" onClick={handleShare} size="default" className="h-10 md:h-14 px-3">
+                  <Share2 className="w-4 h-4 md:w-5 md:h-5" />
+                </Button>
+              </div>
             </div>
           </div>
         </div>
