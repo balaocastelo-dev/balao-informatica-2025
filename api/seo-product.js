@@ -15,7 +15,19 @@ export default async function handler(req, res) {
     const protocol = req.headers['x-forwarded-proto'] || 'https';
     const host = req.headers.host;
     const appUrl = `${protocol}://${host}`;
-    const response = await fetch(`${appUrl}/index.html`);
+    
+    // Add User-Agent to avoid blocks and handle potential 401/403
+    const response = await fetch(`${appUrl}/index.html`, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch index.html: ${response.status}`);
+    }
+    
     return await response.text();
   };
 
@@ -87,13 +99,10 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('Error in SEO function:', error);
-    // Fallback: serve original index.html so client-side routing still works
-    try {
-      const html = await getIndexHtml();
-      res.setHeader('Content-Type', 'text/html');
-      res.status(200).send(html);
-    } catch (e) {
-      res.redirect('/');
-    }
+    // Fallback: Redirect to client-side rendering with special param to bypass this function
+    // This prevents the "open and close" (redirect loop) issue if the function fails
+    const fallbackUrl = id ? `/produto/${id}?ssr=false` : '/?ssr=false';
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.redirect(307, fallbackUrl);
   }
 }
