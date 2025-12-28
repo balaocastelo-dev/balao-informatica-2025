@@ -30,7 +30,10 @@ import {
   Loader2,
   FolderEdit,
   MessageSquare,
-  Users
+  Users,
+  Copy,
+  ExternalLink,
+  CopyPlus
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { PageLayoutEditor } from '@/components/admin/PageLayoutEditor';
@@ -52,7 +55,7 @@ const ADMIN_CREDENTIALS = {
 
 const AdminPage = () => {
   const navigate = useNavigate();
-  const { products, addProduct, updateProduct, deleteProduct, deleteProducts, importProducts, refreshProducts } = useProducts();
+  const { products, loading: productsLoading, addProduct, updateProduct, deleteProduct, deleteProducts, importProducts, refreshProducts } = useProducts();
   const { categories, addCategory, updateCategory, deleteCategory } = useCategories();
   const { banners, addBanner, updateBanner, deleteBanner } = useBanners();
   const { runBatchPriceIncrease, runBatchPriceDiscount, runBatchDelete, runBatchCategoryChange, isRunning } = useBatchOperations();
@@ -105,6 +108,9 @@ const AdminPage = () => {
 
   // Products filter state
   const [productCategoryFilter, setProductCategoryFilter] = useState<string>('');
+  const [productSearchQuery, setProductSearchQuery] = useState('');
+  const [productStockFilter, setProductStockFilter] = useState<'all' | 'in' | 'out'>('all');
+  const [productSort, setProductSort] = useState<'newest' | 'name_asc' | 'price_asc' | 'price_desc' | 'stock_asc' | 'stock_desc'>('newest');
 
   // Batch price increase state
   const [showPriceIncreaseModal, setShowPriceIncreaseModal] = useState(false);
@@ -118,13 +124,71 @@ const AdminPage = () => {
   const [showCategoryChangeModal, setShowCategoryChangeModal] = useState(false);
   const [newBatchCategory, setNewBatchCategory] = useState('');
 
-  // Filtered products based on category filter
-  const filteredProducts = useMemo(() => {
-    if (!productCategoryFilter || productCategoryFilter === '') {
-      return products;
+  const copyText = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast({ title: 'Copiado!' });
+    } catch {
+      toast({ title: 'Não foi possível copiar', variant: 'destructive' });
     }
-    return products.filter(p => p.category === productCategoryFilter);
-  }, [products, productCategoryFilter]);
+  };
+
+  const getProductLink = (id: string) => `https://www.balaodainformatica.com.br/produto/${id}`;
+
+  const handleDuplicateProduct = async (product: Product) => {
+    await addProduct({
+      name: `${product.name} (Cópia)`,
+      description: product.description,
+      price: product.price,
+      costPrice: product.costPrice,
+      image: product.image,
+      category: product.category,
+      stock: product.stock,
+      sourceUrl: product.sourceUrl,
+    });
+    toast({ title: 'Produto duplicado!' });
+    refreshProducts();
+  };
+
+  // Filtered products based on filters
+  const filteredProducts = useMemo(() => {
+    let list = products;
+
+    if (productCategoryFilter) {
+      list = list.filter(p => p.category === productCategoryFilter);
+    }
+
+    const q = productSearchQuery.trim().toLowerCase();
+    if (q) {
+      list = list.filter(p => {
+        return (
+          p.name.toLowerCase().includes(q) ||
+          p.id.toLowerCase().includes(q) ||
+          (p.description || '').toLowerCase().includes(q) ||
+          (p.sourceUrl || '').toLowerCase().includes(q)
+        );
+      });
+    }
+
+    if (productStockFilter === 'in') {
+      list = list.filter(p => (p.stock || 0) > 0);
+    } else if (productStockFilter === 'out') {
+      list = list.filter(p => (p.stock || 0) <= 0);
+    }
+
+    const sortKey = productSort;
+    list = [...list].sort((a, b) => {
+      if (sortKey === 'newest') return (b.createdAt?.getTime?.() || 0) - (a.createdAt?.getTime?.() || 0);
+      if (sortKey === 'name_asc') return a.name.localeCompare(b.name, 'pt-BR');
+      if (sortKey === 'price_asc') return a.price - b.price;
+      if (sortKey === 'price_desc') return b.price - a.price;
+      if (sortKey === 'stock_asc') return (a.stock || 0) - (b.stock || 0);
+      if (sortKey === 'stock_desc') return (b.stock || 0) - (a.stock || 0);
+      return 0;
+    });
+
+    return list;
+  }, [products, productCategoryFilter, productSearchQuery, productStockFilter, productSort]);
 
   // Check session
   useEffect(() => {
@@ -1115,7 +1179,8 @@ const AdminPage = () => {
             </div>
 
             {/* Category Filter */}
-            <div className="mb-4 flex items-center gap-4">
+            <div className="mb-4 flex flex-col lg:flex-row lg:items-center gap-3">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
               <select
                 value={productCategoryFilter}
                 onChange={(e) => {
@@ -1130,8 +1195,66 @@ const AdminPage = () => {
                   <option key={cat.id} value={cat.slug}>{cat.name}</option>
                 ))}
               </select>
+                <select
+                  value={productStockFilter}
+                  onChange={(e) => setProductStockFilter(e.target.value as 'all' | 'in' | 'out')}
+                  className="input-field w-auto min-w-[180px]"
+                  disabled={isRunning}
+                >
+                  <option value="all">Todos os estoques</option>
+                  <option value="in">Somente com estoque</option>
+                  <option value="out">Somente sem estoque</option>
+                </select>
+
+                <select
+                  value={productSort}
+                  onChange={(e) => setProductSort(e.target.value as typeof productSort)}
+                  className="input-field w-auto min-w-[180px]"
+                  disabled={isRunning}
+                >
+                  <option value="newest">Mais recentes</option>
+                  <option value="name_asc">Nome (A→Z)</option>
+                  <option value="price_asc">Preço (menor)</option>
+                  <option value="price_desc">Preço (maior)</option>
+                  <option value="stock_asc">Estoque (menor)</option>
+                  <option value="stock_desc">Estoque (maior)</option>
+                </select>
+              </div>
+
+              <div className="flex-1 flex items-center gap-2">
+                <div className="relative flex-1">
+                  <input
+                    value={productSearchQuery}
+                    onChange={(e) => setProductSearchQuery(e.target.value)}
+                    className="input-field w-full pr-10"
+                    placeholder="Pesquisar por nome, ID, descrição ou link..."
+                    disabled={isRunning}
+                  />
+                  {productSearchQuery.trim() && (
+                    <button
+                      type="button"
+                      onClick={() => setProductSearchQuery('')}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 hover:bg-secondary rounded-lg transition-colors"
+                      title="Limpar"
+                    >
+                      <X className="w-4 h-4 text-muted-foreground" />
+                    </button>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => refreshProducts()}
+                  className="btn-secondary px-4 py-3 flex items-center gap-2"
+                  disabled={isRunning || productsLoading}
+                  title="Atualizar lista"
+                >
+                  <Loader2 className={`w-4 h-4 ${productsLoading ? 'animate-spin' : ''}`} />
+                  Atualizar
+                </button>
+              </div>
+
               <span className="text-sm text-muted-foreground">
-                Exibindo <strong className="text-foreground">{filteredProducts.length}</strong> de {products.length} produtos
+                Exibindo <strong className="text-foreground">{filteredProducts.length}</strong> de {products.length}
               </span>
             </div>
 
@@ -1203,8 +1326,30 @@ const AdminPage = () => {
                         <td className="p-2">
                           <div className="flex items-center gap-1">
                             <button
+                              onClick={() => window.open(getProductLink(product.id), '_blank', 'noopener,noreferrer')}
+                              className="p-1.5 hover:bg-secondary rounded-lg transition-colors"
+                              title="Abrir na loja"
+                            >
+                              <ExternalLink className="w-4 h-4 text-muted-foreground" />
+                            </button>
+                            <button
+                              onClick={() => copyText(getProductLink(product.id))}
+                              className="p-1.5 hover:bg-secondary rounded-lg transition-colors"
+                              title="Copiar link"
+                            >
+                              <Copy className="w-4 h-4 text-muted-foreground" />
+                            </button>
+                            <button
+                              onClick={() => handleDuplicateProduct(product)}
+                              className="p-1.5 hover:bg-secondary rounded-lg transition-colors"
+                              title="Duplicar produto"
+                            >
+                              <CopyPlus className="w-4 h-4 text-muted-foreground" />
+                            </button>
+                            <button
                               onClick={() => handleEdit(product)}
                               className="p-1.5 hover:bg-secondary rounded-lg transition-colors"
+                              title="Editar"
                             >
                               <Edit className="w-4 h-4 text-muted-foreground" />
                             </button>
@@ -1216,6 +1361,7 @@ const AdminPage = () => {
                                 }
                               }}
                               className="p-1.5 hover:bg-destructive/10 rounded-lg transition-colors"
+                              title="Excluir"
                             >
                               <Trash2 className="w-4 h-4 text-destructive" />
                             </button>
