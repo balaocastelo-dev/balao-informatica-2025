@@ -24,6 +24,7 @@ import {
   LayoutDashboard,
   BarChart3,
   Mail,
+  MessageCircle,
   ShoppingBag,
   Loader2,
   FolderEdit,
@@ -999,6 +1000,13 @@ const AdminPage = () => {
           >
             <Settings className="w-4 h-4" />
             Pagamentos
+          </button>
+          <button
+            onClick={() => navigate('/chat-central')}
+            className="px-3 py-2 font-medium transition-colors border-b-2 -mb-px flex items-center gap-2 whitespace-nowrap text-muted-foreground border-transparent hover:text-foreground"
+          >
+            <MessageCircle className="w-4 h-4" />
+            Chat Central
           </button>
         </div>
 
