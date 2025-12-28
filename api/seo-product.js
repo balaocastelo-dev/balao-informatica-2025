@@ -59,6 +59,8 @@ export default async function handler(req, res) {
         'og:title': title,
         'og:description': description,
         'og:image': image,
+        'og:image:width': '800',
+        'og:image:height': '800',
         'og:url': url,
         'twitter:title': title,
         'twitter:description': description,
