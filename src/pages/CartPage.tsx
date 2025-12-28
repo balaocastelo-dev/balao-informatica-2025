@@ -55,6 +55,7 @@ const CartPage = () => {
   const [currentStep, setCurrentStep] = useState<number>(1);
   const PIX_FALLBACK_KEY = '3f5eee98-f346-4a08-b4e8-85550670f9bf';
   const PIX_MERCHANT_NAME = 'CASTELO DISTRIBUICAO LTDA';
+  const [showConfetti, setShowConfetti] = useState(false);
   const [customerData, setCustomerData] = useState<CustomerData>({
     name: profile?.full_name || '',
     email: profile?.email || user?.email || '',
@@ -583,7 +584,16 @@ const CartPage = () => {
                     />
                     <div className="flex gap-2">
                       <Button variant="outline" onClick={prevStep}>Voltar</Button>
-                      <Button onClick={() => setCurrentStep(6)} className="flex-1">Continuar</Button>
+                      <Button
+                        onClick={() => {
+                          setCurrentStep(6);
+                          setShowConfetti(true);
+                          setTimeout(() => setShowConfetti(false), 2000);
+                        }}
+                        className="flex-1"
+                      >
+                        Continuar
+                      </Button>
                     </div>
                   </div>
                 )}
@@ -597,6 +607,48 @@ const CartPage = () => {
                   <CardTitle>Resumo do Pedido</CardTitle>
                 </CardHeader>
                 <CardContent>
+                  {showConfetti && (
+                    <div className="relative mb-3">
+                      <div className="inline-block px-3 py-1 rounded bg-green-100 text-green-800 font-medium">
+                        Dados coletados com sucesso
+                      </div>
+                      <style>{`
+                        @keyframes burst {
+                          0% { transform: translate(0,0) rotate(0deg); opacity: 1; }
+                          100% { transform: translate(var(--dx), var(--dy)) rotate(360deg); opacity: 0; }
+                        }
+                      `}</style>
+                      {[...Array(12)].map((_, i) => {
+                        const colors = ['#22c55e','#3b82f6','#f59e0b','#ef4444','#8b5cf6','#06b6d4'];
+                        const dx = (Math.random() * 120 - 60).toFixed(0) + 'px';
+                        const dy = (Math.random() * 80 - 10).toFixed(0) + 'px';
+                        const size = (Math.random() * 6 + 6).toFixed(0) + 'px';
+                        const left = (Math.random() * 160 + 0).toFixed(0) + 'px';
+                        const bg = colors[i % colors.length];
+                        const delay = (Math.random() * 0.1).toFixed(2) + 's';
+                        return (
+                          <span
+                            key={i}
+                            style={{
+                              position: 'absolute',
+                              top: '-6px',
+                              left,
+                              width: size,
+                              height: size,
+                              borderRadius: '50%',
+                              background: bg,
+                              animation: `burst 0.9s ease-out forwards`,
+                              animationDelay: delay,
+                              transform: 'translate(0,0)',
+                              // @ts-ignore
+                              '--dx': dx,
+                              '--dy': dy,
+                            } as React.CSSProperties}
+                          />
+                        );
+                      })}
+                    </div>
+                  )}
                   <div className="space-y-3 max-h-64 overflow-y-auto mb-4">
                     {items.map(item => (
                       <div key={item.product.id} className="flex items-center gap-3 text-sm">
@@ -723,7 +775,11 @@ const CartPage = () => {
                   onClick={() => {
                     const code = (pixData?.qr_code && pixData.qr_code.trim() !== '' ? pixData.qr_code : PIX_FALLBACK_KEY);
                     navigator.clipboard.writeText(code);
-                    toast({ title: 'Copiado!' });
+                    toast({ title: 'Chave PIX copiada!' });
+                    toast({ title: 'Pedido registrado', description: 'A identificação do pagamento via PIX será automática em alguns instantes.' });
+                    clearCart();
+                    setShowPixModal(false);
+                    navigate('/pedidos');
                   }}
                   className="w-full"
                 >
