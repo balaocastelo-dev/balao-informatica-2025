@@ -121,6 +121,8 @@ export function BannerManagement() {
 
       const { data } = supabase.storage.from('banners').getPublicUrl(filePath);
       setFormData(prev => ({ ...prev, [field]: data.publicUrl } as typeof prev));
+      if (field === 'image_url' && desktopInputRef.current) desktopInputRef.current.value = '';
+      if (field === 'image_mobile_url' && mobileInputRef.current) mobileInputRef.current.value = '';
       toast({ title: 'Imagem enviada!' });
     } catch (error) {
       toast({ title: 'Erro ao enviar imagem', variant: 'destructive' });
@@ -131,8 +133,8 @@ export function BannerManagement() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.image_url) {
-      toast({ title: 'Selecione uma imagem', variant: 'destructive' });
+    if (!formData.image_url && !formData.image_mobile_url) {
+      toast({ title: 'Selecione uma imagem (PC ou Celular)', variant: 'destructive' });
       return;
     }
 
@@ -141,7 +143,7 @@ export function BannerManagement() {
         const { error } = await supabase
           .from('banners')
           .update({
-            image_url: formData.image_url,
+            image_url: formData.image_url || null,
             image_mobile_url: formData.image_mobile_url || null,
             title: formData.title || null,
             link: formData.link || null,
@@ -157,7 +159,7 @@ export function BannerManagement() {
         const { error } = await supabase
           .from('banners')
           .insert({
-            image_url: formData.image_url,
+            image_url: formData.image_url || null,
             image_mobile_url: formData.image_mobile_url || null,
             title: formData.title || null,
             link: formData.link || null,
@@ -304,7 +306,7 @@ export function BannerManagement() {
               {/* Image Preview */}
               <div className="relative aspect-video bg-muted">
                 <img
-                  src={banner.image_url}
+                  src={banner.image_url || banner.image_mobile_url || ''}
                   alt={banner.title || 'Banner'}
                   className="w-full h-full object-cover"
                 />
@@ -533,7 +535,7 @@ export function BannerManagement() {
               <Button type="button" variant="outline" className="flex-1" onClick={() => setShowModal(false)}>
                 Cancelar
               </Button>
-              <Button type="submit" className="flex-1">
+              <Button type="submit" className="flex-1" disabled={uploading || (!formData.image_url && !formData.image_mobile_url)}>
                 {editingBanner ? 'Salvar' : 'Criar Banner'}
               </Button>
             </div>
