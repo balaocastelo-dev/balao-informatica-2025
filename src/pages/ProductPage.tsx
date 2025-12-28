@@ -104,26 +104,24 @@ export default function ProductPage() {
           { name: product.name, url: productUrl },
         ]}
       />
-      <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-4 py-4">
         <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Voltar
         </Button>
 
-        <div className="grid md:grid-cols-2 gap-8">
-          {/* Product Image */}
-          <div className="bg-card rounded-lg p-4">
-            <img src={product.image} alt={product.name} className="w-full h-auto max-h-[500px] object-contain" />
+        <div className="grid md:grid-cols-2 gap-6 items-center min-h-[calc(100vh-220px)]">
+          <div className="bg-card rounded-lg p-3 flex items-center justify-center">
+            <img src={product.image} alt={product.name} className="w-full h-auto max-h-[60vh] object-contain" />
           </div>
 
-          {/* Product Info */}
-          <div className="space-y-6">
+          <div className="space-y-4">
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">{product.name}</h1>
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground">{product.name}</h1>
               {product.category && <span className="text-sm text-muted-foreground">Categoria: {product.category}</span>}
             </div>
 
-            {product.description && <p className="text-muted-foreground">{product.description}</p>}
+            {product.description && <p className="text-muted-foreground text-sm md:text-base">{product.description}</p>}
 
             <div className="space-y-2">
               <p className="text-3xl md:text-4xl font-bold text-primary">{formatPrice(product.price)}</p>
@@ -136,18 +134,17 @@ export default function ProductPage() {
               </p>
             )}
 
-            {/* BOTÕES ATUALIZADOS AQUI */}
-            <div className="flex flex-col sm:flex-row gap-3 pt-4">
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <Button
                 onClick={handleAddToCart}
-                className="flex-1 h-14 text-lg font-bold shadow-md"
+                className="flex-1 h-12 md:h-14 text-lg font-bold shadow-md"
                 size="lg"
                 disabled={product.stock !== undefined && product.stock <= 0}
               >
                 <ShoppingCart className="w-6 h-6 mr-2" />
                 Adicionar ao Carrinho
               </Button>
-              <Button variant="outline" onClick={handleShare} size="lg" className="h-14">
+              <Button variant="outline" onClick={handleShare} size="lg" className="h-12 md:h-14">
                 <Share2 className="w-5 h-5 mr-2" />
                 Compartilhar
               </Button>

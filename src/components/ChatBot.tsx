@@ -93,6 +93,7 @@ const ChatBot = () => {
   const { products } = useProducts();
   const navigate = useNavigate();
   const [suggestions, setSuggestions] = useState<Product[]>([]);
+  const [canSuggest, setCanSuggest] = useState(false);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -115,8 +116,9 @@ const ChatBot = () => {
       const filtered = products
         .filter(p => (p.stock || 0) > 0)
         .filter(p => terms.every(t => p.name.toLowerCase().includes(t)))
-        .slice(0, 6);
+        .slice(0, 10);
       setSuggestions(filtered);
+      setCanSuggest(false);
     } catch {
       setSuggestions([]);
     }
@@ -189,6 +191,9 @@ const ChatBot = () => {
                 newMessages[newMessages.length - 1] = { role: 'assistant', content: assistantContent };
                 return newMessages;
               });
+              if (assistantContent.length > 40) {
+                setCanSuggest(true);
+              }
             }
           } catch {
             buffer = line + '\n' + buffer;
@@ -300,7 +305,7 @@ const ChatBot = () => {
                   )}
                 </div>
               ))}
-              {!isLoading && suggestions.length > 0 && (
+              {!isLoading && suggestions.length > 0 && canSuggest && (
                 <div className="mt-2 grid grid-cols-2 gap-3">
                   {suggestions.map((p) => (
                     <button
