@@ -92,10 +92,17 @@ export function AdminChat({ currentUser }: AdminChatProps) {
       if (error) throw error;
 
       setNewMessage('');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao enviar mensagem:', error);
+      
+      let description = "Não foi possível enviar a mensagem.";
+      if (error.message?.includes('Could not find the table') || error.code === '42P01') {
+        description = "A tabela do chat não foi encontrada. Execute o SQL de configuração.";
+      }
+
       toast({
         title: 'Erro ao enviar mensagem',
+        description: description,
         variant: 'destructive',
       });
     }

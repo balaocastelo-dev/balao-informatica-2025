@@ -119,9 +119,15 @@ export function EmployeeManagement() {
       fetchUsers();
     } catch (error: any) {
       console.error('Erro ao salvar usuário:', error);
+      
+      let description = error.message;
+      if (error.message?.includes('Could not find the table') || error.code === '42P01') {
+        description = "A tabela 'admin_users' não foi encontrada. Você rodou o script SQL de configuração no Supabase?";
+      }
+
       toast({
         title: "Erro ao salvar",
-        description: error.message,
+        description: description,
         variant: "destructive"
       });
     }
@@ -140,10 +146,17 @@ export function EmployeeManagement() {
 
       toast({ title: "Funcionário removido com sucesso!" });
       fetchUsers();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao remover usuário:', error);
+      
+      let description = error.message || "Erro desconhecido";
+      if (description.includes('Could not find the table') || error.code === '42P01') {
+        description = "A tabela 'admin_users' não foi encontrada.";
+      }
+
       toast({
         title: "Erro ao remover",
+        description: description,
         variant: "destructive"
       });
     }
