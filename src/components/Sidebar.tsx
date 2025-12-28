@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useCategories, CategoryData } from '@/contexts/CategoryContext';
-import { ChevronRight, Home, Cpu, X, Info, Handshake, Wrench } from 'lucide-react';
+import { ChevronRight, Home, Cpu, X, Info, Handshake, Wrench, BatteryCharging, Printer, BadgeCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Auto-generate emoji based on category name
@@ -144,6 +144,39 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               >
                 <Wrench className="w-4 h-4" />
                 Manutenção
+              </Link>
+              <Link
+                to="/carregador-de-notebook"
+                onClick={onClose}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+                  isActive('/carregador-de-notebook') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
+                )}
+              >
+                <BatteryCharging className="w-4 h-4" />
+                Carregador de Notebook
+              </Link>
+              <Link
+                to="/toner-para-impressora"
+                onClick={onClose}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+                  isActive('/toner-para-impressora') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
+                )}
+              >
+                <Printer className="w-4 h-4" />
+                Toner para Impressora
+              </Link>
+              <Link
+                to="/licencas-microsoft"
+                onClick={onClose}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+                  isActive('/licencas-microsoft') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
+                )}
+              >
+                <BadgeCheck className="w-4 h-4" />
+                Licenças Microsoft
               </Link>
               <Link
                 to="/sobre"

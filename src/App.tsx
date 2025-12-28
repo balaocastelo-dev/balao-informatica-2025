@@ -25,6 +25,9 @@ import ProductPage from "./pages/ProductPage";
 import SobreNosPage from "./pages/SobreNosPage";
 import ConsignacaoPage from "./pages/ConsignacaoPage";
 import ManutencaoPage from "./pages/ManutencaoPage";
+import LandingCarregadorNotebookPage from "./pages/LandingCarregadorNotebookPage";
+import LandingTonerImpressoraPage from "./pages/LandingTonerImpressoraPage";
+import LandingLicencasMicrosoftPage from "./pages/LandingLicencasMicrosoftPage";
 import ChatCentralPage from "./pages/ChatCentralPage";
 import BlingCallbackPage from "./pages/BlingCallbackPage";
 import NotFound from "./pages/NotFound";
@@ -62,6 +65,9 @@ const App = () => (
                         <Route path="/sobre" element={<SobreNosPage />} />
                         <Route path="/consignacao" element={<ConsignacaoPage />} />
                         <Route path="/manutencao" element={<ManutencaoPage />} />
+                        <Route path="/carregador-de-notebook" element={<LandingCarregadorNotebookPage />} />
+                        <Route path="/toner-para-impressora" element={<LandingTonerImpressoraPage />} />
+                        <Route path="/licencas-microsoft" element={<LandingLicencasMicrosoftPage />} />
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </BrowserRouter>
