@@ -3,6 +3,7 @@ import { Product } from '@/types/product';
 import { useCart } from '@/contexts/CartContext';
 import { useNavigate } from 'react-router-dom';
 import { ShoppingCart } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface ProductCardProps {
   product: Product;
@@ -26,6 +27,7 @@ export function ProductCard({ product, onClick, viewMode = 'grid' }: ProductCard
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
     addToCart(product);
+    toast.success('Produto adicionado ao carrinho!');
   };
 
   const handleClick = () => {

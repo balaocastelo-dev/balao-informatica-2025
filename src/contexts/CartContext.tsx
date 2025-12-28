@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Product, CartItem } from '@/types/product';
-import { toast } from '@/hooks/use-toast';
+// Removido toast no contexto para evitar duplicidade com notificações de página
 
 interface CartContextType {
   items: CartItem[];
@@ -45,11 +45,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
       
       return [...currentItems, { product, quantity: 1 }];
-    });
-
-    toast({
-      title: "Produto adicionado!",
-      description: `${product.name.substring(0, 30)}... foi adicionado ao carrinho.`,
     });
   };
 
