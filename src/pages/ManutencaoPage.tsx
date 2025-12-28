@@ -1,4 +1,4 @@
-import { useState, ReactNode } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { SEOHead, BreadcrumbSchema } from "@/components/SEOHead";
@@ -150,7 +150,7 @@ export default function ManutencaoPage() {
   );
 }
 
-function ServiceCard({ icon, title, description }: { icon: ReactNode; title: string; description: string }) {
+function ServiceCard({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
   return (
     <div className="bg-white p-6 rounded-xl shadow-md border border-zinc-100 hover:border-[#E30613]/30 transition-all hover:-translate-y-1">
       <div className="mb-4 bg-zinc-50 w-16 h-16 rounded-full flex items-center justify-center">
