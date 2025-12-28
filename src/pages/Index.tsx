@@ -136,7 +136,6 @@ const Index = () => {
       />
 
       {/* Injeção de Dados Estruturados */}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       <LocalBusinessSchema />
 
       <div className="pb-12 bg-zinc-50/50">
