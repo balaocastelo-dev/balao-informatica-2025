@@ -137,14 +137,14 @@ export function BannerManagement() {
       toast({ title: 'Selecione uma imagem (PC ou Celular)', variant: 'destructive' });
       return;
     }
+    const effectiveImageUrl = formData.image_url || formData.image_mobile_url;
 
     try {
       if (editingBanner) {
         const { error } = await supabase
           .from('banners')
           .update({
-            image_url: formData.image_url || null,
-            image_mobile_url: formData.image_mobile_url || null,
+            image_url: effectiveImageUrl!,
             title: formData.title || null,
             link: formData.link || null,
             position: formData.position,
@@ -159,8 +159,7 @@ export function BannerManagement() {
         const { error } = await supabase
           .from('banners')
           .insert({
-            image_url: formData.image_url || null,
-            image_mobile_url: formData.image_mobile_url || null,
+            image_url: effectiveImageUrl!,
             title: formData.title || null,
             link: formData.link || null,
             position: formData.position,
