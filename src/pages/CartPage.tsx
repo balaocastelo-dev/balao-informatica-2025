@@ -441,29 +441,6 @@ const CartPage = () => {
 
   // Checkout Form View
   if (showCheckoutForm) {
-    if (!user) {
-      return (
-        <Layout>
-          <div className="container-balao py-8 sm:py-12">
-            <div className="max-w-xl mx-auto bg-card border border-border rounded-2xl p-8 text-center">
-              <h1 className="text-2xl font-bold text-foreground">Faça login para finalizar</h1>
-              <p className="text-muted-foreground mt-2">
-                Para fechar um pedido, é necessário estar logado.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center mt-6">
-                <Button onClick={() => navigate('/auth?redirect=/carrinho')} className="gap-2">
-                  <User className="w-4 h-4" />
-                  Entrar / Cadastrar
-                </Button>
-                <Button variant="secondary" onClick={() => setShowCheckoutForm(false)}>
-                  Voltar ao carrinho
-                </Button>
-              </div>
-            </div>
-          </div>
-        </Layout>
-      );
-    }
 
     return (
       <Layout>
@@ -847,24 +824,14 @@ const CartPage = () => {
 
               <Button
                 onClick={() => {
-                  if (!user) {
-                    navigate('/auth?redirect=/carrinho');
-                    return;
-                  }
                   setShowCheckoutForm(true);
                 }}
                 className="w-full gap-2"
                 size="lg"
-                disabled={!user}
               >
                 Continuar
                 <ArrowRight className="w-5 h-5" />
               </Button>
-              {!user && (
-                <p className="text-xs text-muted-foreground text-center mt-3">
-                  Faça login para continuar.
-                </p>
-              )}
 
               <p className="text-xs text-muted-foreground text-center mt-4">
                 Pagamento 100% seguro

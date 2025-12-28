@@ -24,8 +24,6 @@ import {
   LayoutDashboard,
   BarChart3,
   Mail,
-  Link2,
-  MessageCircle,
   ShoppingBag,
   Loader2,
   FolderEdit,
@@ -57,7 +55,7 @@ const AdminPage = () => {
   const [loginForm, setLoginForm] = useState({ username: '', password: '' });
   const [loginError, setLoginError] = useState('');
 
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'banners' | 'categories' | 'brands' | 'layout' | 'email' | 'orders' | 'payments' | 'integrations'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'banners' | 'categories' | 'brands' | 'layout' | 'email' | 'orders' | 'payments'>('dashboard');
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
@@ -104,47 +102,7 @@ const AdminPage = () => {
   const [productStockFilter, setProductStockFilter] = useState<'all' | 'in' | 'out'>('all');
   const [productSort, setProductSort] = useState<'newest' | 'name_asc' | 'price_asc' | 'price_desc' | 'stock_asc' | 'stock_desc'>('newest');
 
-  const [blingStatus, setBlingStatus] = useState<{ connected: boolean; updated_at: string | null; expires_at: string | null } | null>(null);
-  const [blingLoading, setBlingLoading] = useState(false);
-
-  useEffect(() => {
-    if (!isAuthenticated) return;
-    if (activeTab !== 'integrations') return;
-
-    let cancelled = false;
-    const run = async () => {
-      setBlingLoading(true);
-      const { data, error } = await supabase.functions.invoke('bling-status');
-      if (!cancelled) {
-        if (error) {
-          setBlingStatus(null);
-        } else {
-          setBlingStatus(data || null);
-        }
-        setBlingLoading(false);
-      }
-    };
-
-    run();
-    return () => {
-      cancelled = true;
-    };
-  }, [activeTab, isAuthenticated]);
-
-  const handleConnectBling = async () => {
-    setBlingLoading(true);
-    const { data, error } = await supabase.functions.invoke('bling-oauth-start');
-    setBlingLoading(false);
-    if (error || !data?.authorize_url) {
-      toast({
-        title: 'Não foi possível iniciar a conexão com o Bling',
-        description: 'Faça login na conta do site com perfil admin e tente novamente.',
-        variant: 'destructive',
-      });
-      return;
-    }
-    window.location.href = data.authorize_url;
-  };
+  // Integrações removidas
 
   // Batch price increase state
   const [showPriceIncreaseModal, setShowPriceIncreaseModal] = useState(false);
@@ -1044,24 +1002,7 @@ const AdminPage = () => {
             <Settings className="w-4 h-4" />
             Pagamentos
           </button>
-          <button
-            onClick={() => setActiveTab('integrations')}
-            className={`px-3 py-2 font-medium transition-colors border-b-2 -mb-px flex items-center gap-2 whitespace-nowrap ${
-              activeTab === 'integrations'
-                ? 'text-primary border-primary'
-                : 'text-muted-foreground border-transparent hover:text-foreground'
-            }`}
-          >
-            <Link2 className="w-4 h-4" />
-            Integrações
-          </button>
-          <button
-            onClick={() => navigate('/chat-central')}
-            className="px-3 py-2 font-medium transition-colors border-b-2 -mb-px flex items-center gap-2 whitespace-nowrap text-muted-foreground border-transparent hover:text-foreground"
-          >
-            <MessageCircle className="w-4 h-4" />
-            Chat Central
-          </button>
+          {/* Integrações e Chat Central removidos */}
         </div>
 
         {/* Dashboard Tab */}
@@ -1076,42 +1017,7 @@ const AdminPage = () => {
         {/* Payments Tab */}
         {activeTab === 'payments' && <MercadoPagoConfig />}
 
-        {/* Integrations Tab */}
-        {activeTab === 'integrations' && (
-          <div className="space-y-4">
-            <div className="admin-card">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                <div>
-                  <h2 className="text-xl font-bold text-foreground">Bling</h2>
-                  <p className="text-sm text-muted-foreground">
-                    Envie pedidos do site para o seu Bling via OAuth.
-                  </p>
-                </div>
-                <button
-                  onClick={handleConnectBling}
-                  className="btn-primary"
-                  disabled={blingLoading}
-                >
-                  {blingLoading ? 'Aguarde...' : 'Conectar Bling'}
-                </button>
-              </div>
-
-              <div className="mt-4 text-sm text-muted-foreground">
-                {blingLoading ? (
-                  <span>Verificando status...</span>
-                ) : blingStatus?.connected ? (
-                  <span>
-                    Status: <strong className="text-foreground">Conectado</strong>
-                  </span>
-                ) : (
-                  <span>
-                    Status: <strong className="text-foreground">Não conectado</strong>
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Integrações removidas */}
 
         {/* Products Tab */}
         {activeTab === 'products' && (
