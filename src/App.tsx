@@ -24,6 +24,7 @@ import PCBuilderPage from "./pages/PCBuilderPage";
 import ProductPage from "./pages/ProductPage";
 import SobreNosPage from "./pages/SobreNosPage";
 import ConsignacaoPage from "./pages/ConsignacaoPage";
+import ManutencaoPage from "./pages/ManutencaoPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -56,6 +57,7 @@ const App = () => (
                         <Route path="/montar-pc" element={<PCBuilderPage />} />
                         <Route path="/sobre" element={<SobreNosPage />} />
                         <Route path="/consignacao" element={<ConsignacaoPage />} />
+                        <Route path="/manutencao" element={<ManutencaoPage />} />
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </BrowserRouter>
