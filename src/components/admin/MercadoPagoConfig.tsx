@@ -32,7 +32,7 @@ interface MercadoPagoSettings {
 }
 
 interface PaymentProviderSettings {
-  provider: 'mercadopago' | 'digitalmanager';
+  provider: 'mercadopago' | 'digitalmanager' | 'cora';
   dmgApiUrl: string;
   dmgApiKey: string;
 }
@@ -223,6 +223,12 @@ export function MercadoPagoConfig() {
                   onClick={() => setProviderSettings(prev => ({ ...prev, provider: 'digitalmanager' }))}
                 >
                   Digital Manager Guru
+                </button>
+                <button
+                  className={`px-3 py-2 rounded border ${providerSettings.provider === 'cora' ? 'bg-primary text-primary-foreground border-primary' : 'bg-card border-border'}`}
+                  onClick={() => setProviderSettings(prev => ({ ...prev, provider: 'cora' }))}
+                >
+                  Cora Bank (PIX)
                 </button>
               </div>
               {providerSettings.provider === 'digitalmanager' && (

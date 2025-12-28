@@ -344,7 +344,12 @@ const CartPage = () => {
 
       const providerRaw = localStorage.getItem('payment_provider_settings');
       const provider = providerRaw ? JSON.parse(providerRaw) : { provider: 'mercadopago' };
-      const fnName = provider?.provider === 'digitalmanager' ? 'digitalmanager-payment' : 'mercadopago-payment';
+      let fnName = 'mercadopago-payment';
+      if (provider?.provider === 'digitalmanager') {
+        fnName = 'digitalmanager-payment';
+      } else if (provider?.provider === 'cora') {
+        fnName = 'cora-payment';
+      }
       const { data: paymentData, error: paymentError } = await supabase.functions.invoke(fnName, {
         body: {
           items: orderItems,
@@ -367,7 +372,7 @@ const CartPage = () => {
         return;
       }
 
-      if (provider?.provider === 'mercadopago' && paymentMethod === 'pix') {
+      if (paymentMethod === 'pix') {
         if (!paymentData?.pix) {
           setPixData(null);
           setShowPixModal(true);
