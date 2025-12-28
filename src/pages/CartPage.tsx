@@ -53,7 +53,7 @@ const CartPage = () => {
   const [currentStep, setCurrentStep] = useState<number>(1);
   // PIX removido do checkout
   const [showConfetti, setShowConfetti] = useState(false);
-  const [pixEnabled, setPixEnabled] = useState<boolean>(false);
+  const [pixEnabled, setPixEnabled] = useState<boolean>(true);
   const [showPixDialog, setShowPixDialog] = useState<boolean>(false);
   const [pixData, setPixData] = useState<{ qr_code_base64?: string; qr_code?: string; ticket_url?: string; status?: string; date_of_expiration?: string | null }>({});
   const [customerData, setCustomerData] = useState<CustomerData>({
@@ -77,7 +77,7 @@ const CartPage = () => {
       const saved = localStorage.getItem('mercadopago_settings');
       if (saved) {
         const parsed = JSON.parse(saved);
-        setPixEnabled(!!parsed.pixEnabled);
+        setPixEnabled(parsed.pixEnabled !== false);
       }
     } catch {}
   }, [showCheckoutForm]);

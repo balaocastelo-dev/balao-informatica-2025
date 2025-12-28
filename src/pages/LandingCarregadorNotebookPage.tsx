@@ -2,291 +2,270 @@ import { Layout } from "@/components/Layout";
 import { SEOHead, BreadcrumbSchema } from "@/components/SEOHead";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge"; // Assumindo que você tem este componente, senão pode usar div estilizada
+import { Badge } from "@/components/ui/badge";
 import {
   BatteryCharging,
   Truck,
   ShieldCheck,
   Phone,
-  Search,
-  CheckCircle2,
   Zap,
-  HelpCircle,
-  ArrowRight,
+  CheckCircle2,
   MapPin,
-  ShoppingCart,
-  Star
+  MessageCircle,
+  Timer,
+  Camera,
+  ArrowRight
 } from "lucide-react";
-import { Link } from "react-router-dom";
-import { useState, useMemo } from "react";
-import { useProducts } from "@/contexts/ProductContext";
 
-export default function LandingCarregadorNotebookPage() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const { products, loading } = useProducts();
+export default function LandingCarregadorZapPage() {
+  
+  // --- CONFIGURAÇÃO CENTRAL DO WHATSAPP ---
+  const WHATSAPP_NUMBER = "5519987510267";
+  
+  // Gera o link dinâmico
+  const openZap = (msg: string) => {
+    const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
+    return url;
+  };
 
-  const title = "Carregador de Notebook Original e Compatível | Entrega Imediata - Balão da Informática";
-  const description = "Seu notebook parou? Encontre carregadores para Dell, Acer, HP, Lenovo, Samsung e Apple. Entrega rápida em todo Brasil ou retire em Campinas.";
-  const keywords = "carregador notebook, fonte dell, fonte acer, fonte hp, carregador samsung, carregador lenovo, fonte universal, carregador usb-c, campinas";
-  const url = "https://www.balao.info/carregador-de-notebook";
+  const title = "Carregador de Notebook em Campinas | Entrega Imediata via Motoboy";
+  const description = "Notebook parou? Entrega em 30 minutos em Campinas. Fontes Dell, Acer, Samsung, Lenovo e Apple. Mande uma foto no WhatsApp e receba agora.";
+  const keywords = "carregador notebook campinas, fonte dell, fonte acer, entrega motoboy informatica, sos carregadores";
+  const url = "https://www.balao.info/carregador-express";
 
-  const featuredProducts = useMemo(() => {
-    const keywords = ['fonte', 'carregador'];
-    const includeTerms = ['notebook', 'laptop', 'macbook', 'usb-c', 'dell', 'acer', 'hp', 'lenovo', 'samsung', 'asus'];
-    const filtered = products.filter(p => {
-      const text = `${p.name} ${p.description || ''}`.toLowerCase();
-      const hasKeyword = keywords.some(k => text.includes(k));
-      const hasInclude = includeTerms.some(k => text.includes(k));
-      return hasKeyword && hasInclude;
-    });
-    return filtered.slice(0, 8);
-  }, [products]);
-
-  const popularBrands = [
-    { name: "Dell", query: "carregador notebook dell" },
-    { name: "Acer", query: "carregador notebook acer" },
-    { name: "HP", query: "carregador notebook hp" },
-    { name: "Lenovo", query: "carregador notebook lenovo" },
-    { name: "Samsung", query: "carregador notebook samsung" },
-    { name: "Asus", query: "carregador notebook asus" },
-    { name: "Apple", query: "carregador macbook" },
-    { name: "Positivo", query: "carregador notebook positivo" },
+  // Marcas agora são botões de atalho para o chat
+  const brands = [
+    "Dell", "Acer", "Samsung", "Lenovo", "HP", "Asus", "Apple (Macbook)", "Positivo/Vaio"
   ];
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchTerm) {
-      window.location.href = `/busca?q=${encodeURIComponent(searchTerm)}`;
-    }
-  };
+  // Produtos "Fake" para vitrine (Clicou = WhatsApp)
+  const commonModels = [
+    { name: "Fonte Dell Pino Fino 45W/65W", tag: "Mais Vendido" },
+    { name: "Fonte Acer Aspire (Pino Azul/Amarelo)", tag: "Promoção" },
+    { name: "Carregador Samsung Original", tag: "Oferta" },
+    { name: "Fonte Lenovo Quadrada (Yoga/Thinkpad)", tag: "Disponível" },
+    { name: "Carregador Universal USB-C (Type-C)", tag: "Moderno" },
+    { name: "Fonte MacBook Magsafe 1 e 2", tag: "Apple" },
+    { name: "Fonte Asus Vivobook / Zenbook", tag: "Disponível" },
+    { name: "Carregador Sony / Toshiba / Multilaser", tag: "Universal" },
+  ];
 
   return (
     <Layout>
       <SEOHead title={title} description={description} keywords={keywords} url={url} type="product" />
-      <BreadcrumbSchema
-        items={[
-          { name: "Início", url: "https://www.balao.info" },
-          { name: "Peças e Acessórios", url: "https://www.balao.info/categorias/acessorios" },
-          { name: "Carregadores e Fontes", url },
-        ]}
-      />
+      
+      {/* --- BOTÃO FLUTUANTE STICKY (O MAIS IMPORTANTE) --- */}
+      <a 
+        href={openZap("Olá! Estou no site e preciso de um carregador com urgência.")}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-4 right-4 z-[9999] flex items-center gap-3 bg-[#25D366] hover:bg-[#1da851] text-white px-6 py-4 rounded-full shadow-[0_4px_20px_rgba(37,211,102,0.6)] transition-all hover:scale-110 animate-pulse"
+      >
+        <MessageCircle className="w-8 h-8 fill-white text-[#25D366]" />
+        <div className="flex flex-col text-left leading-none">
+          <span className="text-xs font-bold text-green-100">Precisa agora?</span>
+          <span className="text-lg font-extrabold">Chamar no Zap</span>
+        </div>
+      </a>
+
+      {/* --- FAIXA DE URGÊNCIA --- */}
+      <div className="bg-yellow-400 text-zinc-900 font-black text-center py-3 px-4 flex items-center justify-center gap-2 animate-in slide-in-from-top duration-700">
+        <Timer className="w-6 h-6 animate-pulse text-[#E30613]" />
+        <span className="text-sm md:text-base uppercase tracking-wide">
+          CAMPINAS E REGIÃO: PEDIU, CHEGOU EM 30 MINUTOS! 🏍️
+        </span>
+      </div>
 
       {/* --- HERO SECTION --- */}
-      <div className="bg-[#E30613] text-white">
-        <div className="container-balao py-10 md:py-16">
-          <div className="grid md:grid-cols-2 gap-8 items-center">
-            <div className="space-y-6">
-              <div className="inline-flex items-center gap-2 bg-red-800/30 px-3 py-1 rounded-full text-sm font-medium border border-red-400/20">
-                <Zap className="w-4 h-4 text-yellow-300 fill-yellow-300" />
-                <span>Envio em até 24h ou Retirada Imediata</span>
-              </div>
-              
-              <h1 className="text-3xl md:text-5xl font-extrabold leading-tight">
-                Seu Notebook Parou? <br />
-                <span className="text-red-100">Nós temos a energia que falta.</span>
-              </h1>
-              
-              <p className="text-lg text-red-50 max-w-xl">
-                Fontes originais e compatíveis Premium para todas as marcas. 
-                Garantia total, Nota Fiscal e o suporte técnico que você confia.
-              </p>
+      <div className="bg-[#E30613] text-white pb-16 pt-10 px-4 md:px-0 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20"></div>
+        
+        <div className="container-balao relative z-10 max-w-4xl mx-auto text-center">
+            
+            <div className="inline-block bg-black/30 backdrop-blur-sm border border-white/20 rounded-full px-4 py-1 mb-6">
+                <span className="text-yellow-400 font-bold flex items-center gap-2 text-sm md:text-base">
+                    <MapPin className="w-4 h-4" /> Atendimento Exclusivo Campinas
+                </span>
+            </div>
 
-              <form onSubmit={handleSearch} className="relative max-w-lg">
-                <Input 
-                  type="text" 
-                  placeholder="Digite o modelo do notebook (ex: Dell Inspiron 15)"
-                  className="h-14 pl-12 pr-4 text-zinc-900 bg-white shadow-xl rounded-xl border-0 ring-offset-0 focus-visible:ring-2 focus-visible:ring-yellow-400"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-                <Search className="absolute left-4 top-4 text-zinc-400 w-6 h-6" />
-                <Button 
-                  type="submit"
-                  className="absolute right-2 top-2 h-10 bg-[#E30613] hover:bg-red-700 text-white font-bold rounded-lg px-6"
+            <h1 className="text-4xl md:text-6xl font-black leading-tight mb-6 drop-shadow-lg">
+                Seu Notebook Parou? <br/>
+                <span className="text-yellow-400">Nós salvamos seu dia.</span>
+            </h1>
+
+            <p className="text-lg md:text-xl text-red-100 mb-8 max-w-2xl mx-auto leading-relaxed">
+                Não perca tempo procurando modelo. Nós temos fontes para <strong>todas as marcas</strong> com entrega expressa ou retirada no balcão agora mesmo.
+            </p>
+
+            <div className="flex flex-col md:flex-row gap-4 justify-center items-center w-full">
+                <a 
+                    href={openZap("Oi, meu notebook parou e preciso de uma fonte urgente!")}
+                    target="_blank"
+                    className="w-full md:w-auto"
                 >
-                  Buscar
-                </Button>
-              </form>
+                    <Button className="w-full md:w-auto h-16 px-8 bg-[#25D366] hover:bg-[#1EB954] text-white text-xl font-bold rounded-xl shadow-xl flex items-center justify-center gap-3 transform hover:-translate-y-1 transition-all">
+                        <MessageCircle className="w-8 h-8" />
+                        PEDIR PELO WHATSAPP
+                    </Button>
+                </a>
+                
+                <a 
+                    href={openZap("Quero saber onde fica a loja para retirar a fonte.")}
+                    target="_blank"
+                    className="w-full md:w-auto"
+                >
+                    <Button variant="outline" className="w-full md:w-auto h-16 px-8 bg-transparent border-2 border-white text-white hover:bg-white hover:text-[#E30613] text-lg font-bold rounded-xl gap-2">
+                        <MapPin className="w-5 h-5" />
+                        Prefiro Retirar na Loja
+                    </Button>
+                </a>
             </div>
 
-            <div className="hidden md:flex justify-center relative">
-              <div className="bg-white/10 backdrop-blur-sm p-6 rounded-2xl border border-white/20 shadow-2xl relative z-10">
-                <BatteryCharging className="w-32 h-32 text-white mx-auto mb-4 opacity-90" />
-                <div className="text-center space-y-2">
-                  <h3 className="text-xl font-bold">Dúvida no modelo?</h3>
-                  <p className="text-red-100 text-sm mb-4">Envie uma foto da etiqueta da sua fonte antiga.</p>
-                  <Button variant="secondary" className="w-full gap-2 font-bold text-[#E30613]">
-                    <Phone className="w-4 h-4" />
-                    Falar com Especialista
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
+            <p className="mt-6 text-sm opacity-80 flex items-center justify-center gap-1">
+                <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                Atendentes online agora respondendo em segundos
+            </p>
         </div>
       </div>
 
-      <div className="bg-zinc-50 min-h-screen">
-        
-        {/* --- BRAND SELECTOR --- */}
-        <div className="container-balao -mt-8 relative z-20 mb-12">
-          <div className="bg-white rounded-xl shadow-lg p-6 border border-zinc-100">
-            <h2 className="text-sm font-bold text-zinc-500 uppercase tracking-wide mb-4">Escolha pela marca</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
-              {popularBrands.map((brand) => (
-                <Link key={brand.name} to={`/busca?q=${encodeURIComponent(brand.query)}`}>
-                  <div className="group flex flex-col items-center justify-center p-3 rounded-lg border border-zinc-100 hover:border-[#E30613] hover:shadow-md transition-all cursor-pointer bg-zinc-50 hover:bg-white h-full">
-                    <span className="font-semibold text-zinc-700 group-hover:text-[#E30613]">{brand.name}</span>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* --- SECTION: PRODUTOS EM DESTAQUE (VITRINE) --- */}
-        <div className="container-balao pb-12">
-            <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-zinc-900 flex items-center gap-2">
-                    <Star className="w-6 h-6 text-yellow-500 fill-yellow-500" />
-                    Destaques e Mais Vendidos
-                </h2>
-                <Link to="/busca?q=carregador+notebook" className="text-[#E30613] font-semibold hover:underline text-sm md:text-base">
-                    Ver todos
-                </Link>
+      {/* --- SEÇÃO "COMO COMPRAR" (FOTO NO ZAP) --- */}
+      <div className="bg-white py-12 -mt-8 relative z-20 rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)]">
+        <div className="container-balao">
+            <div className="text-center mb-10">
+                <h2 className="text-3xl font-bold text-zinc-900 mb-2">Não sabe o modelo da sua fonte?</h2>
+                <p className="text-zinc-500">Não arrisque comprar errado. Deixe com nossos técnicos.</p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {loading ? (
-                  <div className="col-span-full text-center py-10 text-zinc-500">Carregando produtos...</div>
-                ) : featuredProducts.length === 0 ? (
-                  <div className="col-span-full text-center py-10 text-zinc-500">
-                    Nenhum carregador encontrado. <Link to="/busca?q=fonte+notebook" className="text-[#E30613] font-semibold hover:underline">Ver todos</Link>
-                  </div>
-                ) : featuredProducts.map((product) => (
-                    <Card key={product.id} className="group overflow-hidden hover:shadow-xl transition-all duration-300 border-zinc-200">
-                        <CardContent className="p-4 flex flex-col h-full">
-                            <div className="relative aspect-square mb-4 bg-white rounded-lg flex items-center justify-center p-2">
-                                <div className="w-full h-full flex items-center justify-center">
-                                    <img 
-                                      src={product.image} 
-                                      alt={product.name}
-                                      className="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300"
-                                      onError={(e) => {
-                                        e.currentTarget.src = "https://placehold.co/200x200?text=Fonte+Notebook"; 
-                                      }}
-                                    />
-                                </div>
+            <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+                {/* Passo 1 */}
+                <a href={openZap("Vou mandar a foto da etiqueta...")} target="_blank" className="block group">
+                    <Card className="border-2 border-dashed border-zinc-200 group-hover:border-[#E30613] transition-colors cursor-pointer bg-zinc-50 h-full">
+                        <CardContent className="p-8 text-center flex flex-col items-center">
+                            <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                <Camera className="w-8 h-8" />
                             </div>
-
-                            <div className="flex-1 flex flex-col">
-                                <h3 className="font-medium text-zinc-800 text-sm line-clamp-2 mb-2 h-10 leading-snug group-hover:text-[#E30613] transition-colors">
-                                    {product.name}
-                                </h3>
-                                
-                                <div className="mt-auto">
-                                    <div className="text-2xl font-bold text-[#E30613]">
-                                        R$ {product.price.toFixed(2).replace('.', ',')}
-                                    </div>
-                                    
-                                    <Button className="w-full bg-[#E30613] hover:bg-red-700 font-bold gap-2">
-                                        <ShoppingCart className="w-4 h-4" />
-                                        Comprar
-                                    </Button>
-                                </div>
-                            </div>
+                            <h3 className="font-bold text-lg mb-2">1. Tire uma foto</h3>
+                            <p className="text-zinc-600">Fotografe a etiqueta da sua fonte antiga ou o modelo do notebook.</p>
                         </CardContent>
                     </Card>
-                ))}
-            </div>
-            
-            <div className="mt-8 text-center">
-                <Link to="/busca?q=fonte+notebook">
-                     <Button variant="outline" size="lg" className="border-zinc-300 text-zinc-700 hover:text-[#E30613] hover:border-[#E30613]">
-                        Carregar mais produtos
-                     </Button>
-                </Link>
-            </div>
-        </div>
-        
-        {/* --- TRUST BAR --- */}
-        <div className="bg-white border-y border-zinc-200 py-10">
-          <div className="container-balao grid md:grid-cols-3 gap-8">
-            <div className="flex items-start gap-4">
-                <div className="bg-blue-50 p-3 rounded-full text-blue-600 shrink-0">
-                  <ShieldCheck className="w-8 h-8" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-lg text-zinc-900">Garantia Balão</h3>
-                  <p className="text-sm text-zinc-600 mt-1">Garantia estendida e troca imediata. Compre sem medo.</p>
-                </div>
-            </div>
-            <div className="flex items-start gap-4">
-                <div className="bg-green-50 p-3 rounded-full text-green-600 shrink-0">
-                  <Truck className="w-8 h-8" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-lg text-zinc-900">Entrega Ninja</h3>
-                  <p className="text-sm text-zinc-600 mt-1">Envio imediato para todo Brasil. Logística própria.</p>
-                </div>
-            </div>
-            <div className="flex items-start gap-4">
-                <div className="bg-purple-50 p-3 rounded-full text-purple-600 shrink-0">
-                  <HelpCircle className="w-8 h-8" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-lg text-zinc-900">Ajuda Técnica</h3>
-                  <p className="text-sm text-zinc-600 mt-1">Não sabe qual comprar? Nosso time te ajuda agora.</p>
-                </div>
-            </div>
-          </div>
-        </div>
+                </a>
 
-        {/* --- EDUCATIONAL --- */}
-        <div className="bg-zinc-50 py-12">
-          <div className="container-balao">
-            <div className="text-center mb-10">
-              <h2 className="text-2xl font-bold text-zinc-900">Como identificar sua fonte?</h2>
-              <p className="text-zinc-500">3 passos simples para não errar na compra</p>
-            </div>
+                {/* Passo 2 */}
+                <a href={openZap("Já mandei a foto, aguardando verificação...")} target="_blank" className="block group">
+                    <Card className="border-2 border-dashed border-zinc-200 group-hover:border-[#E30613] transition-colors cursor-pointer bg-zinc-50 h-full">
+                        <CardContent className="p-8 text-center flex flex-col items-center">
+                            <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                <MessageCircle className="w-8 h-8" />
+                            </div>
+                            <h3 className="font-bold text-lg mb-2">2. Envie no WhatsApp</h3>
+                            <p className="text-zinc-600">Clique aqui, mande a foto e nosso sistema identifica o modelo compatível.</p>
+                        </CardContent>
+                    </Card>
+                </a>
 
-            <div className="grid md:grid-cols-3 gap-6">
-              <Card className="border-none shadow-md">
-                  <CardContent className="p-6 text-center">
-                      <div className="w-10 h-10 bg-zinc-100 rounded-full flex items-center justify-center font-bold mx-auto mb-4 text-zinc-600">1</div>
-                      <h3 className="font-bold mb-2">Voltagem (V)</h3>
-                      <p className="text-sm text-zinc-500">Deve ser <span className="text-green-600 font-bold">IGUAL</span> à da sua fonte antiga.</p>
-                  </CardContent>
-              </Card>
-              <Card className="border-none shadow-md">
-                  <CardContent className="p-6 text-center">
-                      <div className="w-10 h-10 bg-zinc-100 rounded-full flex items-center justify-center font-bold mx-auto mb-4 text-zinc-600">2</div>
-                      <h3 className="font-bold mb-2">Amperagem (A)</h3>
-                      <p className="text-sm text-zinc-500">Deve ser <span className="text-green-600 font-bold">IGUAL ou MAIOR</span>.</p>
-                  </CardContent>
-              </Card>
-              <Card className="border-none shadow-md">
-                  <CardContent className="p-6 text-center">
-                      <div className="w-10 h-10 bg-zinc-100 rounded-full flex items-center justify-center font-bold mx-auto mb-4 text-zinc-600">3</div>
-                      <h3 className="font-bold mb-2">Pino Conector</h3>
-                      <p className="text-sm text-zinc-500">Compare visualmente a ponta (fina, grossa ou USB-C).</p>
-                  </CardContent>
-              </Card>
-            </div>
-          </div>
-        </div>
-
-        {/* --- FOOTER LOCATION --- */}
-        <div className="bg-white py-8 border-t">
-            <div className="container-balao">
-                <div className="flex items-center gap-2 text-sm text-zinc-500 justify-center">
-                    <MapPin className="w-4 h-4" />
-                    <span>Disponível para retirada imediata em Campinas - SP</span>
+                {/* Passo 3 */}
+                <div className="block group">
+                    <Card className="border-2 border-transparent bg-zinc-50 h-full">
+                        <CardContent className="p-8 text-center flex flex-col items-center">
+                            <div className="w-16 h-16 bg-yellow-100 text-yellow-600 rounded-full flex items-center justify-center mb-4">
+                                <Truck className="w-8 h-8" />
+                            </div>
+                            <h3 className="font-bold text-lg mb-2">3. Receba em casa</h3>
+                            <p className="text-zinc-600">Pague somente na entrega (Pix, Cartão ou Dinheiro). Simples assim.</p>
+                        </CardContent>
+                    </Card>
                 </div>
             </div>
         </div>
       </div>
+
+      {/* --- MARCAS (ATALHOS) --- */}
+      <div className="bg-zinc-50 py-12 border-t border-zinc-200">
+        <div className="container-balao max-w-4xl">
+            <h3 className="text-center font-bold text-zinc-500 uppercase tracking-widest mb-8 text-sm">
+                Selecione a marca para falar com consultor
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {brands.map((brand) => (
+                    <a 
+                        key={brand}
+                        href={openZap(`Olá, preciso de uma fonte para notebook da marca ${brand}`)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bg-white p-4 rounded-xl shadow-sm border border-zinc-200 text-center font-bold text-zinc-700 hover:border-[#E30613] hover:text-[#E30613] hover:shadow-md transition-all flex items-center justify-center gap-2"
+                    >
+                        {brand} <ArrowRight className="w-4 h-4 opacity-30" />
+                    </a>
+                ))}
+            </div>
+        </div>
+      </div>
+
+      {/* --- VITRINE SIMULADA (TUDO LEVA AO ZAP) --- */}
+      <div className="py-16 container-balao">
+        <div className="flex items-center justify-center mb-10 gap-2">
+            <Zap className="text-[#E30613] w-6 h-6 fill-current" />
+            <h2 className="text-3xl font-bold text-zinc-900">Modelos Disponíveis Agora</h2>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+            {commonModels.map((item, idx) => (
+                <a 
+                    key={idx}
+                    href={openZap(`Tenho interesse no ${item.name}`)}
+                    target="_blank"
+                    className="group"
+                >
+                    <Card className="overflow-hidden hover:shadow-xl transition-all border-zinc-200 hover:border-green-400 relative">
+                        {item.tag && (
+                            <Badge className="absolute top-2 right-2 bg-[#E30613] hover:bg-red-700">
+                                {item.tag}
+                            </Badge>
+                        )}
+                        <CardContent className="p-6 text-center">
+                            <div className="w-full aspect-video bg-zinc-100 rounded-lg mb-4 flex items-center justify-center text-zinc-300">
+                                <BatteryCharging className="w-16 h-16 group-hover:text-zinc-400 transition-colors" />
+                            </div>
+                            <h3 className="font-bold text-zinc-900 mb-1 group-hover:text-[#E30613] transition-colors">{item.name}</h3>
+                            <p className="text-xs text-zinc-500 mb-4">Garantia Balão + Nota Fiscal</p>
+                            
+                            <Button className="w-full bg-green-500 hover:bg-green-600 font-bold gap-2">
+                                <MessageCircle className="w-4 h-4" /> Consultar Preço
+                            </Button>
+                        </CardContent>
+                    </Card>
+                </a>
+            ))}
+        </div>
+        
+        <div className="mt-10 text-center">
+             <a href={openZap("Não achei meu modelo na lista, pode me ajudar?")} target="_blank">
+                <span className="text-zinc-500 hover:text-[#E30613] underline cursor-pointer text-sm">
+                    Não encontrou seu modelo? Clique aqui que nós temos no estoque.
+                </span>
+             </a>
+        </div>
+      </div>
+
+      {/* --- FOOTER SIMPLIFICADO --- */}
+      <div className="bg-[#111] text-zinc-400 py-8 border-t border-zinc-800">
+         <div className="container-balao text-center space-y-4">
+             <div className="flex items-center justify-center gap-2 text-white font-bold text-lg">
+                 <ShieldCheck className="text-green-500" />
+                 Balão da Informática Campinas
+             </div>
+             <p className="max-w-md mx-auto text-sm">
+                 Somos especialistas em energia para portáteis. Loja física com técnicos reais.
+                 Recuse imitações baratas que queimam seu equipamento.
+             </p>
+             <div className="pt-4 border-t border-zinc-800 flex justify-center gap-6 text-sm font-medium">
+                 <span className="flex items-center gap-1"><CheckCircle2 className="w-4 h-4 text-[#E30613]" /> CNPJ Ativo</span>
+                 <span className="flex items-center gap-1"><CheckCircle2 className="w-4 h-4 text-[#E30613]" /> Loja Física</span>
+                 <span className="flex items-center gap-1"><CheckCircle2 className="w-4 h-4 text-[#E30613]" /> Desde 2005</span>
+             </div>
+         </div>
+      </div>
+
     </Layout>
   );
 }

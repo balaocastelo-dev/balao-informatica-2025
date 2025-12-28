@@ -1,0 +1,5 @@
+[33m2933ac4[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m Busca: tolerância a erros e correspondência aproximada; nunca retornar vazio
+[33m423f64b[m Admin Pagamentos: manter apenas Mercado Pago; checkout: reintroduzir PIX quando ativado
+[33me866c00[m Atualizações na Landing de Carregador de Notebook
+[33m8121e13[m Stripe: função stripe-payment (Checkout Session), suporte a provider Stripe no Admin e Cart; Supabase config habilitado
+[33mdd68a82[m Checkout: apenas Mercado Pago/Mercado Livre; remoção de PIX e UI; adicionar função stripe-status e habilitar no Supabase
