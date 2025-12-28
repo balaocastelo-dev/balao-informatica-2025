@@ -92,9 +92,9 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
       {/* Sidebar */}
       <aside className={cn(
-        "fixed lg:sticky top-0 left-0 h-screen bg-background border-r border-border z-50 transition-transform duration-300 overflow-y-auto",
+        "fixed lg:fixed left-0 top-16 lg:top-20 h-[calc(100vh-4rem)] lg:h-[calc(100vh-5rem)] bg-background border-r border-border z-50 transition-transform duration-300 overflow-y-auto",
         "w-64 lg:w-56 xl:w-64",
-        "lg:translate-x-0 lg:top-20",
+        "lg:translate-x-0",
         isOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         {/* Mobile Close Button */}
@@ -105,7 +105,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           <X className="w-5 h-5" />
         </button>
 
-        <div className="p-4 pt-14 lg:pt-4">
+        <div className="p-4 pt-4">
           {/* Navigation Section */}
           <div className="mb-6">
             <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
