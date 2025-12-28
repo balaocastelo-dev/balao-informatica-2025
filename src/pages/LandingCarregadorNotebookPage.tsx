@@ -19,91 +19,29 @@ import {
   Star
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { useProducts } from "@/contexts/ProductContext";
 
 export default function LandingCarregadorNotebookPage() {
   const [searchTerm, setSearchTerm] = useState("");
+  const { products, loading } = useProducts();
 
   const title = "Carregador de Notebook Original e Compatível | Entrega Imediata - Balão da Informática";
   const description = "Seu notebook parou? Encontre carregadores para Dell, Acer, HP, Lenovo, Samsung e Apple. Entrega rápida em todo Brasil ou retire em Campinas.";
   const keywords = "carregador notebook, fonte dell, fonte acer, fonte hp, carregador samsung, carregador lenovo, fonte universal, carregador usb-c, campinas";
   const url = "https://www.balao.info/carregador-de-notebook";
 
-  // Dados simulados baseados na busca "FONTE NOTEBOOK"
-  const featuredProducts = [
-    {
-      id: 1,
-      title: "Fonte Carregador Notebook Dell 19.5V 3.34A 65W (Ponta Azul)",
-      price: 149.90,
-      oldPrice: 199.90,
-      installments: "3x de R$ 49,96 sem juros",
-      image: "https://m.media-amazon.com/images/I/51p+y-C4LlL._AC_SX679_.jpg", // Exemplo visual
-      tag: "Mais Vendido"
-    },
-    {
-      id: 2,
-      title: "Fonte Carregador Notebook Acer 19V 3.42A 65W (Ponta Fina)",
-      price: 99.90,
-      oldPrice: 159.90,
-      installments: "2x de R$ 49,95 sem juros",
-      image: "https://m.media-amazon.com/images/I/61SdwjqvBKL._AC_SX679_.jpg",
-      tag: "Oferta"
-    },
-    {
-      id: 3,
-      title: "Fonte Carregador Universal Notebook 120W com 10 Conectores",
-      price: 189.90,
-      oldPrice: 249.90,
-      installments: "4x de R$ 47,47 sem juros",
-      image: "https://m.media-amazon.com/images/I/71wE7-k7z+L._AC_SX679_.jpg",
-      tag: "Compatível com Tudo"
-    },
-    {
-      id: 4,
-      title: "Fonte Carregador Samsung 19V 3.16A / 2.1A (Ponta Agulha)",
-      price: 119.90,
-      oldPrice: 169.00,
-      installments: "3x de R$ 39,96 sem juros",
-      image: "https://m.media-amazon.com/images/I/51wXkY7f+JL._AC_SX679_.jpg",
-      tag: null
-    },
-    {
-      id: 5,
-      title: "Fonte Carregador Lenovo USB-C 65W (Power Delivery)",
-      price: 229.90,
-      oldPrice: 359.90,
-      installments: "5x de R$ 45,98 sem juros",
-      image: "https://m.media-amazon.com/images/I/51eM8y+yG+L._AC_SX679_.jpg",
-      tag: "Original"
-    },
-    {
-      id: 6,
-      title: "Fonte Carregador Notebook HP 18.5V 3.5A 65W (Ponta Grossa)",
-      price: 109.90,
-      oldPrice: 149.90,
-      installments: "2x de R$ 54,95 sem juros",
-      image: "https://m.media-amazon.com/images/I/61+2z3QJ+dL._AC_SX679_.jpg",
-      tag: null
-    },
-    {
-        id: 7,
-        title: "Fonte Carregador Asus 19V 3.42A ou 2.37A (Ponta Fina)",
-        price: 129.90,
-        oldPrice: 189.90,
-        installments: "3x de R$ 43,30 sem juros",
-        image: "https://m.media-amazon.com/images/I/61kCg+y5HLL._AC_SX679_.jpg",
-        tag: null
-    },
-    {
-        id: 8,
-        title: "Cabo de Força Tripolar Novo Padrão BR 1.5 Metros",
-        price: 19.90,
-        oldPrice: 35.00,
-        installments: "À vista no PIX",
-        image: "https://m.media-amazon.com/images/I/41s7t+G+wRL._AC_SX679_.jpg",
-        tag: "Essencial"
-    }
-  ];
+  const featuredProducts = useMemo(() => {
+    const keywords = ['fonte', 'carregador'];
+    const includeTerms = ['notebook', 'laptop', 'macbook', 'usb-c', 'dell', 'acer', 'hp', 'lenovo', 'samsung', 'asus'];
+    const filtered = products.filter(p => {
+      const text = `${p.name} ${p.description || ''}`.toLowerCase();
+      const hasKeyword = keywords.some(k => text.includes(k));
+      const hasInclude = includeTerms.some(k => text.includes(k));
+      return hasKeyword && hasInclude;
+    });
+    return filtered.slice(0, 8);
+  }, [products]);
 
   const popularBrands = [
     { name: "Dell", query: "carregador notebook dell" },
@@ -220,45 +158,37 @@ export default function LandingCarregadorNotebookPage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {featuredProducts.map((product) => (
+                {loading ? (
+                  <div className="col-span-full text-center py-10 text-zinc-500">Carregando produtos...</div>
+                ) : featuredProducts.length === 0 ? (
+                  <div className="col-span-full text-center py-10 text-zinc-500">
+                    Nenhum carregador encontrado. <Link to="/busca?q=fonte+notebook" className="text-[#E30613] font-semibold hover:underline">Ver todos</Link>
+                  </div>
+                ) : featuredProducts.map((product) => (
                     <Card key={product.id} className="group overflow-hidden hover:shadow-xl transition-all duration-300 border-zinc-200">
                         <CardContent className="p-4 flex flex-col h-full">
-                            {/* Imagem */}
                             <div className="relative aspect-square mb-4 bg-white rounded-lg flex items-center justify-center p-2">
-                                {product.tag && (
-                                    <span className="absolute top-0 left-0 bg-[#E30613] text-white text-[10px] font-bold px-2 py-1 rounded-br-lg z-10 uppercase">
-                                        {product.tag}
-                                    </span>
-                                )}
-                                {/* Placeholder visual elegante se a imagem falhar ou apenas para layout */}
                                 <div className="w-full h-full flex items-center justify-center">
                                     <img 
                                       src={product.image} 
-                                      alt={product.title}
+                                      alt={product.name}
                                       className="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300"
                                       onError={(e) => {
-                                        // Fallback se a imagem externa não carregar
                                         e.currentTarget.src = "https://placehold.co/200x200?text=Fonte+Notebook"; 
                                       }}
                                     />
                                 </div>
                             </div>
 
-                            {/* Info Produto */}
                             <div className="flex-1 flex flex-col">
                                 <h3 className="font-medium text-zinc-800 text-sm line-clamp-2 mb-2 h-10 leading-snug group-hover:text-[#E30613] transition-colors">
-                                    {product.title}
+                                    {product.name}
                                 </h3>
                                 
                                 <div className="mt-auto">
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <span className="text-xs text-zinc-400 line-through">R$ {product.oldPrice.toFixed(2).replace('.', ',')}</span>
-                                        <span className="text-xs font-bold text-green-600 bg-green-50 px-1 rounded">-25%</span>
-                                    </div>
                                     <div className="text-2xl font-bold text-[#E30613]">
                                         R$ {product.price.toFixed(2).replace('.', ',')}
                                     </div>
-                                    <p className="text-xs text-zinc-500 mb-3">{product.installments}</p>
                                     
                                     <Button className="w-full bg-[#E30613] hover:bg-red-700 font-bold gap-2">
                                         <ShoppingCart className="w-4 h-4" />
