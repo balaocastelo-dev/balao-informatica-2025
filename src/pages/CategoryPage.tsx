@@ -9,7 +9,7 @@ import { useCategories } from '@/contexts/CategoryContext';
 
 const CategoryPage = () => {
   const { categoryId } = useParams<{ categoryId: string }>();
-  const { products, getProductsByCategory } = useProducts();
+  const { products, loading } = useProducts();
   const { categories } = useCategories();
 
   const [minPrice, setMinPrice] = useState<number | null>(null);
@@ -146,7 +146,13 @@ const CategoryPage = () => {
 
           {/* Products Grid */}
           <div className="flex-1">
-            <ProductGrid products={filteredProducts} infiniteScroll />
+            {loading ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground text-lg">Carregando produtos...</p>
+              </div>
+            ) : (
+              <ProductGrid products={filteredProducts} infiniteScroll />
+            )}
           </div>
         </div>
       </div>
