@@ -1,0 +1,326 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
+
+    --primary: 0 100% 45%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 10%;
+
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
+
+    --accent: 0 100% 45%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 0 100% 45%;
+
+    --radius: 0.75rem;
+
+    /* Custom Balão tokens */
+    --balao-red: 0 100% 45%;
+    --balao-red-hover: 0 100% 40%;
+    --balao-red-light: 0 100% 97%;
+    --balao-dark: 0 0% 15%;
+    --balao-gray: 0 0% 60%;
+    --balao-light-gray: 0 0% 97%;
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.05);
+    --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.1), 0 2px 4px -2px hsl(0 0% 0% / 0.1);
+    --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.1), 0 4px 6px -4px hsl(0 0% 0% / 0.1);
+    --shadow-xl: 0 20px 25px -5px hsl(0 0% 0% / 0.1), 0 8px 10px -6px hsl(0 0% 0% / 0.1);
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 0 0% 8%;
+    --foreground: 0 0% 95%;
+
+    --card: 0 0% 12%;
+    --card-foreground: 0 0% 95%;
+
+    --popover: 0 0% 12%;
+    --popover-foreground: 0 0% 95%;
+
+    --primary: 0 100% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 18%;
+    --secondary-foreground: 0 0% 95%;
+
+    --muted: 0 0% 18%;
+    --muted-foreground: 0 0% 65%;
+
+    --accent: 0 100% 50%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 0 0% 95%;
+
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 0 100% 50%;
+
+    --balao-red: 0 100% 50%;
+    --balao-red-hover: 0 100% 45%;
+    --balao-red-light: 0 100% 15%;
+    --balao-dark: 0 0% 95%;
+    --balao-gray: 0 0% 70%;
+    --balao-light-gray: 0 0% 12%;
+
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
+  }
+}
+
+@layer components {
+  .container-balao {
+    @apply w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .btn-primary {
+    @apply bg-primary text-primary-foreground font-semibold px-6 py-3 rounded-lg 
+           transition-all duration-200 hover:bg-[hsl(var(--balao-red-hover))] 
+           active:scale-[0.98] shadow-md hover:shadow-lg;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary text-secondary-foreground font-medium px-6 py-3 rounded-lg 
+           transition-all duration-200 hover:bg-muted border border-border;
+  }
+
+  .btn-cart {
+    @apply bg-primary text-primary-foreground font-bold px-4 py-2 rounded-lg 
+           transition-all duration-200 hover:bg-[hsl(var(--balao-red-hover))] 
+           active:scale-[0.95] text-sm;
+  }
+
+  .product-card {
+    @apply bg-card rounded-xl overflow-hidden border border-border 
+           transition-all duration-300 hover:shadow-xl hover:-translate-y-1
+           flex flex-col;
+  }
+
+  .product-card-image {
+    @apply w-full aspect-square object-contain p-4;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+    background: linear-gradient(135deg, hsl(0 0% 100%) 0%, hsl(0 0% 98%) 100%);
+  }
+
+  .product-image-container {
+    @apply relative overflow-hidden bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.03);
+  }
+
+  .product-image-container img {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+    backface-visibility: hidden;
+    transform: translateZ(0);
+    -webkit-font-smoothing: subpixel-antialiased;
+  }
+
+  .product-card-content {
+    @apply p-4 flex flex-col flex-1;
+  }
+
+  .product-card-title {
+    @apply font-semibold text-foreground line-clamp-2 min-h-[3rem] text-sm sm:text-base;
+  }
+
+  .product-card-price {
+    @apply text-xl sm:text-2xl font-bold text-primary mt-2;
+  }
+
+  .category-badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium 
+           bg-[hsl(var(--balao-red-light))] text-primary;
+  }
+
+  .search-input {
+    @apply w-full bg-secondary border-0 rounded-lg px-4 py-3 text-foreground 
+           placeholder:text-muted-foreground focus:ring-2 focus:ring-primary 
+           focus:outline-none transition-all;
+  }
+
+  .nav-link {
+    @apply text-foreground/80 hover:text-primary transition-colors font-medium;
+  }
+
+  .modal-overlay {
+    @apply fixed inset-0 bg-black/50 backdrop-blur-sm z-50 
+           flex items-center justify-center p-4;
+  }
+
+  .modal-content {
+    @apply bg-card rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] 
+           overflow-y-auto animate-in fade-in zoom-in-95 duration-200;
+  }
+
+  .admin-card {
+    @apply bg-card rounded-xl border border-border p-6 shadow-sm;
+  }
+
+  .input-field {
+    @apply w-full bg-background border border-border rounded-lg px-4 py-3 
+           text-foreground placeholder:text-muted-foreground 
+           focus:ring-2 focus:ring-primary focus:border-transparent 
+           focus:outline-none transition-all;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Animations */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from { 
+    opacity: 0; 
+    transform: translateY(20px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+@keyframes scale-in {
+  from { 
+    opacity: 0; 
+    transform: scale(0.95); 
+  }
+  to { 
+    opacity: 1; 
+    transform: scale(1); 
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.4s ease-out;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.2s ease-out;
+}
+
+/* Staggered animations for product grid */
+.product-grid > * {
+  animation: slide-up 0.4s ease-out backwards;
+}
+
+.product-grid > *:nth-child(1) { animation-delay: 0ms; }
+.product-grid > *:nth-child(2) { animation-delay: 50ms; }
+.product-grid > *:nth-child(3) { animation-delay: 100ms; }
+.product-grid > *:nth-child(4) { animation-delay: 150ms; }
+.product-grid > *:nth-child(5) { animation-delay: 200ms; }
+.product-grid > *:nth-child(6) { animation-delay: 250ms; }
+.product-grid > *:nth-child(7) { animation-delay: 300ms; }
+.product-grid > *:nth-child(8) { animation-delay: 350ms; }
+
+/* Custom scrollbar for filters */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background-color: hsl(var(--muted-foreground) / 0.5);
+}
