@@ -211,81 +211,11 @@ export function ProductProvider({ children }: { children: ReactNode }) {
   };
 
   const searchProducts = (query: string) => {
-    const normalize = (s: string) =>
-      s
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/[^\w\s]/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
-    const ngrams = (s: string) => {
-      const t = s.replace(/\s+/g, '');
-      const res: string[] = [];
-      for (let i = 0; i < Math.max(1, t.length - 2); i++) res.push(t.slice(i, i + 3));
-      if (res.length === 0 && t.length > 0) res.push(t);
-      return res;
-    };
-    const jaccard = (a: string[], b: string[]) => {
-      const sa = new Set(a);
-      const sb = new Set(b);
-      let inter = 0;
-      for (const x of sa) if (sb.has(x)) inter++;
-      const union = sa.size + sb.size - inter;
-      return union === 0 ? 0 : inter / union;
-    };
-    const levenshtein = (a: string, b: string) => {
-      const m = a.length, n = b.length;
-      if (m === 0) return n;
-      if (n === 0) return m;
-      const dp = Array.from({ length: n + 1 }, (_, j) => j);
-      for (let i = 1; i <= m; i++) {
-        let prev = dp[0];
-        dp[0] = i;
-        for (let j = 1; j <= n; j++) {
-          const temp = dp[j];
-          dp[j] = Math.min(
-            dp[j] + 1,
-            dp[j - 1] + 1,
-            prev + (a[i - 1] === b[j - 1] ? 0 : 1)
-          );
-          prev = temp;
-        }
-      }
-      return dp[n];
-    };
-    const nq = normalize(query);
-    if (!nq) return products;
-    const qTokens = nq.split(' ');
-    const qTris = ngrams(nq);
-    const scored = products.map(p => {
-      const name = normalize(p.name);
-      const desc = normalize(p.description || '');
-      const cat = normalize(p.category);
-      let score = 0;
-      if (name.includes(nq)) score = Math.max(score, 1);
-      if (name.startsWith(nq)) score = Math.max(score, 0.95);
-      const nameWords = name.split(' ');
-      for (const t of qTokens) {
-        for (const w of nameWords) {
-          const d = levenshtein(t, w);
-          const s = 1 - d / Math.max(t.length, w.length, 1);
-          score = Math.max(score, 0.9 * s);
-        }
-      }
-      const triSimName = jaccard(qTris, ngrams(name));
-      score = Math.max(score, 0.8 * triSimName);
-      const triSimDesc = jaccard(qTris, ngrams(desc));
-      score = Math.max(score, 0.4 * triSimDesc);
-      if (cat.includes(nq)) score = Math.max(score, 0.7);
-      const triSimCat = jaccard(qTris, ngrams(cat));
-      score = Math.max(score, 0.5 * triSimCat);
-      return { p, score };
-    });
-    scored.sort((a, b) => b.score - a.score);
-    const results = scored.filter(s => s.score > 0.15).map(s => s.p);
-    if (results.length > 0) return results;
-    return scored.slice(0, Math.min(24, scored.length)).map(s => s.p);
+    const lowerQuery = query.toLowerCase();
+    return products.filter(product =>
+      product.name.toLowerCase().includes(lowerQuery) ||
+      product.description?.toLowerCase().includes(lowerQuery)
+    );
   };
 
   const importProducts = async (

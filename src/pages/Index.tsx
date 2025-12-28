@@ -34,7 +34,7 @@ interface Banner {
 }
 
 const Index = () => {
-  const { products, getProductsByCategory, searchProducts } = useProducts();
+  const { products, getProductsByCategory } = useProducts();
   const { blocks, loading } = usePageBlocks();
   const [banners, setBanners] = useState<Banner[]>([]);
   const [searchParams] = useSearchParams();
@@ -86,7 +86,11 @@ const Index = () => {
 
   // --- RESULTADOS DE BUSCA ---
   if (searchQuery) {
-    const searchResults = searchProducts(searchQuery);
+    const searchResults = products.filter(
+      (p) =>
+        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.category.toLowerCase().includes(searchQuery.toLowerCase()),
+    );
 
     return (
       <Layout>
@@ -99,7 +103,20 @@ const Index = () => {
             Resultados para: <span className="text-[#E30613]">"{searchQuery}"</span>
           </h1>
 
-          <ProductGrid products={searchResults} title="" />
+          {searchResults.length > 0 ? (
+            <ProductGrid products={searchResults} title="" />
+          ) : (
+            <div className="text-center py-20 bg-white rounded-xl border border-zinc-100">
+              <SearchX className="w-16 h-16 text-zinc-300 mx-auto mb-4" />
+              <h2 className="text-xl font-bold text-zinc-700">Nenhum produto encontrado</h2>
+              <p className="text-zinc-500 mt-2">
+                Tente buscar por termos mais genéricos como "Gamer", "Intel" ou "SSD".
+              </p>
+              <Button asChild className="mt-6 btn-primary">
+                <Link to="/">Voltar para Home</Link>
+              </Button>
+            </div>
+          )}
         </div>
       </Layout>
     );
