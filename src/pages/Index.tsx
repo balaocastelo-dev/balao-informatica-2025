@@ -16,6 +16,7 @@ import {
   CreditCard,
   SearchX,
   MapPin,
+  CheckCircle2,
 } from "lucide-react";
 
 import { bannerImageMap } from "@/config/banners";
