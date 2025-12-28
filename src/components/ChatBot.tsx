@@ -31,6 +31,9 @@ const ChatBot = () => {
   const { addToCart } = useCart();
   const navigate = useNavigate();
   const [hasGreeted, setHasGreeted] = useState(false);
+  const [askedUsage, setAskedUsage] = useState(false);
+  const [askedBudget, setAskedBudget] = useState(false);
+  const [chatContext, setChatContext] = useState<{ category?: string; usage?: string; budget?: number }>({});
   const formatPrice = (price: number) =>
     price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   const clarifyText = 'Me diz rapidinho: é para jogos, trabalho ou estudo? E qual faixa de preço?';
@@ -44,7 +47,7 @@ const ChatBot = () => {
     localStorage.setItem(STORAGE_SESSION, crypto.randomUUID());
   };
 
-  const inferIntent = (text: string): { category?: string; budget?: number; query: string } => {
+  const inferIntent = (text: string): { category?: string; budget?: number; query: string; usage?: string } => {
     const t = text.toLowerCase();
     const catMap: Record<string, string> = {
       'impressora': 'impressoras',
@@ -71,6 +74,20 @@ const ChatBot = () => {
       'macbook': 'macbook',
       'apple': 'apple',
     };
+    const usageMap: Record<string, string> = {
+      'jogo': 'jogos',
+      'gamer': 'jogos',
+      'jogos': 'jogos',
+      'trabalho': 'trabalho',
+      'office': 'trabalho',
+      'planilha': 'trabalho',
+      'estudo': 'estudo',
+      'escola': 'estudo',
+      'faculdade': 'estudo',
+      'universidade': 'estudo',
+      'edição': 'trabalho',
+      'stream': 'jogos',
+    };
     let category: string | undefined;
     for (const key of Object.keys(catMap)) {
       if (t.includes(key)) {
@@ -78,9 +95,16 @@ const ChatBot = () => {
         break;
       }
     }
+    let usage: string | undefined;
+    for (const key of Object.keys(usageMap)) {
+      if (t.includes(key)) {
+        usage = usageMap[key];
+        break;
+      }
+    }
     const budgetMatch = t.match(/(\d{3,6})(?:\s*|,|\.|k|\s*mil)?/);
     const budget = budgetMatch ? Number(budgetMatch[1]) : undefined;
-    return { category, budget, query: text };
+    return { category, budget, query: text, usage };
   };
 
   useEffect(() => {
@@ -148,15 +172,40 @@ const ChatBot = () => {
 
     try {
       const intent = inferIntent(userMessage.content);
-      let suggestions = searchLocalProducts(intent.query, intent.category);
-      if (suggestions.length === 0 && intent.category) {
-        // fallback: top items in category
+      setChatContext(prev => ({
+        category: intent.category || prev.category,
+        usage: intent.usage || prev.usage,
+        budget: intent.budget || prev.budget
+      }));
+      const usageCategoryMap: Record<string, string> = {
+        'jogos': 'pc-gamer',
+        'trabalho': 'pc-office',
+        'estudo': 'notebooks'
+      };
+      const derivedCategory =
+        intent.category ||
+        chatContext.category ||
+        (intent.usage ? usageCategoryMap[intent.usage] : undefined) ||
+        (chatContext.usage ? usageCategoryMap[chatContext.usage] : undefined);
+      const needsUsage = !intent.usage && !chatContext.usage && !derivedCategory;
+      const needsBudget = !intent.budget && !chatContext.budget;
+      if (needsUsage && !askedUsage) {
+        setAskedUsage(true);
+        setMessages(prev => [...prev, { role: 'assistant', content: 'É para jogos, trabalho ou estudo?' }]);
+        return;
+      }
+      if (needsBudget && !askedBudget) {
+        setAskedBudget(true);
+        setMessages(prev => [...prev, { role: 'assistant', content: 'Qual sua faixa de preço aproximada?' }]);
+        return;
+      }
+      let suggestions = searchLocalProducts(intent.query, derivedCategory);
+      if (suggestions.length === 0 && derivedCategory) {
         suggestions = products
-          .filter(p => (p.stock ?? 0) > 0 && p.category === intent.category)
+          .filter(p => (p.stock ?? 0) > 0 && p.category === derivedCategory)
           .slice(0, 10);
       }
       if (suggestions.length === 0) {
-        // fallback: general top items
         suggestions = products.filter(p => (p.stock ?? 0) > 0).slice(0, 10);
       }
       if (suggestions.length > 0) {
