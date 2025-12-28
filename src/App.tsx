@@ -25,6 +25,7 @@ import ProductPage from "./pages/ProductPage";
 import SobreNosPage from "./pages/SobreNosPage";
 import ConsignacaoPage from "./pages/ConsignacaoPage";
 import ManutencaoPage from "./pages/ManutencaoPage";
+import ChatCentralPage from "./pages/ChatCentralPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -55,6 +56,7 @@ const App = () => (
                         <Route path="/pedidos" element={<OrdersPage />} />
                         <Route path="/perfil" element={<ProfilePage />} />
                         <Route path="/montar-pc" element={<PCBuilderPage />} />
+                        <Route path="/chat-central" element={<ChatCentralPage />} />
                         <Route path="/sobre" element={<SobreNosPage />} />
                         <Route path="/consignacao" element={<ConsignacaoPage />} />
                         <Route path="/manutencao" element={<ManutencaoPage />} />
