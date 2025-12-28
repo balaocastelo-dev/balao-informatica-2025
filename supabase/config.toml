@@ -18,5 +18,8 @@ verify_jwt = false
 [functions.cora-payment]
 verify_jwt = false
 
+[functions.stripe-status]
+verify_jwt = false
+
 [functions.asaas-wallet]
 verify_jwt = false

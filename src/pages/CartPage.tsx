@@ -8,9 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Trash2, Plus, Minus, ShoppingBag, CreditCard, Loader2, User, ArrowLeft, ArrowRight, MapPin, QrCode, Wrench } from 'lucide-react';
+import { Trash2, Plus, Minus, ShoppingBag, CreditCard, Loader2, User, ArrowLeft, ArrowRight, MapPin, Wrench } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button as UiButton } from '@/components/ui/button';
@@ -47,7 +46,7 @@ const CartPage = () => {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<'pix' | 'credit_card'>('credit_card');
+  const [paymentMethod] = useState<'credit_card'>('credit_card');
   const [isLoadingCep, setIsLoadingCep] = useState(false);
   const [showCheckoutForm, setShowCheckoutForm] = useState(false);
   // PIX removido do checkout
@@ -272,7 +271,7 @@ const CartPage = () => {
             order_id: order.id,
             items: orderItems,
             total: total,
-            payment_method: paymentMethod,
+            payment_method: 'credit_card',
             payment_status: 'pending',
           },
         });
@@ -378,7 +377,7 @@ const CartPage = () => {
             order_id: order.id,
             items: orderItems,
             total: total,
-            payment_method: paymentMethod,
+            payment_method: 'credit_card',
             payment_status: 'pending',
           },
         });
@@ -685,7 +684,7 @@ const CartPage = () => {
                     <CreditCard className="w-5 h-5 text-primary" />
                     <div>
                       <p className="font-medium">Cartão de Crédito</p>
-                      <p className="text-xs text-muted-foreground">Em até 12x sem juros (Mercado Pago)</p>
+                      <p className="text-xs text-muted-foreground">Em até 12x sem juros (Mercado Livre / Mercado Pago)</p>
                     </div>
                   </div>
                 </CardContent>
@@ -703,7 +702,7 @@ const CartPage = () => {
                   ) : (
                     <CreditCard className="w-5 h-5" />
                   )}
-                  Pagar com Cartão (Mercado Pago)
+                  Pagar com Cartão (Mercado Livre / Mercado Pago)
                 </Button>
               </div>
 
