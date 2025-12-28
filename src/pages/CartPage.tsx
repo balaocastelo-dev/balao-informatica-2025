@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Trash2, Plus, Minus, ShoppingBag, CreditCard, Loader2, User, ArrowLeft, ArrowRight, MapPin, QrCode } from 'lucide-react';
+import { Trash2, Plus, Minus, ShoppingBag, CreditCard, Loader2, User, ArrowLeft, ArrowRight, MapPin, QrCode, Wrench } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button as UiButton } from '@/components/ui/button';
@@ -600,11 +600,17 @@ const CartPage = () => {
                   <div className="space-y-3 max-h-64 overflow-y-auto mb-4">
                     {items.map(item => (
                       <div key={item.product.id} className="flex items-center gap-3 text-sm">
-                        <img
-                          src={item.product.image}
-                          alt={item.product.name}
-                          className="w-12 h-12 object-contain bg-white rounded"
-                        />
+                        {/servi[cç]o de montagem/i.test(item.product.name) ? (
+                          <div className="w-12 h-12 bg-white rounded flex items-center justify-center">
+                            <Wrench className="w-6 h-6 text-primary" />
+                          </div>
+                        ) : (
+                          <img
+                            src={item.product.image}
+                            alt={item.product.name}
+                            className="w-12 h-12 object-contain bg-white rounded"
+                          />
+                        )}
                         <div className="flex-1 min-w-0">
                           <p className="font-medium line-clamp-1">{item.product.name}</p>
                           <p className="text-muted-foreground">
@@ -706,6 +712,10 @@ const CartPage = () => {
                   className="w-64 h-64 mx-auto"
                 />
               )}
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Valor</p>
+                <p className="text-lg font-bold">{formatPrice(total)}</p>
+              </div>
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">Copia e Cola</p>
                 <Textarea readOnly value={(pixData?.qr_code && pixData.qr_code.trim() !== '' ? pixData.qr_code : PIX_FALLBACK_KEY)} />
@@ -751,11 +761,17 @@ const CartPage = () => {
                 key={item.product.id}
                 className="flex gap-4 bg-card rounded-xl p-4 border border-border"
               >
-                <img
-                  src={item.product.image}
-                  alt={item.product.name}
-                  className="w-24 h-24 sm:w-32 sm:h-32 object-contain bg-white rounded-lg"
-                />
+                {/servi[cç]o de montagem/i.test(item.product.name) ? (
+                  <div className="w-24 h-24 sm:w-32 sm:h-32 bg-white rounded-lg flex items-center justify-center">
+                    <Wrench className="w-8 h-8 text-primary" />
+                  </div>
+                ) : (
+                  <img
+                    src={item.product.image}
+                    alt={item.product.name}
+                    className="w-24 h-24 sm:w-32 sm:h-32 object-contain bg-white rounded-lg"
+                  />
+                )}
                 
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-foreground line-clamp-2 mb-2">

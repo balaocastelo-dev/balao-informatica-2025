@@ -428,11 +428,11 @@ const ChatBot = () => {
                                   addToCart(p);
                                   toast({ title: 'Adicionado ao carrinho!' });
                                 }}
-                                className="mt-2 w-full"
+                                className="mt-2 w-full flex items-center justify-center gap-2"
                                 size="sm"
                               >
-                                <ShoppingCart className="w-4 h-4 mr-2" />
-                                Adicionar ao carrinho
+                                <ShoppingCart className="w-4 h-4" />
+                                Comprar
                               </Button>
                             </div>
                           </div>
