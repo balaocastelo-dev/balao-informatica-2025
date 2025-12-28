@@ -140,7 +140,7 @@ export default function ManutencaoPage() {
               />
               <LocationCard 
                 title="Unidade Castelo"
-                address="Av. Andrade Neves, 1682 - Castelo, Campinas - SP"
+                address="Av. Andrade Neves, 2150 - Castelo, Campinas - SP"
                 hours="Seg a Sex: 09h às 18h | Sáb: 09h às 13h"
                 phone="(19) 3243-3333"
               />
