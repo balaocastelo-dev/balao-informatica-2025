@@ -1,14 +1,17 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Initialize Supabase
-const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "https://pfnqchbzimrtohyvbqjq.supabase.co";
-const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBmbnFjaGJ6aW1ydG9oeXZicWpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyMDA3NTMsImV4cCI6MjA4MDc3Njc1M30.riWwDKNyKojTIKRcAKBNUh5eLyAnxpurWJ5eVoyTDaU";
+const getSupabaseClient = () => {
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+  if (!supabaseUrl || !supabaseKey) return null;
+  return createClient(supabaseUrl, supabaseKey);
+};
 
 export default async function handler(req, res) {
   const { id } = req.query;
   const userAgent = req.headers['user-agent'] || '';
+  const supabase = getSupabaseClient();
   
   // Helper to fetch index.html
   const getIndexHtml = async () => {
@@ -32,6 +35,7 @@ export default async function handler(req, res) {
   };
 
   try {
+    if (!supabase) throw new Error('Missing Supabase env vars (SUPABASE_URL and SUPABASE_ANON_KEY)');
     // 1. Fetch product
     const { data: product } = await supabase
       .from('products')

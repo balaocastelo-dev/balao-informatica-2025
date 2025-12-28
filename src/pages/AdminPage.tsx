@@ -845,7 +845,7 @@ const AdminPage = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="bg-card border-b border-border sticky top-0 z-50">
-        <div className="container-balao">
+        <div className="container-admin">
           <div className="flex items-center justify-between h-16">
             <Link to="/">
               <img
@@ -870,12 +870,12 @@ const AdminPage = () => {
         </div>
       </header>
 
-      <main className="container-balao py-8">
+      <main className="container-admin py-6">
         {/* Tabs */}
-        <div className="flex gap-2 mb-6 border-b border-border overflow-x-auto scrollbar-hide">
+        <div className="flex gap-2 mb-4 border-b border-border overflow-x-auto scrollbar-hide">
           <button
             onClick={() => setActiveTab('dashboard')}
-            className={`px-4 py-3 font-medium transition-colors border-b-2 -mb-px flex items-center gap-2 whitespace-nowrap ${
+            className={`px-3 py-2 font-medium transition-colors border-b-2 -mb-px flex items-center gap-2 whitespace-nowrap ${
               activeTab === 'dashboard' 
                 ? 'text-primary border-primary' 
                 : 'text-muted-foreground border-transparent hover:text-foreground'
@@ -886,7 +886,7 @@ const AdminPage = () => {
           </button>
           <button
             onClick={() => setActiveTab('products')}
-            className={`px-4 py-3 font-medium transition-colors border-b-2 -mb-px flex items-center gap-2 whitespace-nowrap ${
+            className={`px-3 py-2 font-medium transition-colors border-b-2 -mb-px flex items-center gap-2 whitespace-nowrap ${
               activeTab === 'products' 
                 ? 'text-primary border-primary' 
                 : 'text-muted-foreground border-transparent hover:text-foreground'
@@ -897,7 +897,7 @@ const AdminPage = () => {
           </button>
           <button
             onClick={() => setActiveTab('banners')}
-            className={`px-4 py-3 font-medium transition-colors border-b-2 -mb-px flex items-center gap-2 whitespace-nowrap ${
+            className={`px-3 py-2 font-medium transition-colors border-b-2 -mb-px flex items-center gap-2 whitespace-nowrap ${
               activeTab === 'banners' 
                 ? 'text-primary border-primary' 
                 : 'text-muted-foreground border-transparent hover:text-foreground'
@@ -908,7 +908,7 @@ const AdminPage = () => {
           </button>
           <button
             onClick={() => setActiveTab('categories')}
-            className={`px-4 py-3 font-medium transition-colors border-b-2 -mb-px flex items-center gap-2 whitespace-nowrap ${
+            className={`px-3 py-2 font-medium transition-colors border-b-2 -mb-px flex items-center gap-2 whitespace-nowrap ${
               activeTab === 'categories' 
                 ? 'text-primary border-primary' 
                 : 'text-muted-foreground border-transparent hover:text-foreground'
@@ -919,7 +919,7 @@ const AdminPage = () => {
           </button>
           <button
             onClick={() => setActiveTab('brands')}
-            className={`px-4 py-3 font-medium transition-colors border-b-2 -mb-px flex items-center gap-2 whitespace-nowrap ${
+            className={`px-3 py-2 font-medium transition-colors border-b-2 -mb-px flex items-center gap-2 whitespace-nowrap ${
               activeTab === 'brands' 
                 ? 'text-primary border-primary' 
                 : 'text-muted-foreground border-transparent hover:text-foreground'
@@ -930,7 +930,7 @@ const AdminPage = () => {
           </button>
           <button
             onClick={() => setActiveTab('layout')}
-            className={`px-4 py-3 font-medium transition-colors border-b-2 -mb-px flex items-center gap-2 whitespace-nowrap ${
+            className={`px-3 py-2 font-medium transition-colors border-b-2 -mb-px flex items-center gap-2 whitespace-nowrap ${
               activeTab === 'layout' 
                 ? 'text-primary border-primary' 
                 : 'text-muted-foreground border-transparent hover:text-foreground'
@@ -941,7 +941,7 @@ const AdminPage = () => {
           </button>
           <button
             onClick={() => setActiveTab('email')}
-            className={`px-4 py-3 font-medium transition-colors border-b-2 -mb-px flex items-center gap-2 whitespace-nowrap ${
+            className={`px-3 py-2 font-medium transition-colors border-b-2 -mb-px flex items-center gap-2 whitespace-nowrap ${
               activeTab === 'email' 
                 ? 'text-primary border-primary' 
                 : 'text-muted-foreground border-transparent hover:text-foreground'
@@ -952,7 +952,7 @@ const AdminPage = () => {
           </button>
           <button
             onClick={() => setActiveTab('orders')}
-            className={`px-4 py-3 font-medium transition-colors border-b-2 -mb-px flex items-center gap-2 whitespace-nowrap ${
+            className={`px-3 py-2 font-medium transition-colors border-b-2 -mb-px flex items-center gap-2 whitespace-nowrap ${
               activeTab === 'orders' 
                 ? 'text-primary border-primary' 
                 : 'text-muted-foreground border-transparent hover:text-foreground'
@@ -963,7 +963,7 @@ const AdminPage = () => {
           </button>
           <button
             onClick={() => setActiveTab('payments')}
-            className={`px-4 py-3 font-medium transition-colors border-b-2 -mb-px flex items-center gap-2 whitespace-nowrap ${
+            className={`px-3 py-2 font-medium transition-colors border-b-2 -mb-px flex items-center gap-2 whitespace-nowrap ${
               activeTab === 'payments' 
                 ? 'text-primary border-primary' 
                 : 'text-muted-foreground border-transparent hover:text-foreground'
@@ -974,7 +974,7 @@ const AdminPage = () => {
           </button>
           <button
             onClick={() => setActiveTab('chat')}
-            className={`px-4 py-3 font-medium transition-colors border-b-2 -mb-px flex items-center gap-2 whitespace-nowrap ${
+            className={`px-3 py-2 font-medium transition-colors border-b-2 -mb-px flex items-center gap-2 whitespace-nowrap ${
               activeTab === 'chat' 
                 ? 'text-primary border-primary' 
                 : 'text-muted-foreground border-transparent hover:text-foreground'
@@ -987,7 +987,7 @@ const AdminPage = () => {
           {currentUser?.role === 'admin' && (
             <button
               onClick={() => setActiveTab('employees')}
-              className={`px-4 py-3 font-medium transition-colors border-b-2 -mb-px flex items-center gap-2 whitespace-nowrap ${
+              className={`px-3 py-2 font-medium transition-colors border-b-2 -mb-px flex items-center gap-2 whitespace-nowrap ${
                 activeTab === 'employees' 
                   ? 'text-primary border-primary' 
                   : 'text-muted-foreground border-transparent hover:text-foreground'
@@ -1004,14 +1004,14 @@ const AdminPage = () => {
 
         {/* Chat Tab */}
         {activeTab === 'chat' && (
-          <div className="max-w-4xl mx-auto">
+          <div className="w-full">
             <AdminChat currentUser={currentUser?.name || 'Admin'} />
           </div>
         )}
 
         {/* Employees Tab */}
         {activeTab === 'employees' && (
-          <div className="max-w-5xl mx-auto">
+          <div className="w-full">
             <EmployeeManagement />
           </div>
         )}
@@ -1141,7 +1141,7 @@ const AdminPage = () => {
                 <table className="w-full">
                   <thead className="bg-secondary">
                     <tr>
-                      <th className="p-4 text-left">
+                      <th className="p-2 text-left">
                         <input
                           type="checkbox"
                           checked={selectedProducts.length === filteredProducts.length && filteredProducts.length > 0}
@@ -1149,18 +1149,18 @@ const AdminPage = () => {
                           className="rounded border-border"
                         />
                       </th>
-                      <th className="p-4 text-left text-sm font-medium text-muted-foreground">Produto</th>
-                      <th className="p-4 text-left text-sm font-medium text-muted-foreground">Categoria</th>
-                      <th className="p-4 text-left text-sm font-medium text-muted-foreground">Custo</th>
-                      <th className="p-4 text-left text-sm font-medium text-muted-foreground">Preço Final</th>
-                      <th className="p-4 text-left text-sm font-medium text-muted-foreground">Estoque</th>
-                      <th className="p-4 text-left text-sm font-medium text-muted-foreground">Ações</th>
+                      <th className="p-2 text-left text-xs font-medium text-muted-foreground">Produto</th>
+                      <th className="p-2 text-left text-xs font-medium text-muted-foreground">Categoria</th>
+                      <th className="p-2 text-left text-xs font-medium text-muted-foreground">Custo</th>
+                      <th className="p-2 text-left text-xs font-medium text-muted-foreground">Preço Final</th>
+                      <th className="p-2 text-left text-xs font-medium text-muted-foreground">Estoque</th>
+                      <th className="p-2 text-left text-xs font-medium text-muted-foreground">Ações</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
                     {filteredProducts.map(product => (
                       <tr key={product.id} className="hover:bg-secondary/50 transition-colors">
-                        <td className="p-4">
+                        <td className="p-2">
                           <input
                             type="checkbox"
                             checked={selectedProducts.includes(product.id)}
@@ -1168,30 +1168,30 @@ const AdminPage = () => {
                             className="rounded border-border"
                           />
                         </td>
-                        <td className="p-4">
-                          <div className="flex items-center gap-3">
+                        <td className="p-2">
+                          <div className="flex items-center gap-2">
                             <img
                               src={product.image}
                               alt={product.name}
-                              className="w-12 h-12 object-contain bg-white rounded"
+                              className="w-10 h-10 object-contain bg-white rounded"
                             />
-                            <span className="font-medium text-foreground line-clamp-1 max-w-xs">
+                            <span className="font-medium text-foreground text-sm line-clamp-1 max-w-xs">
                               {product.name}
                             </span>
                           </div>
                         </td>
-                        <td className="p-4">
-                          <span className="text-sm text-muted-foreground">
+                        <td className="p-2">
+                          <span className="text-xs text-muted-foreground">
                             {categories.find(c => c.slug === product.category)?.name || product.category}
                           </span>
                         </td>
-                        <td className="p-4 text-muted-foreground">
+                        <td className="p-2 text-muted-foreground text-sm">
                           {product.costPrice ? formatPrice(product.costPrice) : '-'}
                         </td>
-                        <td className="p-4 font-semibold text-primary">
+                        <td className="p-2 font-semibold text-primary text-sm">
                           {formatPrice(product.price)}
                         </td>
-                        <td className="p-4">
+                        <td className="p-2">
                           <span className={`px-2 py-1 rounded text-sm ${
                             (product.stock || 0) > 5 
                               ? 'bg-green-100 text-green-800' 
@@ -1200,11 +1200,11 @@ const AdminPage = () => {
                             {product.stock || 0}
                           </span>
                         </td>
-                        <td className="p-4">
-                          <div className="flex items-center gap-2">
+                        <td className="p-2">
+                          <div className="flex items-center gap-1">
                             <button
                               onClick={() => handleEdit(product)}
-                              className="p-2 hover:bg-secondary rounded-lg transition-colors"
+                              className="p-1.5 hover:bg-secondary rounded-lg transition-colors"
                             >
                               <Edit className="w-4 h-4 text-muted-foreground" />
                             </button>
@@ -1215,7 +1215,7 @@ const AdminPage = () => {
                                   toast({ title: 'Produto excluído!' });
                                 }
                               }}
-                              className="p-2 hover:bg-destructive/10 rounded-lg transition-colors"
+                              className="p-1.5 hover:bg-destructive/10 rounded-lg transition-colors"
                             >
                               <Trash2 className="w-4 h-4 text-destructive" />
                             </button>

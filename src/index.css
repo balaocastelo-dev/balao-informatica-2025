@@ -124,6 +124,9 @@
   .container-balao {
     @apply w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
   }
+  .container-admin {
+    @apply w-full max-w-[100%] mx-auto px-2 sm:px-4 lg:px-6;
+  }
 
   .btn-primary {
     @apply bg-primary text-primary-foreground font-semibold px-6 py-3 rounded-lg 
