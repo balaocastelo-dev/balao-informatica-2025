@@ -144,17 +144,47 @@ const ChatBot = () => {
       const decoder = new TextDecoder();
       setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
 
+      let sseBuffer = '';
+      let assistantText = '';
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         const chunk = decoder.decode(value, { stream: true });
-        assistantContent += chunk;
-        setMessages(prev => {
-          const arr = [...prev];
-          arr[arr.length - 1] = { role: 'assistant', content: assistantContent };
-          return arr;
-        });
+        sseBuffer += chunk;
+
+        const lines = sseBuffer.split(/\r?\n/);
+        // Keep last line if not terminated by newline
+        sseBuffer = lines[lines.length - 1]?.trim() ? lines[lines.length - 1] : '';
+
+        for (let i = 0; i < lines.length - 1; i++) {
+          const line = lines[i].trim();
+          if (!line) continue;
+          if (line === 'data: [DONE]') continue;
+          if (line.startsWith('data:')) {
+            const payload = line.slice(5).trim();
+            if (!payload) continue;
+            try {
+              const json = JSON.parse(payload);
+              const choice = (json?.choices || [])[0];
+              const delta = choice?.delta;
+              const contentPiece = typeof delta?.content === 'string' ? delta.content : '';
+              if (contentPiece) {
+                assistantText += contentPiece;
+                setMessages(prev => {
+                  const arr = [...prev];
+                  arr[arr.length - 1] = { role: 'assistant', content: assistantText };
+                  return arr;
+                });
+              }
+            } catch {
+              // ignore non-JSON or partial frames
+            }
+          } else {
+            // ignore non-SSE lines like "OPENROUTER PROCESSING"
+          }
+        }
       }
+      assistantContent = assistantText || assistantContent;
     } catch {
       setMessages(prev => [
         ...prev,
