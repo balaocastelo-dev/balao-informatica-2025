@@ -115,9 +115,9 @@ const CategoryPage = () => {
         { name: 'Home', url: 'https://www.balaodainformatica.com.br' },
         { name: pageTitle, url: categoryUrl }
       ]} />
-      <div className="container-balao py-8 sm:py-12">
+      <div className="container-balao py-4 sm:py-6">
         {/* Header */}
-        <div className="mb-6">
+        <div className="mb-4">
           <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-2">
             {pageTitle}
           </h1>

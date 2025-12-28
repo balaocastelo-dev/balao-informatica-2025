@@ -110,9 +110,9 @@ export default function ProductPage() {
           Voltar
         </Button>
 
-        <div className="grid md:grid-cols-2 gap-6 items-center min-h-[calc(100vh-220px)]">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center md:min-h-[calc(100vh-220px)]">
           <div className="bg-card rounded-lg p-3 flex items-center justify-center">
-            <img src={product.image} alt={product.name} className="w-full h-auto max-h-[60vh] object-contain" />
+            <img src={product.image} alt={product.name} className="w-full h-auto max-h-[45vh] md:max-h-[60vh] object-contain" />
           </div>
 
           <div className="space-y-4">

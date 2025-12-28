@@ -10,12 +10,12 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Trash2, Plus, Minus, ShoppingBag, MessageCircle, CreditCard, Loader2, User, ArrowLeft, ArrowRight, MapPin, QrCode } from 'lucide-react';
+import { Trash2, Plus, Minus, ShoppingBag, CreditCard, Loader2, User, ArrowLeft, ArrowRight, MapPin, QrCode } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button as UiButton } from '@/components/ui/button';
 
-const WHATSAPP_NUMBER = '5519987510267';
+ 
 
 interface CustomerData {
   name: string;
@@ -214,30 +214,7 @@ const CartPage = () => {
     setCustomerData(prev => ({ ...prev, phone: formatted }));
   };
 
-  const generateWhatsAppMessage = () => {
-    const fullAddress = getFullAddress();
-    let message = '🛒 *Orçamento - Balão da Informática*\n\n';
-    
-    message += `👤 *Dados do Cliente:*\n`;
-    message += `Nome: ${customerData.name}\n`;
-    message += `Email: ${customerData.email}\n`;
-    message += `Telefone: ${customerData.phone}\n`;
-    message += `Endereço: ${fullAddress}\n\n`;
-    
-    message += `📦 *Produtos:*\n`;
-    items.forEach((item, index) => {
-      message += `${index + 1}. ${item.product.name}\n`;
-      message += `   Qtd: ${item.quantity} x ${formatPrice(item.product.price)}\n`;
-      message += `   Subtotal: ${formatPrice(item.product.price * item.quantity)}\n\n`;
-    });
-    
-    message += `━━━━━━━━━━━━━━━\n`;
-    message += `*TOTAL: ${formatPrice(total)}*\n`;
-    message += `━━━━━━━━━━━━━━━\n\n`;
-    message += `Gostaria de finalizar este pedido!`;
-    
-    return encodeURIComponent(message);
-  };
+ 
 
   const createOrderAndNotify = async (paymentMethod: string) => {
     if (!validateForm()) {
@@ -317,17 +294,7 @@ const CartPage = () => {
     }
   };
 
-  const handleWhatsAppCheckout = async () => {
-    const order = await createOrderAndNotify('whatsapp');
-    if (!order) return;
-
-    const message = generateWhatsAppMessage();
-    const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`;
-    
-    clearCart();
-    toast({ title: 'Pedido criado!', description: 'Redirecionando para o WhatsApp...' });
-    window.location.href = whatsappUrl;
-  };
+ 
 
   const handleOnlinePayment = async () => {
     if (!validateForm()) {
@@ -471,7 +438,7 @@ const CartPage = () => {
   if (items.length === 0) {
     return (
       <Layout>
-        <div className="container-balao py-12">
+        <div className="container-balao py-6">
           <div className="max-w-md mx-auto text-center">
             <ShoppingBag className="w-20 h-20 mx-auto text-muted-foreground mb-6" />
             <h1 className="text-2xl font-bold text-foreground mb-4">
@@ -494,7 +461,7 @@ const CartPage = () => {
 
     return (
       <Layout>
-        <div className="container-balao py-8 sm:py-12">
+        <div className="container-balao py-4 sm:py-6">
           <Button
             variant="ghost"
             onClick={() => setShowCheckoutForm(false)}
@@ -764,7 +731,7 @@ const CartPage = () => {
 
   return (
     <Layout>
-      <div className="container-balao py-8 sm:py-12">
+      <div className="container-balao py-4 sm:py-6">
         <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-8">
           Carrinho de Compras
         </h1>
