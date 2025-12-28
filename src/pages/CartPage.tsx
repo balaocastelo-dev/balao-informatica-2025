@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Trash2, Plus, Minus, ShoppingBag, CreditCard, Loader2, User, ArrowLeft, ArrowRight, MapPin, Wrench } from 'lucide-react';
+import { Trash2, Plus, Minus, ShoppingBag, CreditCard, Loader2, User, ArrowLeft, ArrowRight, MapPin, QrCode, Wrench } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button as UiButton } from '@/components/ui/button';
@@ -53,6 +53,9 @@ const CartPage = () => {
   const [currentStep, setCurrentStep] = useState<number>(1);
   // PIX removido do checkout
   const [showConfetti, setShowConfetti] = useState(false);
+  const [pixEnabled, setPixEnabled] = useState<boolean>(false);
+  const [showPixDialog, setShowPixDialog] = useState<boolean>(false);
+  const [pixData, setPixData] = useState<{ qr_code_base64?: string; qr_code?: string; ticket_url?: string; status?: string; date_of_expiration?: string | null }>({});
   const [customerData, setCustomerData] = useState<CustomerData>({
     name: profile?.full_name || '',
     email: profile?.email || user?.email || '',
@@ -70,6 +73,13 @@ const CartPage = () => {
     if (showCheckoutForm) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+    try {
+      const saved = localStorage.getItem('mercadopago_settings');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        setPixEnabled(!!parsed.pixEnabled);
+      }
+    } catch {}
   }, [showCheckoutForm]);
 
   const formatPrice = (price: number) => {
@@ -339,14 +349,7 @@ const CartPage = () => {
         throw new Error('Erro ao criar pedido');
       }
 
-      const providerRaw = localStorage.getItem('payment_provider_settings');
-      const provider = providerRaw ? JSON.parse(providerRaw) : { provider: 'mercadopago' };
       let fnName = 'mercadopago-payment';
-      if (provider?.provider === 'digitalmanager') {
-        fnName = 'digitalmanager-payment';
-      } else if (provider?.provider === 'stripe') {
-        fnName = 'stripe-payment';
-      }
       const { data: paymentData, error: paymentError } = await supabase.functions.invoke(fnName, {
         body: {
           items: orderItems,
@@ -418,6 +421,94 @@ const CartPage = () => {
         description: 'Ocorreu um erro ao processar o pedido. Tente novamente.', 
         variant: 'destructive' 
       });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handlePixPayment = async () => {
+    if (!validateForm()) {
+      toast({ title: 'Preencha todos os campos corretamente', variant: 'destructive' });
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const orderItems = items.map(item => ({
+        id: item.product.id,
+        name: item.product.name,
+        price: item.product.price,
+        quantity: item.quantity,
+        image: item.product.image,
+      }));
+      const fullAddress = getFullAddress();
+
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          user_id: user?.id || null,
+          items: orderItems,
+          total: total,
+          payment_method: 'pix',
+          payment_status: 'pending',
+          status: 'pending',
+          customer_name: customerData.name.trim(),
+          customer_email: customerData.email.trim(),
+          customer_phone: customerData.phone.trim(),
+          customer_address: fullAddress,
+          shipping_address: fullAddress,
+        })
+        .select()
+        .single();
+
+      if (orderError) {
+        throw new Error('Erro ao criar pedido');
+      }
+
+      const { data: paymentData, error: paymentError } = await supabase.functions.invoke('mercadopago-payment', {
+        body: {
+          items: orderItems,
+          customer_name: customerData.name.trim(),
+          customer_email: customerData.email.trim(),
+          customer_phone: customerData.phone.trim(),
+          customer_address: fullAddress,
+          order_id: order.id,
+          payment_method: 'pix',
+        },
+      });
+
+      if (paymentError || !paymentData?.pix) {
+        toast({ title: 'Erro no pagamento PIX', description: 'Não foi possível gerar o QR Code.', variant: 'destructive' });
+        return;
+      }
+
+      setPixData(paymentData.pix);
+      setShowPixDialog(true);
+      clearCart();
+      toast({ title: 'Pedido criado!', description: 'Use o QR Code para pagar via PIX.' });
+
+      try {
+        await supabase.functions.invoke('notify-order', {
+          body: {
+            customer_email: customerData.email.trim(),
+            customer_name: customerData.name.trim(),
+            customer_phone: customerData.phone.trim(),
+            customer_address: fullAddress,
+            order_id: order.id,
+            items: orderItems,
+            total: total,
+            payment_method: 'pix',
+            payment_status: 'pending',
+          },
+        });
+        try {
+          await supabase.functions.invoke('bling-sync-order', {
+            body: { order_id: order.id },
+          });
+        } catch (_) {}
+      } catch {}
+    } catch (error) {
+      toast({ title: 'Erro', description: 'Ocorreu um erro ao processar o pedido.', variant: 'destructive' });
     } finally {
       setIsProcessing(false);
     }
@@ -703,8 +794,24 @@ const CartPage = () => {
                   ) : (
                     <CreditCard className="w-5 h-5" />
                   )}
-                  Pagar com Cartão (Mercado Livre / Mercado Pago)
+                  Pagar com Cartão (Mercado Pago)
                 </Button>
+                {pixEnabled && (
+                  <Button
+                    variant="outline"
+                    onClick={handlePixPayment}
+                    disabled={isProcessing || currentStep < 6}
+                    className="w-full gap-2"
+                    size="lg"
+                  >
+                    {isProcessing ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <QrCode className="w-5 h-5" />
+                    )}
+                    Pagar com PIX (Mercado Pago)
+                  </Button>
+                )}
               </div>
 
               <p className="text-xs text-muted-foreground text-center">
@@ -713,7 +820,34 @@ const CartPage = () => {
             </div>
           </div>
         </div>
-        {/* PIX removido do checkout */}
+        <Dialog open={showPixDialog} onOpenChange={setShowPixDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <QrCode className="w-5 h-5" />
+                PIX
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              {pixData.qr_code_base64 && (
+                <img src={`data:image/png;base64,${pixData.qr_code_base64}`} alt="QR Code PIX" className="mx-auto w-56 h-56" />
+              )}
+              {pixData.qr_code && (
+                <Textarea readOnly value={pixData.qr_code} />
+              )}
+              <div className="flex gap-2">
+                {pixData.ticket_url && (
+                  <Button asChild className="flex-1">
+                    <a href={pixData.ticket_url} target="_blank" rel="noopener noreferrer">Abrir Comprovante</a>
+                  </Button>
+                )}
+                <Button variant="outline" className="flex-1" onClick={() => navigator.clipboard.writeText(pixData.qr_code || '')}>
+                  Copiar Código
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </Layout>
     );
   }

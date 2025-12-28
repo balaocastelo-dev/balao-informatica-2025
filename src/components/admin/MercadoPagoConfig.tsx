@@ -32,9 +32,7 @@ interface MercadoPagoSettings {
 }
 
 interface PaymentProviderSettings {
-  provider: 'mercadopago' | 'digitalmanager' | 'cora' | 'stripe';
-  dmgApiUrl: string;
-  dmgApiKey: string;
+  provider: 'mercadopago';
 }
 
 export function MercadoPagoConfig() {
@@ -47,8 +45,6 @@ export function MercadoPagoConfig() {
   });
   const [providerSettings, setProviderSettings] = useState<PaymentProviderSettings>({
     provider: 'mercadopago',
-    dmgApiUrl: 'https://digitalmanager.guru',
-    dmgApiKey: '',
   });
   const [showAccessToken, setShowAccessToken] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -73,17 +69,7 @@ export function MercadoPagoConfig() {
       const prov = localStorage.getItem('payment_provider_settings');
       if (prov) {
         const parsedProv = JSON.parse(prov);
-        setProviderSettings(parsedProv);
-        if (parsedProv.provider === 'digitalmanager') {
-          setIsConnected(!!parsedProv.dmgApiKey);
-        } else if (parsedProv.provider === 'stripe') {
-          try {
-            const { data } = await supabase.functions.invoke('stripe-status');
-            setIsConnected(!!data?.configured);
-          } catch {
-            setIsConnected(false);
-          }
-        }
+        setProviderSettings({ provider: 'mercadopago' });
       }
     } catch (error) {
       console.error('Error loading settings:', error);
@@ -102,40 +88,12 @@ export function MercadoPagoConfig() {
         });
         return;
       }
-    } else if (providerSettings.provider === 'digitalmanager') {
-      if (!providerSettings.dmgApiKey) {
-        toast({
-          title: 'Campos obrigatórios',
-          description: 'Informe a chave da Digital Manager',
-          variant: 'destructive',
-        });
-        return;
-      }
-    } else if (providerSettings.provider === 'stripe') {
-      try {
-        const { data } = await supabase.functions.invoke('stripe-status');
-        if (!data?.configured) {
-          toast({
-            title: 'Stripe não configurado',
-            description: 'Defina STRIPE_SECRET_KEY e STRIPE_PUBLISHABLE_KEY nas funções.',
-            variant: 'destructive',
-          });
-          return;
-        }
-      } catch {
-        toast({
-          title: 'Erro ao verificar Stripe',
-          description: 'Não foi possível validar a configuração do Stripe.',
-          variant: 'destructive',
-        });
-        return;
-      }
     }
 
     setIsSaving(true);
     try {
       localStorage.setItem('mercadopago_settings', JSON.stringify(settings));
-      localStorage.setItem('payment_provider_settings', JSON.stringify(providerSettings));
+      localStorage.setItem('payment_provider_settings', JSON.stringify({ provider: 'mercadopago' }));
       setIsConnected(true);
       toast({
         title: 'Configurações salvas!',
@@ -165,8 +123,6 @@ export function MercadoPagoConfig() {
     });
     setProviderSettings({
       provider: 'mercadopago',
-      dmgApiUrl: 'https://digitalmanager.guru',
-      dmgApiKey: '',
     });
     setIsConnected(false);
     toast({
@@ -239,54 +195,12 @@ export function MercadoPagoConfig() {
             <CardContent className="space-y-4">
               <div className="flex items-center gap-3">
                 <button
-                  className={`px-3 py-2 rounded border ${providerSettings.provider === 'mercadopago' ? 'bg-primary text-primary-foreground border-primary' : 'bg-card border-border'}`}
-                  onClick={() => setProviderSettings(prev => ({ ...prev, provider: 'mercadopago' }))}
+                  className="px-3 py-2 rounded border bg-primary text-primary-foreground border-primary"
+                  onClick={() => setProviderSettings({ provider: 'mercadopago' })}
                 >
                   Mercado Pago
                 </button>
-                <button
-                  className={`px-3 py-2 rounded border ${providerSettings.provider === 'digitalmanager' ? 'bg-primary text-primary-foreground border-primary' : 'bg-card border-border'}`}
-                  onClick={() => setProviderSettings(prev => ({ ...prev, provider: 'digitalmanager' }))}
-                >
-                  Digital Manager Guru
-                </button>
-                <button
-                  className={`px-3 py-2 rounded border ${providerSettings.provider === 'cora' ? 'bg-primary text-primary-foreground border-primary' : 'bg-card border-border'}`}
-                  onClick={() => setProviderSettings(prev => ({ ...prev, provider: 'cora' }))}
-                >
-                  Cora Bank (PIX)
-                </button>
-                <button
-                  className={`px-3 py-2 rounded border ${providerSettings.provider === 'stripe' ? 'bg-primary text-primary-foreground border-primary' : 'bg-card border-border'}`}
-                  onClick={() => setProviderSettings(prev => ({ ...prev, provider: 'stripe' }))}
-                >
-                  Stripe
-                </button>
               </div>
-              {providerSettings.provider === 'digitalmanager' && (
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="dmgUrl">URL</Label>
-                    <Input
-                      id="dmgUrl"
-                      type="text"
-                      value={providerSettings.dmgApiUrl}
-                      onChange={(e) => setProviderSettings({ ...providerSettings, dmgApiUrl: e.target.value })}
-                      placeholder="https://digitalmanager.guru"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="dmgKey">Chave API</Label>
-                    <Input
-                      id="dmgKey"
-                      type="text"
-                      value={providerSettings.dmgApiKey}
-                      onChange={(e) => setProviderSettings({ ...providerSettings, dmgApiKey: e.target.value })}
-                      placeholder="Cole sua chave API"
-                    />
-                  </div>
-                </div>
-              )}
             </CardContent>
           </Card>
           <Card>
