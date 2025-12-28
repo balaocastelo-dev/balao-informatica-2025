@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Send, User, Loader2, ShoppingCart } from 'lucide-react';
+import { X, Send, User, Loader2, ShoppingCart, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -34,6 +34,54 @@ const ChatBot = () => {
   const formatPrice = (price: number) =>
     price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   const clarifyText = 'Me diz rapidinho: é para jogos, trabalho ou estudo? E qual faixa de preço?';
+  const clearHistory = () => {
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(STORAGE_SESSION);
+    setMessages([
+      { role: 'assistant', content: 'Olá! Sou o Balão Expert. ' + clarifyText }
+    ]);
+    setHasGreeted(true);
+    localStorage.setItem(STORAGE_SESSION, crypto.randomUUID());
+  };
+
+  const inferIntent = (text: string): { category?: string; budget?: number; query: string } => {
+    const t = text.toLowerCase();
+    const catMap: Record<string, string> = {
+      'impressora': 'impressoras',
+      'notebook': 'notebooks',
+      'pc gamer': 'pc-gamer',
+      'pc office': 'pc-office',
+      'placa de vídeo': 'placa-de-video',
+      'placas de vídeo': 'placa-de-video',
+      'gpu': 'placa-de-video',
+      'placa mae': 'placas-mae',
+      'placa-mãe': 'placas-mae',
+      'memoria': 'memoria-ram',
+      'memória': 'memoria-ram',
+      'ram': 'memoria-ram',
+      'ssd': 'ssd-hd',
+      'hd': 'ssd-hd',
+      'fonte': 'fontes',
+      'gabinete': 'gabinetes',
+      'cooler': 'coolers',
+      'monitor': 'monitores',
+      'console': 'consoles',
+      'iphone': 'iphone',
+      'ipad': 'ipad',
+      'macbook': 'macbook',
+      'apple': 'apple',
+    };
+    let category: string | undefined;
+    for (const key of Object.keys(catMap)) {
+      if (t.includes(key)) {
+        category = catMap[key];
+        break;
+      }
+    }
+    const budgetMatch = t.match(/(\d{3,6})(?:\s*|,|\.|k|\s*mil)?/);
+    const budget = budgetMatch ? Number(budgetMatch[1]) : undefined;
+    return { category, budget, query: text };
+  };
 
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -99,7 +147,18 @@ const ChatBot = () => {
     setInput('');
 
     try {
-      const suggestions = searchLocalProducts(userMessage.content);
+      const intent = inferIntent(userMessage.content);
+      let suggestions = searchLocalProducts(intent.query, intent.category);
+      if (suggestions.length === 0 && intent.category) {
+        // fallback: top items in category
+        suggestions = products
+          .filter(p => (p.stock ?? 0) > 0 && p.category === intent.category)
+          .slice(0, 10);
+      }
+      if (suggestions.length === 0) {
+        // fallback: general top items
+        suggestions = products.filter(p => (p.stock ?? 0) > 0).slice(0, 10);
+      }
       if (suggestions.length > 0) {
         setMessages(prev => [
           ...prev,
@@ -109,12 +168,18 @@ const ChatBot = () => {
       }
     } catch {}
 
-    setMessages(prev => [
-      ...prev,
-      { role: 'assistant', content: clarifyText }
-    ]);
+    // If truly nothing found (edge-case), keep a minimal clarification without repeating
+    if (!hasGreeted) {
+      setMessages(prev => [
+        ...prev,
+        { role: 'assistant', content: clarifyText }
+      ]);
+      setHasGreeted(true);
+    }
 
-    setIsLoading(true);
+    if (ASSISTANT_ENABLED) {
+      setIsLoading(true);
+    }
     let assistantContent = '';
     try {
       if (!ASSISTANT_ENABLED) {
@@ -255,6 +320,18 @@ const ChatBot = () => {
               className="text-primary-foreground hover:bg-primary-foreground/20"
             >
               <X className="h-5 w-5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                clearHistory();
+              }}
+              className="text-primary-foreground hover:bg-primary-foreground/20"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Limpar histórico
             </Button>
           </div>
 
