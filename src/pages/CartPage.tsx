@@ -368,7 +368,9 @@ const CartPage = () => {
 
       if (provider?.provider === 'mercadopago' && paymentMethod === 'pix') {
         if (!paymentData?.pix) {
-          toast({ title: 'Erro no pagamento', description: 'PIX indisponível', variant: 'destructive' });
+          setPixData(null);
+          setShowPixModal(true);
+          toast({ title: 'PIX indisponível', description: 'Use a chave fixa abaixo para concluir o pagamento.', variant: 'destructive' });
           return;
         }
         setPixData({
@@ -376,7 +378,7 @@ const CartPage = () => {
           qr_code: paymentData.pix.qr_code,
           ticket_url: paymentData.pix.ticket_url,
         });
-        toast({ title: 'Pedido criado!', description: 'Escaneie o QR Code para pagar' });
+        toast({ title: 'Pedido criado!', description: 'Escaneie o QR Code ou use Copia e Cola' });
         setShowPixModal(true);
         return;
       }

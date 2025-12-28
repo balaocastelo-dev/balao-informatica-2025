@@ -172,23 +172,22 @@ const ChatBot = () => {
 
     try {
       const intent = inferIntent(userMessage.content);
-      setChatContext(prev => ({
-        category: intent.category || prev.category,
-        usage: intent.usage || prev.usage,
-        budget: intent.budget || prev.budget
-      }));
+      const nextContext = {
+        category: intent.category ?? chatContext.category,
+        usage: intent.usage ?? chatContext.usage,
+        budget: intent.budget ?? chatContext.budget
+      };
+      setChatContext(nextContext);
       const usageCategoryMap: Record<string, string> = {
         'jogos': 'pc-gamer',
         'trabalho': 'pc-office',
         'estudo': 'notebooks'
       };
       const derivedCategory =
-        intent.category ||
-        chatContext.category ||
-        (intent.usage ? usageCategoryMap[intent.usage] : undefined) ||
-        (chatContext.usage ? usageCategoryMap[chatContext.usage] : undefined);
-      const needsUsage = !intent.usage && !chatContext.usage && !derivedCategory;
-      const needsBudget = !intent.budget && !chatContext.budget;
+        nextContext.category ||
+        (nextContext.usage ? usageCategoryMap[nextContext.usage] : undefined);
+      const needsUsage = !nextContext.usage && !derivedCategory;
+      const needsBudget = !nextContext.budget;
       if (needsUsage && !askedUsage) {
         setAskedUsage(true);
         setMessages(prev => [...prev, { role: 'assistant', content: 'É para jogos, trabalho ou estudo?' }]);
