@@ -342,6 +342,11 @@ const CartPage = () => {
       const providerRaw = localStorage.getItem('payment_provider_settings');
       const provider = providerRaw ? JSON.parse(providerRaw) : { provider: 'mercadopago' };
       let fnName = 'mercadopago-payment';
+      if (provider?.provider === 'digitalmanager') {
+        fnName = 'digitalmanager-payment';
+      } else if (provider?.provider === 'stripe') {
+        fnName = 'stripe-payment';
+      }
       const { data: paymentData, error: paymentError } = await supabase.functions.invoke(fnName, {
         body: {
           items: orderItems,
@@ -390,11 +395,7 @@ const CartPage = () => {
         console.error('Error sending notification:', emailError);
       }
 
-      if (provider?.provider === 'digitalmanager') {
-        if (!paymentData?.checkout_url) {
-          toast({ title: 'Erro no pagamento', description: 'Checkout indisponível', variant: 'destructive' });
-          return;
-        }
+      if (paymentData?.checkout_url) {
         clearCart();
         toast({ title: 'Pedido criado!', description: 'Redirecionando para o pagamento...' });
         window.location.href = paymentData.checkout_url;

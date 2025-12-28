@@ -21,5 +21,8 @@ verify_jwt = false
 [functions.stripe-status]
 verify_jwt = false
 
+[functions.stripe-payment]
+verify_jwt = false
+
 [functions.asaas-wallet]
 verify_jwt = false

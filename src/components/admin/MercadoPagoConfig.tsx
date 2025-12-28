@@ -32,7 +32,7 @@ interface MercadoPagoSettings {
 }
 
 interface PaymentProviderSettings {
-  provider: 'mercadopago' | 'digitalmanager' | 'cora';
+  provider: 'mercadopago' | 'digitalmanager' | 'cora' | 'stripe';
   dmgApiUrl: string;
   dmgApiKey: string;
 }
@@ -76,6 +76,13 @@ export function MercadoPagoConfig() {
         setProviderSettings(parsedProv);
         if (parsedProv.provider === 'digitalmanager') {
           setIsConnected(!!parsedProv.dmgApiKey);
+        } else if (parsedProv.provider === 'stripe') {
+          try {
+            const { data } = await supabase.functions.invoke('stripe-status');
+            setIsConnected(!!data?.configured);
+          } catch {
+            setIsConnected(false);
+          }
         }
       }
     } catch (error) {
@@ -95,11 +102,30 @@ export function MercadoPagoConfig() {
         });
         return;
       }
-    } else {
+    } else if (providerSettings.provider === 'digitalmanager') {
       if (!providerSettings.dmgApiKey) {
         toast({
           title: 'Campos obrigatórios',
           description: 'Informe a chave da Digital Manager',
+          variant: 'destructive',
+        });
+        return;
+      }
+    } else if (providerSettings.provider === 'stripe') {
+      try {
+        const { data } = await supabase.functions.invoke('stripe-status');
+        if (!data?.configured) {
+          toast({
+            title: 'Stripe não configurado',
+            description: 'Defina STRIPE_SECRET_KEY e STRIPE_PUBLISHABLE_KEY nas funções.',
+            variant: 'destructive',
+          });
+          return;
+        }
+      } catch {
+        toast({
+          title: 'Erro ao verificar Stripe',
+          description: 'Não foi possível validar a configuração do Stripe.',
           variant: 'destructive',
         });
         return;
@@ -229,6 +255,12 @@ export function MercadoPagoConfig() {
                   onClick={() => setProviderSettings(prev => ({ ...prev, provider: 'cora' }))}
                 >
                   Cora Bank (PIX)
+                </button>
+                <button
+                  className={`px-3 py-2 rounded border ${providerSettings.provider === 'stripe' ? 'bg-primary text-primary-foreground border-primary' : 'bg-card border-border'}`}
+                  onClick={() => setProviderSettings(prev => ({ ...prev, provider: 'stripe' }))}
+                >
+                  Stripe
                 </button>
               </div>
               {providerSettings.provider === 'digitalmanager' && (
