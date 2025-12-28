@@ -82,11 +82,10 @@ export function HeroBanner({ singleBanner = false }: HeroBannerProps) {
     return bannerImageMap[imageUrl] || imageUrl;
   };
 
-  // Skeleton Loading ajustado para a nova altura mobile
+  // Skeleton Loading ajustado para altura mobile menor
   if (banners.length === 0) {
     return (
-      // Altura inicial maior no mobile (h-64 = 256px)
-      <div className="w-full h-64 md:aspect-[21/9] bg-zinc-100 animate-pulse rounded-2xl" />
+      <div className="w-full h-32 sm:h-40 md:aspect-[21/9] bg-zinc-100 animate-pulse rounded-2xl" />
     );
   }
 
@@ -103,18 +102,13 @@ export function HeroBanner({ singleBanner = false }: HeroBannerProps) {
         <CarouselContent>
           {banners.map((banner) => (
             <CarouselItem key={banner.id} className="pl-0">
-              {/* CORREÇÃO DE ALTURA DO CONTAINER:
-                 - h-[250px]: Define uma altura fixa e alta para Celulares (aprox. o dobro do anterior).
-                 - sm:h-[350px]: Altura para tablets.
-                 - md:h-auto: A partir de notebooks/PC, volta a usar a altura automática baseada na proporção da imagem.
-              */}
-              <div className="relative w-full h-[250px] sm:h-[350px] md:h-auto overflow-hidden group rounded-2xl">
+              <div className="relative w-full h-32 sm:h-40 md:h-auto overflow-hidden group rounded-2xl">
                 {banner.link ? (
                   <Link to={banner.link} className="block w-full h-full md:h-auto">
                     <img
                       src={getResolvedImageUrl(banner.image_mobile_url || banner.image_url)}
                       alt={banner.title || "Banner Balão da Informática"}
-                      className="block md:hidden w-full h-full object-fill transition-transform duration-700 group-hover:scale-[1.01]"
+                      className="block md:hidden w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.01]"
                       loading="eager"
                     />
                     <img
@@ -129,7 +123,7 @@ export function HeroBanner({ singleBanner = false }: HeroBannerProps) {
                     <img
                       src={getResolvedImageUrl(banner.image_mobile_url || banner.image_url)}
                       alt={banner.title || "Banner Balão da Informática"}
-                      className="block md:hidden w-full h-full object-fill"
+                      className="block md:hidden w-full h-full object-cover"
                       loading="eager"
                     />
                     <img

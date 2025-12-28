@@ -288,7 +288,7 @@ const Index = () => {
                         <img
                           src={getResolvedImageUrl(betweenBanner.image_mobile_url || betweenBanner.image_url)}
                           alt={betweenBanner.title || "Oferta Especial"}
-                          className="block md:hidden w-full h-auto object-cover"
+                          className="block md:hidden w-full h-32 sm:h-40 object-cover"
                           loading="lazy"
                         />
                         <img
@@ -337,7 +337,7 @@ const Index = () => {
                         <img
                           src={getResolvedImageUrl(banner.image_mobile_url || banner.image_url)}
                           alt={banner.title || "Promoção"}
-                          className="block md:hidden w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                          className="block md:hidden w-full h-32 sm:h-40 object-cover group-hover:scale-105 transition-transform duration-700"
                         />
                         <img
                           src={getResolvedImageUrl(banner.image_url)}
