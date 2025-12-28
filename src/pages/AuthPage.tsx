@@ -9,17 +9,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 
 export default function AuthPage() {
-  const { user, isLoading, signInWithGoogle, signInWithPhoneOtp, verifyPhoneOtp } = useAuth();
+  const { user, isLoading, signInWithGoogle, signInWithEmailPassword, signUpWithEmailPassword } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const redirectTo = useMemo(() => searchParams.get('redirect') || '/', [searchParams]);
 
-  const [phone, setPhone] = useState('');
-  const [channel, setChannel] = useState<'sms' | 'whatsapp'>('sms');
-  const [otpSent, setOtpSent] = useState(false);
-  const [otp, setOtp] = useState('');
-  const [isSending, setIsSending] = useState(false);
-  const [isVerifying, setIsVerifying] = useState(false);
+  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (user && !isLoading) {
@@ -34,37 +34,36 @@ export default function AuthPage() {
     }
   };
 
-  const handleSendOtp = async () => {
-    const cleaned = phone.trim();
-    if (!cleaned) {
-      toast.error('Informe seu telefone (com DDI). Ex: +5511999999999');
+  const handleEmailAuth = async () => {
+    const cleanedEmail = email.trim();
+    if (!cleanedEmail || !password) {
+      toast.error('Informe email e senha.');
       return;
     }
-    setIsSending(true);
-    const { error } = await signInWithPhoneOtp(cleaned, channel);
-    setIsSending(false);
-    if (error) {
-      toast.error('Erro ao enviar código: ' + error.message);
-      return;
-    }
-    setOtpSent(true);
-    toast.success('Código enviado!');
-  };
 
-  const handleVerifyOtp = async () => {
-    const cleanedPhone = phone.trim();
-    const cleanedOtp = otp.trim();
-    if (!cleanedPhone || !cleanedOtp) {
-      toast.error('Informe telefone e código.');
+    if (mode === 'signup' && password !== confirmPassword) {
+      toast.error('As senhas não conferem.');
       return;
     }
-    setIsVerifying(true);
-    const { error } = await verifyPhoneOtp(cleanedPhone, cleanedOtp, channel);
-    setIsVerifying(false);
+
+    setIsSubmitting(true);
+    const { error } =
+      mode === 'signin'
+        ? await signInWithEmailPassword(cleanedEmail, password)
+        : await signUpWithEmailPassword(cleanedEmail, password, fullName.trim() || undefined);
+    setIsSubmitting(false);
+
     if (error) {
-      toast.error('Código inválido: ' + error.message);
+      toast.error('Erro: ' + error.message);
       return;
     }
+
+    if (mode === 'signup') {
+      toast.success('Conta criada! Você já pode entrar.');
+      setMode('signin');
+      return;
+    }
+
     toast.success('Login realizado!');
   };
 
@@ -94,7 +93,7 @@ export default function AuthPage() {
           <Tabs defaultValue="google" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="google">Google</TabsTrigger>
-              <TabsTrigger value="phone">Telefone</TabsTrigger>
+              <TabsTrigger value="email">Email/Senha</TabsTrigger>
             </TabsList>
 
             <TabsContent value="google" className="space-y-4 mt-4">
@@ -125,57 +124,69 @@ export default function AuthPage() {
               </Button>
             </TabsContent>
 
-            <TabsContent value="phone" className="space-y-4 mt-4">
-              <div className="space-y-2">
-                <Label>Telefone (com DDI)</Label>
-                <Input
-                  placeholder="+5511999999999"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                />
-              </div>
-
+            <TabsContent value="email" className="space-y-4 mt-4">
               <div className="flex gap-2">
                 <Button
                   type="button"
-                  variant={channel === 'sms' ? 'default' : 'secondary'}
+                  variant={mode === 'signin' ? 'default' : 'secondary'}
                   className="flex-1"
-                  onClick={() => setChannel('sms')}
+                  onClick={() => setMode('signin')}
                 >
-                  SMS
+                  Entrar
                 </Button>
                 <Button
                   type="button"
-                  variant={channel === 'whatsapp' ? 'default' : 'secondary'}
+                  variant={mode === 'signup' ? 'default' : 'secondary'}
                   className="flex-1"
-                  onClick={() => setChannel('whatsapp')}
+                  onClick={() => setMode('signup')}
                 >
-                  WhatsApp
+                  Criar conta
                 </Button>
               </div>
 
-              {!otpSent ? (
-                <Button onClick={handleSendOtp} className="w-full" disabled={isSending}>
-                  {isSending ? 'Enviando...' : 'Enviar código'}
-                </Button>
-              ) : (
-                <>
-                  <div className="space-y-2">
-                    <Label>Código</Label>
-                    <Input
-                      placeholder="123456"
-                      value={otp}
-                      onChange={(e) => setOtp(e.target.value)}
-                    />
-                  </div>
-                  <Button onClick={handleVerifyOtp} className="w-full" disabled={isVerifying}>
-                    {isVerifying ? 'Verificando...' : 'Verificar e entrar'}
-                  </Button>
-                  <Button onClick={handleSendOtp} variant="secondary" className="w-full" disabled={isSending}>
-                    Reenviar código
-                  </Button>
-                </>
+              {mode === 'signup' && (
+                <div className="space-y-2">
+                  <Label>Nome (opcional)</Label>
+                  <Input
+                    placeholder="Seu nome"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                  />
+                </div>
               )}
+
+              <div className="space-y-2">
+                <Label>Email</Label>
+                <Input
+                  placeholder="voce@exemplo.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Senha</Label>
+                <Input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+
+              {mode === 'signup' && (
+                <div className="space-y-2">
+                  <Label>Confirmar senha</Label>
+                  <Input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                  />
+                </div>
+              )}
+
+              <Button onClick={handleEmailAuth} className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? 'Aguarde...' : mode === 'signin' ? 'Entrar' : 'Criar conta'}
+              </Button>
             </TabsContent>
           </Tabs>
 

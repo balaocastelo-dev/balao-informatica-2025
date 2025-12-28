@@ -266,6 +266,11 @@ const CartPage = () => {
             payment_status: 'pending',
           },
         });
+        try {
+          await supabase.functions.invoke('bling-sync-order', {
+            body: { order_id: order.id },
+          });
+        } catch (_) {}
       } catch (emailError) {
         console.error('Error sending notification:', emailError);
         // Don't fail the order if email fails
@@ -383,6 +388,11 @@ const CartPage = () => {
             payment_status: 'pending',
           },
         });
+        try {
+          await supabase.functions.invoke('bling-sync-order', {
+            body: { order_id: order.id },
+          });
+        } catch (_) {}
       } catch (emailError) {
         console.error('Error sending notification:', emailError);
       }

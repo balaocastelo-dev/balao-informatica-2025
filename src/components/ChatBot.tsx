@@ -7,6 +7,7 @@ import { useProducts } from '@/contexts/ProductContext';
 import { toast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import chatbotImage from '@/assets/chatbot-robot.png';
+import type { Product } from '@/types/product';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -91,6 +92,7 @@ const ChatBot = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const { products } = useProducts();
   const navigate = useNavigate();
+  const [suggestions, setSuggestions] = useState<Product[]>([]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -108,6 +110,16 @@ const ChatBot = () => {
 
     const userMessage: Message = { role: 'user', content: input.trim() };
     setMessages(prev => [...prev, userMessage]);
+    try {
+      const terms = input.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+      const filtered = products
+        .filter(p => (p.stock || 0) > 0)
+        .filter(p => terms.every(t => p.name.toLowerCase().includes(t)))
+        .slice(0, 6);
+      setSuggestions(filtered);
+    } catch {
+      setSuggestions([]);
+    }
     setInput('');
     setIsLoading(true);
 
@@ -288,6 +300,31 @@ const ChatBot = () => {
                   )}
                 </div>
               ))}
+              {!isLoading && suggestions.length > 0 && (
+                <div className="mt-2 grid grid-cols-2 gap-3">
+                  {suggestions.map((p) => (
+                    <button
+                      key={p.id}
+                      onClick={() => { setIsOpen(false); navigate(`/produto/${p.id}`); }}
+                      className="text-left bg-muted rounded-lg overflow-hidden hover:ring-2 hover:ring-primary transition-shadow"
+                    >
+                      <div className="aspect-video bg-background flex items-center justify-center">
+                        {p.image ? (
+                          <img src={p.image} alt={p.name} className="w-full h-full object-contain" />
+                        ) : (
+                          <div className="text-xs text-muted-foreground">Sem imagem</div>
+                        )}
+                      </div>
+                      <div className="p-2">
+                        <div className="text-xs font-medium line-clamp-2">{p.name}</div>
+                        <div className="text-xs text-primary font-bold mt-1">
+                          {p.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
               {isLoading && messages[messages.length - 1]?.content === '' && (
                 <div className="flex gap-2 justify-start">
                   <img 
