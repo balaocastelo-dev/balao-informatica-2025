@@ -56,7 +56,11 @@ const getCategoryEmoji = (name: string, slug: string): string => {
   if (nameLower.includes('cadeira') || nameLower.includes('chair')) return '🪑';
   if (nameLower.includes('mesa') || nameLower.includes('desk')) return '🪑';
   if (nameLower.includes('n8n') || nameLower.includes('fluxo')) return '🔄';
-  if (nameLower.includes('outros')) return '📦';
+  if (nameLower.includes('entrega') || nameLower.includes('flash')) return '🚀';
+  if (nameLower.includes('segurança') || nameLower.includes('seguranca') || nameLower.includes('security')) return '🛡️';
+  if (nameLower.includes('energia')) return '🔋';
+  if (nameLower.includes('ventilação') || nameLower.includes('ventilacao')) return '🌬️';
+  if (nameLower.includes('outros')) return '🧩';
   if (nameLower.includes('todos')) return '🛒';
   
   return '📦';
@@ -92,7 +96,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
       {/* Sidebar */}
       <aside className={cn(
-        "fixed lg:fixed left-0 top-16 lg:top-20 h-[calc(100vh-4rem)] lg:h-[calc(100vh-5rem)] bg-background border-r border-border z-50 transition-transform duration-300 overflow-y-auto",
+        "fixed lg:sticky left-0 top-16 lg:top-20 h-[calc(100vh-4rem)] lg:h-[calc(100vh-5rem)] bg-background border-r border-border z-50 lg:z-10 transition-transform duration-300 overflow-y-auto",
         "w-64 lg:w-56 xl:w-64",
         "lg:translate-x-0",
         isOpen ? "translate-x-0" : "-translate-x-full"
