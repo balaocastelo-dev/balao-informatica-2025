@@ -119,10 +119,24 @@ export function ProductCard({ product, onClick, viewMode = 'grid' }: ProductCard
               Últimas!
             </span>
           )}
+          {Array.isArray(product.tags) && product.tags.length > 0 && (
+            <div className="absolute bottom-2 left-2 right-2 flex flex-wrap gap-1 z-10">
+              {product.tags.slice(0, 3).map((tag, i) => (
+                <span key={i} className="bg-secondary/80 text-foreground text-[10px] px-1.5 py-0.5 rounded">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
         
         <div className="p-3">
           <h3 className="text-xs font-medium text-foreground line-clamp-2 min-h-[32px]">{product.name}</h3>
+          {product.description && (
+            <p className="text-[10px] text-muted-foreground mt-1 line-clamp-2">
+              {product.description}
+            </p>
+          )}
           
           <div className="mt-2 space-y-1">
             <p className="text-sm font-bold text-primary">{formatPrice(product.price)}</p>
@@ -151,10 +165,24 @@ export function ProductCard({ product, onClick, viewMode = 'grid' }: ProductCard
             Últimas unidades!
           </span>
         )}
+        {Array.isArray(product.tags) && product.tags.length > 0 && (
+          <div className="absolute bottom-3 left-3 right-3 flex flex-wrap gap-1 z-10">
+            {product.tags.slice(0, 3).map((tag, i) => (
+              <span key={i} className="bg-secondary/80 text-foreground text-[11px] px-2 py-0.5 rounded">
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
       
       <div className="product-card-content">
         <h3 className="product-card-title">{product.name}</h3>
+        {product.description && (
+          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+            {product.description}
+          </p>
+        )}
         
         <div className="mt-auto pt-3 space-y-2">
           <p className="product-card-price">{formatPrice(product.price)}</p>

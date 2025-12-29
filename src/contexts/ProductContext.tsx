@@ -8,6 +8,7 @@ interface ProductContextType {
   loading: boolean;
   addProduct: (product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
   updateProduct: (id: string, product: Partial<Product>) => Promise<void>;
+  reprocessProductsWithAI: (ids: string[]) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
   deleteProducts: (ids: string[]) => Promise<void>;
   getProductsByCategory: (category: Category) => Product[];
@@ -213,6 +214,10 @@ export function ProductProvider({ children }: { children: ReactNode }) {
       if (updates.category !== undefined) dbUpdates.category = updates.category;
       if (updates.stock !== undefined) dbUpdates.stock = updates.stock;
       if (updates.sourceUrl !== undefined) dbUpdates.source_url = updates.sourceUrl;
+      if (updates.status !== undefined) dbUpdates.status = updates.status;
+      if (updates.tags !== undefined) dbUpdates.tags = updates.tags;
+      if (updates.aiGenerated !== undefined) dbUpdates.ai_generated = updates.aiGenerated;
+      if (updates.aiConfidence !== undefined) dbUpdates.ai_confidence = updates.aiConfidence;
       const existing = products.find(p => p.id === id);
       const textName = updates.name ?? existing?.name ?? '';
       const textDesc = updates.description ?? existing?.description ?? '';
@@ -251,6 +256,37 @@ export function ProductProvider({ children }: { children: ReactNode }) {
         title: "Erro ao atualizar produto",
         variant: "destructive",
       });
+      throw error;
+    }
+  };
+
+  const reprocessProductsWithAI = async (ids: string[]) => {
+    try {
+      for (const id of ids) {
+        const product = products.find(p => p.id === id);
+        if (!product) continue;
+        const name = product.name;
+        const isNotebook = /\b(notebook|laptop)\b/i.test(name);
+        const isMonitor = /\b(monitor|tela)\b/i.test(name);
+        const attrs = extractAttributes(name);
+        const confident = !!(attrs.ramGb || attrs.storageGb || attrs.screenInches);
+        const short =
+          isNotebook
+            ? `Notebook ${name} pensado para produtividade e mobilidade.`
+            : isMonitor
+            ? `Monitor ${name} com visual moderno para um setup organizado.`
+            : `Produto ${name} com excelente custo-benefício. Ideal para uso diário e tarefas comuns.`;
+        await updateProduct(id, {
+          description: short,
+          aiGenerated: true,
+          aiConfidence: confident ? 'medium' : 'low',
+          ...attrs,
+        });
+      }
+      toast({ title: "Produtos reprocessados com IA" });
+    } catch (error) {
+      console.error('Error reprocessing with AI:', error);
+      toast({ title: "Erro ao reprocessar com IA", variant: "destructive" });
       throw error;
     }
   };
@@ -520,6 +556,7 @@ export function ProductProvider({ children }: { children: ReactNode }) {
         loading,
         addProduct,
         updateProduct,
+        reprocessProductsWithAI,
         deleteProduct,
         deleteProducts,
         getProductsByCategory,
