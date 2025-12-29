@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const DEFAULT_ALLOWED_ORIGINS = [
   "https://www.balaodainformatica.com.br",
+  "https://www.balao.info",
   "http://localhost:8080",
   "http://127.0.0.1:8080",
 ];

@@ -49,7 +49,7 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    const origin = req.headers.get("origin") || "https://www.balaodainformatica.com.br";
+    const origin = req.headers.get("origin") || "https://www.balao.info";
     const redirectUri = `${origin}/bling/callback`;
 
     const state = crypto.randomUUID();
@@ -86,4 +86,3 @@ const handler = async (req: Request): Promise<Response> => {
 };
 
 serve(handler);
-

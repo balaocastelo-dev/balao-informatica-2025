@@ -820,7 +820,7 @@ const AdminPage = () => {
         <div className="bg-card rounded-2xl shadow-xl p-8 w-full max-w-md border border-border">
           <div className="text-center mb-8">
             <img
-              src="https://www.balaodainformatica.com.br/media/wysiwyg/balao500.png"
+              src="https://www.balao.info/media/wysiwyg/balao500.png"
               alt="Balão da Informática"
               className="h-16 mx-auto mb-4"
             />
@@ -877,9 +877,9 @@ const AdminPage = () => {
       <header className="bg-card border-b border-border sticky top-0 z-50">
         <div className="container-admin">
           <div className="flex items-center justify-between h-16">
-            <Link to="/">
+          <Link to="/">
               <img
-                src="https://www.balaodainformatica.com.br/media/wysiwyg/balao500.png"
+                src="https://www.balao.info/media/wysiwyg/balao500.png"
                 alt="Balão da Informática"
                 className="h-10 w-auto"
               />

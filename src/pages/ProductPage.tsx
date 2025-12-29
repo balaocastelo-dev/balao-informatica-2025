@@ -73,8 +73,8 @@ export default function ProductPage() {
     );
   }
 
-  const productUrl = `https://www.balaodainformatica.com.br/produto/${product.id}`;
-  const categoryUrl = `https://www.balaodainformatica.com.br/categoria/${product.category}`;
+  const productUrl = `https://www.balao.info/produto/${product.id}`;
+  const categoryUrl = `https://www.balao.info/categoria/${product.category}`;
 
   return (
     <Layout>
@@ -99,7 +99,7 @@ export default function ProductPage() {
       />
       <BreadcrumbSchema
         items={[
-          { name: "Home", url: "https://www.balaodainformatica.com.br" },
+          { name: "Home", url: "https://www.balao.info" },
           { name: product.category || "Produtos", url: categoryUrl },
           { name: product.name, url: productUrl },
         ]}

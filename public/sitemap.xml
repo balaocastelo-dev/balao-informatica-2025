@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <!-- Homepage -->
   <url>
-    <loc>https://www.balaodainformatica.com.br/</loc>
+    <loc>https://www.balao.info/</loc>
     <lastmod>2024-12-16</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
@@ -10,25 +10,25 @@
   
   <!-- Institutional Pages -->
   <url>
-    <loc>https://www.balaodainformatica.com.br/sobre</loc>
+    <loc>https://www.balao.info/sobre</loc>
     <lastmod>2024-12-16</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.balaodainformatica.com.br/carregador-de-notebook</loc>
+    <loc>https://www.balao.info/carregador-de-notebook</loc>
     <lastmod>2025-12-28</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://www.balaodainformatica.com.br/toner-para-impressora</loc>
+    <loc>https://www.balao.info/toner-para-impressora</loc>
     <lastmod>2025-12-28</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://www.balaodainformatica.com.br/licencas-microsoft</loc>
+    <loc>https://www.balao.info/licencas-microsoft</loc>
     <lastmod>2025-12-28</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
@@ -36,7 +36,7 @@
   
   <!-- PC Builder -->
   <url>
-    <loc>https://www.balaodainformatica.com.br/montar-pc</loc>
+    <loc>https://www.balao.info/montar-pc</loc>
     <lastmod>2024-12-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
@@ -44,55 +44,55 @@
   
   <!-- Main Categories -->
   <url>
-    <loc>https://www.balaodainformatica.com.br/categoria/todos</loc>
+    <loc>https://www.balao.info/categoria/todos</loc>
     <lastmod>2024-12-16</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://www.balaodainformatica.com.br/categoria/hardware</loc>
+    <loc>https://www.balao.info/categoria/hardware</loc>
     <lastmod>2024-12-16</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://www.balaodainformatica.com.br/categoria/notebooks</loc>
+    <loc>https://www.balao.info/categoria/notebooks</loc>
     <lastmod>2024-12-16</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://www.balaodainformatica.com.br/categoria/monitores</loc>
+    <loc>https://www.balao.info/categoria/monitores</loc>
     <lastmod>2024-12-16</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://www.balaodainformatica.com.br/categoria/placa-de-video</loc>
+    <loc>https://www.balao.info/categoria/placa-de-video</loc>
     <lastmod>2024-12-16</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://www.balaodainformatica.com.br/categoria/pc-gamer</loc>
+    <loc>https://www.balao.info/categoria/pc-gamer</loc>
     <lastmod>2024-12-16</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://www.balaodainformatica.com.br/categoria/consoles</loc>
+    <loc>https://www.balao.info/categoria/consoles</loc>
     <lastmod>2024-12-16</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.balaodainformatica.com.br/categoria/acessorios</loc>
+    <loc>https://www.balao.info/categoria/acessorios</loc>
     <lastmod>2024-12-16</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.balaodainformatica.com.br/categoria/apple</loc>
+    <loc>https://www.balao.info/categoria/apple</loc>
     <lastmod>2024-12-16</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
@@ -100,43 +100,43 @@
   
   <!-- Hardware Subcategories -->
   <url>
-    <loc>https://www.balaodainformatica.com.br/categoria/processadores</loc>
+    <loc>https://www.balao.info/categoria/processadores</loc>
     <lastmod>2024-12-16</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.balaodainformatica.com.br/categoria/memoria-ram</loc>
+    <loc>https://www.balao.info/categoria/memoria-ram</loc>
     <lastmod>2024-12-16</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.balaodainformatica.com.br/categoria/ssd-hd</loc>
+    <loc>https://www.balao.info/categoria/ssd-hd</loc>
     <lastmod>2024-12-16</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.balaodainformatica.com.br/categoria/placas-mae</loc>
+    <loc>https://www.balao.info/categoria/placas-mae</loc>
     <lastmod>2024-12-16</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.balaodainformatica.com.br/categoria/fontes</loc>
+    <loc>https://www.balao.info/categoria/fontes</loc>
     <lastmod>2024-12-16</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.balaodainformatica.com.br/categoria/gabinetes</loc>
+    <loc>https://www.balao.info/categoria/gabinetes</loc>
     <lastmod>2024-12-16</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.balaodainformatica.com.br/categoria/coolers</loc>
+    <loc>https://www.balao.info/categoria/coolers</loc>
     <lastmod>2024-12-16</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
@@ -144,25 +144,25 @@
   
   <!-- Accessories Subcategories -->
   <url>
-    <loc>https://www.balaodainformatica.com.br/categoria/teclado-mecanico</loc>
+    <loc>https://www.balao.info/categoria/teclado-mecanico</loc>
     <lastmod>2024-12-16</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.balaodainformatica.com.br/categoria/mouse</loc>
+    <loc>https://www.balao.info/categoria/mouse</loc>
     <lastmod>2024-12-16</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.balaodainformatica.com.br/categoria/headset</loc>
+    <loc>https://www.balao.info/categoria/headset</loc>
     <lastmod>2024-12-16</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.balaodainformatica.com.br/categoria/cadeira</loc>
+    <loc>https://www.balao.info/categoria/cadeira</loc>
     <lastmod>2024-12-16</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
@@ -170,25 +170,25 @@
   
   <!-- Apple Subcategories -->
   <url>
-    <loc>https://www.balaodainformatica.com.br/categoria/iphone</loc>
+    <loc>https://www.balao.info/categoria/iphone</loc>
     <lastmod>2024-12-16</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.balaodainformatica.com.br/categoria/ipad</loc>
+    <loc>https://www.balao.info/categoria/ipad</loc>
     <lastmod>2024-12-16</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.balaodainformatica.com.br/categoria/macbook</loc>
+    <loc>https://www.balao.info/categoria/macbook</loc>
     <lastmod>2024-12-16</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.balaodainformatica.com.br/categoria/imac</loc>
+    <loc>https://www.balao.info/categoria/imac</loc>
     <lastmod>2024-12-16</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
@@ -196,13 +196,13 @@
   
   <!-- Other Categories -->
   <url>
-    <loc>https://www.balaodainformatica.com.br/categoria/licencas</loc>
+    <loc>https://www.balao.info/categoria/licencas</loc>
     <lastmod>2024-12-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.balaodainformatica.com.br/categoria/pc-office</loc>
+    <loc>https://www.balao.info/categoria/pc-office</loc>
     <lastmod>2024-12-16</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>

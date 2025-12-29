@@ -54,13 +54,13 @@ export default function SobreNosPage() {
         title="Sobre o Balão da Informática Campinas | Desde 2010 Sua Loja de Tecnologia"
         description="Conheça a história do Balão da Informática em Campinas. Referência no Cambuí e Castelo em PC Gamer de alta performance, notebooks, hardware e assistência técnica especializada."
         keywords="balão da informática história, loja de informática cambuí campinas, loja de informática castelo campinas, especialistas em pc gamer campinas, onde comprar hardware em campinas, assistência técnica de confiança campinas, balão da informática é confiável"
-        url="https://www.balaodainformatica.com.br/sobre"
+        url="https://www.balao.info/sobre"
       />
       <LocalBusinessSchema />
       <BreadcrumbSchema
         items={[
-          { name: "Home", url: "https://www.balaodainformatica.com.br" },
-          { name: "Quem Somos", url: "https://www.balaodainformatica.com.br/sobre" },
+          { name: "Home", url: "https://www.balao.info" },
+          { name: "Quem Somos", url: "https://www.balao.info/sobre" },
         ]}
       />
 

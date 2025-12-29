@@ -44,7 +44,7 @@ const DEFAULT_BLOCKS: EmailBlock[] = [
   { id: '1', type: 'header', content: { title: '🎉 Ofertas Especiais!', subtitle: 'Confira nossos produtos em destaque' } },
   { id: '2', type: 'text', content: { text: 'Olá! Temos novidades incríveis para você. Não perca essas oportunidades!' } },
   { id: '3', type: 'products', content: { layout: 'grid' } },
-  { id: '4', type: 'button', content: { text: 'Ver Todas as Ofertas', url: 'https://balaodainformatica.com.br', color: '#E60000' } },
+  { id: '4', type: 'button', content: { text: 'Ver Todas as Ofertas', url: 'https://www.balao.info', color: '#E60000' } },
   { id: '5', type: 'divider', content: {} },
   { id: '6', type: 'text', content: { text: 'Atenciosamente,\nEquipe Balão da Informática' } },
 ];
@@ -313,7 +313,7 @@ export function EmailBuilder({ products, selectedProducts, initialSubject, onSav
   <div style="max-width:600px;margin:0 auto;background-color:#ffffff;">
     <!-- Logo Header -->
     <div style="text-align:center;padding:20px;background-color:#ffffff;border-bottom:3px solid #E60000;">
-      <img src="https://www.balaodainformatica.com.br/media/wysiwyg/balao500.png" alt="Balão da Informática" style="max-width:200px;height:auto;">
+      <img src="https://www.balao.info/media/wysiwyg/balao500.png" alt="Balão da Informática" style="max-width:200px;height:auto;">
     </div>
 `;
 
@@ -352,7 +352,7 @@ export function EmailBuilder({ products, selectedProducts, initialSubject, onSav
               </div>
               <p style="font-size:12px;margin:8px 0 4px;color:#1f2937;font-weight:500;line-height:1.3;">${product.name.substring(0, 50)}...</p>
               <p style="font-size:16px;margin:0;color:#E60000;font-weight:bold;">${formatPrice(product.price)}</p>
-              <a href="https://balaodainformatica.com.br/produto/${product.id}" style="display:inline-block;margin-top:8px;padding:6px 12px;background:#E60000;color:#fff;text-decoration:none;border-radius:4px;font-size:11px;font-weight:600;">VER PRODUTO</a>
+              <a href="https://www.balao.info/produto/${product.id}" style="display:inline-block;margin-top:8px;padding:6px 12px;background:#E60000;color:#fff;text-decoration:none;border-radius:4px;font-size:11px;font-weight:600;">VER PRODUTO</a>
             </div>
           </td>`;
             if (i % 2 === 1 && i < selectedProductsList.slice(0, 4).length - 1) {
@@ -387,7 +387,7 @@ export function EmailBuilder({ products, selectedProducts, initialSubject, onSav
 
     html += `
     <div style="text-align:center;padding:24px;background:#1f2937;color:#ffffff;font-size:12px;">
-      <img src="https://www.balaodainformatica.com.br/media/wysiwyg/balao500.png" alt="Balão da Informática" style="max-width:120px;height:auto;margin-bottom:12px;">
+      <img src="https://www.balao.info/media/wysiwyg/balao500.png" alt="Balão da Informática" style="max-width:120px;height:auto;margin-bottom:12px;">
       <p style="margin:0;">© ${new Date().getFullYear()} Balão da Informática - Todos os direitos reservados</p>
       <p style="margin:8px 0 0;color:#9ca3af;">Campinas, SP - (19) 98751-0267</p>
     </div>

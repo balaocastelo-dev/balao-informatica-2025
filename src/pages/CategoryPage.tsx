@@ -101,7 +101,7 @@ const CategoryPage = () => {
   }
 
   const pageTitle = isAllProducts ? 'Todos os Produtos' : category?.name || '';
-  const categoryUrl = `https://www.balaodainformatica.com.br/categoria/${categoryId}`;
+  const categoryUrl = `https://www.balao.info/categoria/${categoryId}`;
 
   return (
     <Layout>
@@ -112,7 +112,7 @@ const CategoryPage = () => {
         url={categoryUrl}
       />
       <BreadcrumbSchema items={[
-        { name: 'Home', url: 'https://www.balaodainformatica.com.br' },
+        { name: 'Home', url: 'https://www.balao.info' },
         { name: pageTitle, url: categoryUrl }
       ]} />
       <div className="container-balao pt-0 pb-6 sm:pb-8">

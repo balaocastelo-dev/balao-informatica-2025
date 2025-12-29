@@ -21,8 +21,8 @@ export function SEOHead({
   title = 'Balão da Informática - Computadores, Notebooks e Hardware em Campinas',
   description = 'Balão da Informática: as melhores ofertas em computadores, notebooks, hardware e tecnologia em Campinas. PC Gamer, monitores, placas de vídeo e muito mais!',
   keywords = 'computadores, notebooks, hardware, tecnologia, PC Gamer, placa de vídeo, monitores, Campinas, informática',
-  image = 'https://www.balaodainformatica.com.br/media/wysiwyg/balao500.png',
-  url = 'https://www.balaodainformatica.com.br',
+  image = 'https://www.balao.info/media/wysiwyg/balao500.png',
+  url = 'https://www.balao.info',
   type = 'website',
   product
 }: SEOHeadProps) {

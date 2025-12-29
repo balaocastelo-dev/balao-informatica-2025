@@ -3,3 +3,8 @@
 [33me866c00[m Atualizações na Landing de Carregador de Notebook
 [33m8121e13[m Stripe: função stripe-payment (Checkout Session), suporte a provider Stripe no Admin e Cart; Supabase config habilitado
 [33mdd68a82[m Checkout: apenas Mercado Pago/Mercado Livre; remoção de PIX e UI; adicionar função stripe-status e habilitar no Supabase
+[33m0eba77f[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m Landing: incluir produtos da busca 'fonte notebook' com botões de WhatsApp em cada card
+[33m78de332[m Checkout: reativar PIX com QR Code; usar default pixEnabled ativo e respeitar desativação no Admin
+[33m870a8e3[m Landing: listar carregadores reais com imagem, nome e preço
+[33m1ffc817[m Atualizações menores em ProductContext e Index
+[33mbdccf94[m rotina: commit automático

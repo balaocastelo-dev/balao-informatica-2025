@@ -76,7 +76,7 @@ export function Header({ onMenuClick }: HeaderProps) {
           {/* Logo */}
           <Link to="/" className="flex-shrink-0">
             <img
-              src="https://www.balaodainformatica.com.br/media/wysiwyg/balao500.png"
+              src="https://www.balao.info/media/wysiwyg/balao500.png"
               alt="Balão da Informática"
               className="h-10 sm:h-14 w-auto object-contain"
             />

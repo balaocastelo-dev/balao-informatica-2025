@@ -10,7 +10,7 @@ export function Footer() {
           <div className="lg:col-span-2">
             <Link to="/">
               <img
-                src="https://www.balaodainformatica.com.br/media/wysiwyg/balao500.png"
+                src="https://www.balao.info/media/wysiwyg/balao500.png"
                 alt="Balão da Informática"
                 className="h-16 w-auto object-contain brightness-0 invert mb-4"
               />
