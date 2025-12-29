@@ -24,8 +24,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { useProducts } from "@/contexts/ProductContext";
+import type { Product } from "@/types/product";
 
-// --- 1. CONFIGURAÇÃO DOS PASSOS E DADOS (MOCK) ---
+// --- 1. CONFIGURAÇÃO DOS PASSOS ---
 const STEPS = [
   { id: "cpu", label: "Processador", icon: <Cpu />, multi: false },
   { id: "mobo", label: "Placa Mãe", icon: <CircuitBoard />, multi: false },
@@ -41,45 +43,46 @@ const STEPS = [
   { id: "review", label: "Resumo & Compra", icon: <ShoppingCart />, multi: false },
 ];
 
-// Dados fictícios para exemplo (Idealmente viriam de uma API)
-const PRODUCTS_DB = {
-  cpu: [
-    { id: 1, name: "Intel Core i5-13400F", price: 1300, score: 70, brand: "Intel" },
-    { id: 2, name: "Intel Core i9-14900K", price: 4500, score: 98, brand: "Intel" },
-    { id: 3, name: "AMD Ryzen 7 7800X3D", price: 3200, score: 95, brand: "AMD" },
-  ],
-  mobo: [
-    { id: 11, name: "Asus Prime B760M", price: 900 },
-    { id: 12, name: "MSI Z790 Tomahawk", price: 2100 },
-  ],
-  ram: [
-    { id: 31, name: "Kingston Fury 16GB 3200MHz", price: 280 },
-    { id: 32, name: "Corsair Vengeance 32GB RGB", price: 750 },
-  ],
-  gpu: [
-    { id: 71, name: "NVIDIA RTX 4060 8GB", price: 2100, score: 60 },
-    { id: 72, name: "NVIDIA RTX 4070 Ti SUPER", price: 6500, score: 90 },
-    { id: 73, name: "NVIDIA RTX 4090 24GB", price: 12000, score: 100 },
-  ],
-  // ... Preencheria as outras categorias aqui
+// Mapeamento de categorias/keywords para filtrar produtos do Supabase
+const STEP_CATEGORY_MAP: Record<string, string[]> = {
+  cpu: ["cpu", "processadores", "hardware"],
+  mobo: ["placa-mae", "motherboard", "hardware", "mobo"],
+  cooler_cpu: ["cooler", "refrigeracao", "hardware"],
+  ram: ["memoria", "ram", "hardware"],
+  ssd: ["armazenamento", "ssd", "hdd", "hardware", "disco"],
+  psu: ["fonte", "psu", "hardware", "energia"],
+  gpu: ["placa-de-video", "gpu", "hardware", "video"],
+  case: ["gabinete", "case", "hardware"],
+  cooler_case: ["cooler", "fan", "ventoinha", "hardware"],
+  os: ["licencas", "software", "sistemas"],
+  perif: ["perifericos", "acessorios", "mouse", "teclado", "monitor", "audio"],
 };
 
-// Fallback para categorias vazias no exemplo
-const getProducts = (stepId) => PRODUCTS_DB[stepId] || [
-  { id: 991, name: `Item Genérico de ${stepId}`, price: 150 },
-  { id: 992, name: `Item Premium de ${stepId}`, price: 550 },
-];
+const STEP_KEYWORDS: Record<string, string[]> = {
+  cpu: ["intel", "ryzen", "cpu", "processador"],
+  mobo: ["placa mãe", "placa-mae", "motherboard", "b760", "z790", "x670"],
+  cooler_cpu: ["cooler", "aio", "water", "air"],
+  ram: ["ram", "ddr4", "ddr5", "memória", "memoria"],
+  ssd: ["ssd", "nvme", "sata", "hd", "hdd", "armazenamento"],
+  psu: ["fonte", "psu", "80 plus", "600w", "750w", "850w"],
+  gpu: ["rtx", "gtx", "rx", "placa de vídeo", "placa-de-video", "gpu"],
+  case: ["gabinete", "case", "mid tower", "atx", "m-atx"],
+  cooler_case: ["fan", "ventoinha", "cooler de gabinete", "cooler"],
+  os: ["windows", "office", "licença", "licenca", "license"],
+  perif: ["mouse", "teclado", "monitor", "headset", "webcam", "periférico", "periferico"],
+};
 
 export default function PCBuilderPage() {
+  const { products, loading } = useProducts();
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
-  const [selections, setSelections] = useState({}); // { cpu: [item], ram: [item1, item2] }
+  const [selections, setSelections] = useState<Record<string, Product[]>>({});
   const [userEmail, setUserEmail] = useState("");
 
   const currentStep = STEPS[currentStepIndex];
   const isReview = currentStep.id === "review";
 
   // --- LÓGICA DE SELEÇÃO ---
-  const handleSelect = (product) => {
+  const handleSelect = (product: Product) => {
     setSelections((prev) => {
       const currentList = prev[currentStep.id] || [];
       
@@ -98,7 +101,7 @@ export default function PCBuilderPage() {
     }
   };
 
-  const removeSelection = (stepId, indexToRemove) => {
+  const removeSelection = (stepId: string, indexToRemove: number) => {
     setSelections((prev) => {
       const newList = prev[stepId].filter((_, idx) => idx !== indexToRemove);
       return { ...prev, [stepId]: newList };
@@ -118,10 +121,10 @@ export default function PCBuilderPage() {
     }
   };
 
-  const goToStep = (index) => setCurrentStepIndex(index);
+  const goToStep = (index: number) => setCurrentStepIndex(index);
 
   // --- CÁLCULOS ---
-  const totalValue = Object.values(selections).flat().reduce((acc, item) => acc + item.price, 0);
+  const totalValue = Object.values(selections).flat().reduce((acc, item) => acc + (item.price || 0), 0);
 
   // --- GERADOR DE TEXTO INTELIGENTE ---
   const generateBuildAnalysis = () => {
@@ -131,7 +134,7 @@ export default function PCBuilderPage() {
     const ramTotal = (selections['ram'] || []).length * 16; // Assumindo 16GB por pente pra simplificar estimativa
 
     let analysis = "🚀 *Análise da sua Configuração Balão:*\n\n";
-    let capabilities = [];
+    const capabilities: string[] = [];
 
     if (gpu?.score > 80) capabilities.push("✅ Roda Cyberpunk 2077 e Alan Wake 2 no Ultra/4K");
     else if (gpu?.score > 50) capabilities.push("✅ Roda Warzone, GTA V e Fortnite com alto FPS");
@@ -144,6 +147,20 @@ export default function PCBuilderPage() {
     analysis += "*Pontos Fortes:*\nEsta máquina foi montada com componentes de alta durabilidade. O sistema de refrigeração escolhido garante longevidade.";
     
     return analysis;
+  };
+
+  const getProductsForStep = (stepId: string): Product[] => {
+    const cats = (STEP_CATEGORY_MAP[stepId] || []).map(c => c.toLowerCase());
+    const kws = (STEP_KEYWORDS[stepId] || []).map(k => k.toLowerCase());
+    const filtered = products.filter(p => {
+      const cat = (p.category || "").toLowerCase();
+      const name = p.name.toLowerCase();
+      const desc = (p.description || "").toLowerCase();
+      const inCat = cats.some(c => cat.includes(c));
+      const hasKw = kws.some(k => name.includes(k) || desc.includes(k));
+      return inCat || hasKw;
+    });
+    return filtered.sort((a, b) => a.price - b.price);
   };
 
   const handleWhatsApp = () => {
@@ -245,7 +262,11 @@ export default function PCBuilderPage() {
             <>
               {/* GRID DE PRODUTOS */}
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {getProducts(currentStep.id).map((product) => {
+                {loading ? (
+                  <div className="col-span-full text-center py-12 text-slate-500">
+                    Carregando produtos...
+                  </div>
+                ) : getProductsForStep(currentStep.id).map((product) => {
                   const isSelected = selections[currentStep.id]?.find(p => p.id === product.id);
                   return (
                     <Card key={product.id} className={`p-0 overflow-hidden group hover:shadow-xl transition-all border-2 ${isSelected ? 'border-red-600 ring-2 ring-red-100' : 'border-transparent hover:border-red-100'}`}>
@@ -254,11 +275,6 @@ export default function PCBuilderPage() {
                          <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center text-slate-300">
                            {currentStep.icon}
                          </div>
-                         {product.score && (
-                           <span className="absolute top-2 right-2 bg-slate-900 text-white text-xs font-bold px-2 py-1 rounded">
-                             Score: {product.score}
-                           </span>
-                         )}
                       </div>
                       <div className="p-4">
                         <h3 className="font-bold text-slate-800 text-lg leading-tight mb-2 h-12 line-clamp-2">{product.name}</h3>
