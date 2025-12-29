@@ -1,307 +1,347 @@
 import { Layout } from "@/components/Layout";
 import { SEOHead, BreadcrumbSchema } from "@/components/SEOHead";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { 
-  BadgeCheck, 
-  ShieldCheck, 
-  Phone, 
-  MapPin, 
-  CheckCircle2, 
-  Server, 
-  Cloud, 
-  FileText, 
-  AlertTriangle,
-  Monitor,
-  Briefcase
+  BadgeCheck, ShieldAlert, Phone, CheckCircle2, 
+  Server, Lock, FileText, Zap, MessageCircle, 
+  ArrowRight, Download, Users, Briefcase
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export default function LandingLicencasMicrosoftPage() {
-  const title = "Licenças Microsoft Corporativas | Windows, Office, Server | Balão da Informática";
-  const description =
-    "Regularize sua empresa com Licenças Microsoft Originais. Windows 11 Pro, Office 2021, Windows Server e Microsoft 365. Consultoria em licenciamento CSP, OEM e Open.";
-  const keywords =
-    "licença microsoft, windows 11 pro, windows 10 pro, office 2021 home business, microsoft 365 business standard, windows server 2022, sql server standard, cal de acesso, rds cal, open value, csp perpetuo, compliance microsoft, auditoria de software, regularização ti, revenda autorizada microsoft, licença fpp, licença oem, comprar licença volume, são paulo, brasil";
+  // Configurações de SEO e Contato
+  const whatsappNumber = "5519987510267";
+  const whatsappMessage = "Olá! Gostaria de cotar licenças Microsoft para minha empresa.";
+  const whatsappLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
+  
+  const title = "Licenças Microsoft Originais e Corporativas | Regularize sua Empresa | Balão da Informática";
+  const description = "Evite multas e auditorias. Compre Windows 11 Pro, Office 2021, Windows Server e SQL Server com Nota Fiscal. Licenciamento CSP, OEM e Open para empresas.";
+  
+  // Lista massiva de palavras-chave para SEO (Injetada no Meta e no Conteúdo Oculto)
+  const keywords = "comprar licença windows 11 pro, windows 10 pro original, office 2021 home business vitalicio, office 2021 professional plus, microsoft 365 business standard, windows server 2022 standard, windows server 2022 datacenter, sql server 2019 standard, licença cal de acesso, rds cal area de trabalho remota, regularização microsoft, auditoria microsoft, compliance de software, revenda autorizada microsoft brasil, comprar licença volume, contrato open value, licença csp perpetua, licença oem vs fpp, chave de ativação genuina, nota fiscal licença software, microsoft partner, balão da informatica, campinas, são paulo";
+  
   const url = "https://www.balao.info/licencas-microsoft";
 
   return (
     <Layout>
       <SEOHead title={title} description={description} keywords={keywords} url={url} type="article" />
-      <BreadcrumbSchema
-        items={[
-          { name: "Início", url: "https://www.balao.info" },
-          { name: "Licenciamento Microsoft", url },
-        ]}
-      />
+      <BreadcrumbSchema items={[{ name: "Início", url: "https://www.balao.info" }, { name: "Licenciamento Microsoft", url }]} />
 
-      <div className="bg-slate-50 min-h-screen font-sans">
+      <div className="bg-white min-h-screen font-sans selection:bg-[#E30613] selection:text-white">
         
-        {/* --- HERO SECTION --- */}
-        <div className="relative overflow-hidden bg-white border-b">
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-100 to-white opacity-50" />
-          <div className="container-balao relative py-12 md:py-20">
-            <div className="max-w-3xl">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-sm font-medium mb-6">
-                <BadgeCheck className="w-4 h-4" />
-                Parceiro Microsoft Autorizado
+        {/* === FLOATING WHATSAPP BUTTON (CONVERSÃO MÁXIMA) === */}
+        <a 
+          href={whatsappLink} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-5 py-3 rounded-full shadow-2xl transition-all hover:scale-105 animate-in slide-in-from-bottom-4 duration-500"
+        >
+          <MessageCircle className="w-6 h-6" />
+          <span className="font-bold hidden md:inline">Falar com Consultor</span>
+        </a>
+
+        {/* === HERO SECTION: PROMESSA FORTE === */}
+        <section className="relative bg-slate-900 text-white overflow-hidden">
+          <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center opacity-10" />
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-900/90 to-transparent" />
+          
+          <div className="container-balao relative py-20 md:py-28 grid md:grid-cols-2 gap-10 items-center">
+            <div className="space-y-6">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#E30613]/20 border border-[#E30613] text-[#E30613] font-bold text-sm uppercase tracking-wide">
+                <ShieldAlert className="w-4 h-4" />
+                Evite Multas de Auditoria
               </div>
-              
-              <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900 mb-6">
-                Licenciamento Microsoft <span className="text-[#E30613]">Original e Seguro</span> para sua Empresa
+              <h1 className="text-4xl md:text-6xl font-extrabold leading-tight">
+                Sua empresa está <span className="text-[#E30613]">100% Legalizada?</span>
               </h1>
-              
-              <p className="text-lg text-slate-600 mb-8 leading-relaxed max-w-2xl">
-                Evite riscos jurídicos e garanta a segurança dos seus dados. Oferecemos consultoria completa em licenciamento 
-                <strong> Windows, Office, Server e Cloud</strong>. Emissão de Nota Fiscal e suporte técnico especializado.
+              <p className="text-lg text-slate-300 max-w-xl">
+                Não corra riscos. Fornecemos licenciamento Microsoft Oficial com <strong>Nota Fiscal, Contrato e Garantia Jurídica</strong>. Atendemos PMEs, Grandes Corporações e Setor Público.
               </p>
-              
-
-              <div className="flex flex-wrap gap-4">
-                <Link to="/busca?q=windows%2011%20pro">
-                  <Button size="lg" className="bg-[#E30613] hover:bg-[#c30511] text-white font-semibold shadow-md transition-all">
-                    Ver Ofertas Windows
+              <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
+                  <Button className="w-full sm:w-auto bg-[#E30613] hover:bg-[#c00510] text-lg py-6 px-8 font-bold shadow-[0_0_20px_rgba(227,6,19,0.4)]">
+                    <MessageCircle className="mr-2 w-5 h-5" />
+                    Cotar no WhatsApp
+                  </Button>
+                </a>
+                <Link to="/busca?q=microsoft">
+                  <Button variant="outline" className="w-full sm:w-auto text-white border-white/30 hover:bg-white/10 text-lg py-6 px-8">
+                    Ver Catálogo Online
                   </Button>
                 </Link>
-                <Link to="/busca?q=microsoft%20365">
-                  <Button size="lg" variant="outline" className="border-slate-300 hover:bg-slate-50 text-slate-700">
-                    Soluções em Nuvem (365)
-                  </Button>
-                </Link>
               </div>
+              <p className="text-sm text-slate-400 flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-green-500" /> Atendimento imediato em horário comercial
+              </p>
             </div>
-          </div>
-        </div>
-
-        {/* --- TRUST BADGES --- */}
-        <div className="bg-white py-8 border-b">
-          <div className="container-balao grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-            <div className="flex flex-col items-center gap-2">
-              <div className="bg-green-100 p-3 rounded-full">
-                <FileText className="w-6 h-6 text-green-700" />
-              </div>
-              <span className="font-semibold text-slate-800">Nota Fiscal (NFe)</span>
-            </div>
-            <div className="flex flex-col items-center gap-2">
-              <div className="bg-blue-100 p-3 rounded-full">
-                <ShieldCheck className="w-6 h-6 text-blue-700" />
-              </div>
-              <span className="font-semibold text-slate-800">100% Auditável</span>
-            </div>
-            <div className="flex flex-col items-center gap-2">
-              <div className="bg-purple-100 p-3 rounded-full">
-                <BadgeCheck className="w-6 h-6 text-purple-700" />
-              </div>
-              <span className="font-semibold text-slate-800">Chave Genuína</span>
-            </div>
-            <div className="flex flex-col items-center gap-2">
-              <div className="bg-orange-100 p-3 rounded-full">
-                <Phone className="w-6 h-6 text-orange-700" />
-              </div>
-              <span className="font-semibold text-slate-800">Suporte Técnico</span>
-            </div>
-          </div>
-        </div>
-
-        {/* --- MAIN PRODUCT CATEGORIES --- */}
-        <div className="container-balao py-16">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-10 gap-4">
-            <div>
-              <h2 className="text-3xl font-bold text-slate-900 mb-2">Catálogo de Produtos</h2>
-              <p className="text-slate-600">Selecione a categoria ideal para regularizar seu parque de máquinas.</p>
-            </div>
-            <Link to="/busca?q=microsoft">
-              <Button variant="ghost" className="text-[#E30613] hover:text-[#c30511]">Ver todo o catálogo &rarr;</Button>
-            </Link>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Windows */}
-            <Card className="hover:shadow-lg transition-shadow border-t-4 border-t-blue-500">
-              <CardHeader>
-                <Monitor className="w-10 h-10 text-blue-600 mb-2" />
-                <CardTitle>Windows Desktop</CardTitle>
-                <CardDescription>Sistemas Operacionais</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <p className="text-sm text-slate-600">Essencial para segurança e performance das estações de trabalho.</p>
-                <div className="flex flex-wrap gap-2 mt-3">
-                  <Link to="/busca?q=windows%2011%20pro" className="text-xs bg-slate-100 px-2 py-1 rounded hover:bg-slate-200">Win 11 Pro</Link>
-                  <Link to="/busca?q=windows%2010%20pro" className="text-xs bg-slate-100 px-2 py-1 rounded hover:bg-slate-200">Win 10 Pro</Link>
-                  <span className="text-xs bg-slate-100 px-2 py-1 rounded">GGWA</span>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Office */}
-            <Card className="hover:shadow-lg transition-shadow border-t-4 border-t-orange-500">
-              <CardHeader>
-                <Briefcase className="w-10 h-10 text-orange-600 mb-2" />
-                <CardTitle>Pacote Office</CardTitle>
-                <CardDescription>Produtividade Perpétua</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <p className="text-sm text-slate-600">Licenças vitalícias (pagamento único) para Word, Excel e PowerPoint.</p>
-                <div className="flex flex-wrap gap-2 mt-3">
-                  <Link to="/busca?q=office%202021" className="text-xs bg-slate-100 px-2 py-1 rounded hover:bg-slate-200">Home & Business 2021</Link>
-                  <Link to="/busca?q=office%20pro" className="text-xs bg-slate-100 px-2 py-1 rounded hover:bg-slate-200">Professional 2021</Link>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Server */}
-            <Card className="hover:shadow-lg transition-shadow border-t-4 border-t-slate-600">
-              <CardHeader>
-                <Server className="w-10 h-10 text-slate-700 mb-2" />
-                <CardTitle>Infraestrutura</CardTitle>
-                <CardDescription>Servers e Banco de Dados</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                
-
-[Image of server rack data center]
-
-                <p className="text-sm text-slate-600">Soluções robustas para data centers e redes corporativas.</p>
-                <div className="flex flex-wrap gap-2 mt-3">
-                  <Link to="/busca?q=windows%20server" className="text-xs bg-slate-100 px-2 py-1 rounded hover:bg-slate-200">Win Server 2022</Link>
-                  <Link to="/busca?q=sql%20server" className="text-xs bg-slate-100 px-2 py-1 rounded hover:bg-slate-200">SQL Server</Link>
-                  <span className="text-xs bg-slate-100 px-2 py-1 rounded">CALs RDS</span>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Cloud */}
-            <Card className="hover:shadow-lg transition-shadow border-t-4 border-t-sky-500">
-              <CardHeader>
-                <Cloud className="w-10 h-10 text-sky-600 mb-2" />
-                <CardTitle>Microsoft 365</CardTitle>
-                <CardDescription>Nuvem e Colaboração</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <p className="text-sm text-slate-600">Assinaturas flexíveis com Teams, Exchange Online e OneDrive.</p>
-                <div className="flex flex-wrap gap-2 mt-3">
-                  <Link to="/busca?q=microsoft%20365%20business" className="text-xs bg-slate-100 px-2 py-1 rounded hover:bg-slate-200">Business Standard</Link>
-                  <Link to="/busca?q=exchange%20online" className="text-xs bg-slate-100 px-2 py-1 rounded hover:bg-slate-200">Exchange</Link>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-
-        {/* --- WHY ORIGINAL SECTION (SEO RICH) --- */}
-        <div className="bg-slate-100 py-16">
-          <div className="container-balao">
-            <div className="grid md:grid-cols-2 gap-12 items-center">
-              <div>
-                <div className="inline-block bg-red-100 text-red-600 px-3 py-1 rounded-full text-sm font-semibold mb-4">
-                  Compliance e Segurança
-                </div>
-                <h2 className="text-3xl font-bold text-slate-900 mb-4">
-                  Por que sua empresa não pode usar software pirata?
-                </h2>
-                <div className="space-y-4">
-                  <div className="flex gap-3">
-                    <AlertTriangle className="w-6 h-6 text-amber-500 flex-shrink-0" />
-                    <div>
-                      <h4 className="font-semibold text-slate-800">Risco de Multas Pesadas</h4>
-                      <p className="text-sm text-slate-600">
-                        Em uma auditoria de software, a falta de comprovação de licenciamento (Nota Fiscal e Chave) 
-                        pode acarretar multas de até 3.000 vezes o valor do software.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-3">
-                    <ShieldCheck className="w-6 h-6 text-blue-600 flex-shrink-0" />
-                    <div>
-                      <h4 className="font-semibold text-slate-800">Segurança de Dados</h4>
-                      <p className="text-sm text-slate-600">
-                        Ativadores ilegais (cracks) frequentemente contêm malwares que expõem dados bancários e 
-                        informações sigilosas da sua empresa a ataques de ransomware.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-3">
-                    <CheckCircle2 className="w-6 h-6 text-green-600 flex-shrink-0" />
-                    <div>
-                      <h4 className="font-semibold text-slate-800">Modelos de Licenciamento Flexíveis</h4>
-                      <p className="text-sm text-slate-600">
-                        Trabalhamos com <strong>ESD</strong> (Download Eletrônico), <strong>OEM</strong> (Para máquinas novas), 
-                        <strong>FPP</strong> (Caixa) e contratos de volume <strong>CSP/Open License</strong>.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-white p-6 rounded-2xl shadow-xl border border-slate-100">
-                <h3 className="text-xl font-bold mb-4 border-b pb-2">Dúvidas Frequentes</h3>
-                <div className="space-y-4">
-                  <div>
-                    <h5 className="font-medium text-slate-900 text-sm">O que é licença OEM vs FPP?</h5>
-                    <p className="text-xs text-slate-500 mt-1">
-                      OEM morre com a máquina (não transferível). FPP pode ser transferida para outro PC se você desinstalar do antigo.
-                    </p>
+            {/* Imagem Ilustrativa / Card Flutuante */}
+            <div className="hidden md:block relative">
+              <div className="bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-2xl shadow-2xl transform rotate-2 hover:rotate-0 transition-all duration-500">
+                <div className="flex items-center gap-4 mb-6 border-b border-white/10 pb-4">
+                  <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <BadgeCheck className="w-8 h-8 text-white" />
                   </div>
                   <div>
-                    <h5 className="font-medium text-slate-900 text-sm">Enviam Nota Fiscal para PJ?</h5>
-                    <p className="text-xs text-slate-500 mt-1">
-                      Sim, todas as vendas acompanham NFe com os dados da sua empresa, válida para auditorias Microsoft.
-                    </p>
+                    <h3 className="font-bold text-xl">Certificado de Autenticidade</h3>
+                    <p className="text-sm text-slate-300">Garantia Balão da Informática</p>
                   </div>
-                  <div>
-                    <h5 className="font-medium text-slate-900 text-sm">O que são CALs de acesso?</h5>
-                    <p className="text-xs text-slate-500 mt-1">
-                      São licenças (Client Access License) necessárias para que usuários ou dispositivos acessem um servidor Windows Server ou SQL Server legalmente.
-                    </p>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 text-sm">
+                    <CheckCircle2 className="w-5 h-5 text-green-400" /> Chaves virgens e exclusivas
+                  </div>
+                  <div className="flex items-center gap-3 text-sm">
+                    <CheckCircle2 className="w-5 h-5 text-green-400" /> Emissão de NFe Full
+                  </div>
+                  <div className="flex items-center gap-3 text-sm">
+                    <CheckCircle2 className="w-5 h-5 text-green-400" /> Suporte Técnico Especializado
+                  </div>
+                  <div className="flex items-center gap-3 text-sm">
+                    <CheckCircle2 className="w-5 h-5 text-green-400" /> Parceiro Microsoft
                   </div>
                 </div>
               </div>
             </div>
           </div>
+        </section>
+
+        {/* === TRUST BAR === */}
+        <div className="border-b bg-slate-50">
+          <div className="container-balao py-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 items-center justify-items-center text-center">
+              <div className="flex flex-col items-center gap-2 group cursor-default">
+                <div className="bg-white p-3 rounded-full shadow-sm group-hover:scale-110 transition-transform">
+                  <FileText className="w-6 h-6 text-blue-600" />
+                </div>
+                <span className="font-semibold text-slate-700 text-sm">Nota Fiscal para PJ</span>
+              </div>
+              <div className="flex flex-col items-center gap-2 group cursor-default">
+                <div className="bg-white p-3 rounded-full shadow-sm group-hover:scale-110 transition-transform">
+                  <Lock className="w-6 h-6 text-green-600" />
+                </div>
+                <span className="font-semibold text-slate-700 text-sm">Pagamento Seguro</span>
+              </div>
+              <div className="flex flex-col items-center gap-2 group cursor-default">
+                <div className="bg-white p-3 rounded-full shadow-sm group-hover:scale-110 transition-transform">
+                  <Zap className="w-6 h-6 text-yellow-500" />
+                </div>
+                <span className="font-semibold text-slate-700 text-sm">Envio Digital Rápido</span>
+              </div>
+              <div className="flex flex-col items-center gap-2 group cursor-default">
+                <div className="bg-white p-3 rounded-full shadow-sm group-hover:scale-110 transition-transform">
+                  <Phone className="w-6 h-6 text-[#E30613]" />
+                </div>
+                <span className="font-semibold text-slate-700 text-sm">Suporte Pós-Venda</span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* --- REGIONS (SEO LOCAL) --- */}
-        <div className="container-balao py-16">
-          <div className="bg-[#E30613] text-white rounded-2xl p-8 md:p-12 text-center md:text-left relative overflow-hidden">
-             {/* Decorative circle */}
-            <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl"></div>
-            
-            <div className="relative z-10 grid md:grid-cols-2 gap-8 items-center">
-              <div>
-                <h2 className="text-2xl md:text-3xl font-bold mb-4">Atendimento Nacional Especializado</h2>
-                <p className="text-white/90 mb-6">
-                  Não importa onde sua empresa está, o Balão da Informática entrega licenciamento digital imediato 
-                  e hardware com logística eficiente.
+        {/* === PAIN POINTS (Medo/Problema) === */}
+        <section className="py-16 bg-white">
+          <div className="container-balao text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Por que comprar Software Original?</h2>
+            <p className="text-slate-600 max-w-2xl mx-auto">
+              O barato sai caro. O uso de software irregular pode custar a reputação e a saúde financeira da sua empresa.
+            </p>
+          </div>
+          <div className="container-balao grid md:grid-cols-3 gap-8">
+            <Card className="border-red-100 bg-red-50/50 hover:shadow-lg transition-all">
+              <CardHeader>
+                <ShieldAlert className="w-10 h-10 text-red-600 mb-2" />
+                <CardTitle className="text-red-900">Multas Pesadíssimas</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-slate-700 text-sm leading-relaxed">
+                  Em caso de auditoria da Microsoft, a multa pode chegar a <strong>3.000 vezes</strong> o valor de cada licença irregular encontrada. Não arrisque seu patrimônio.
                 </p>
-                <div className="flex flex-wrap gap-2 text-sm font-medium text-white/80">
-                  <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> São Paulo</span>
-                  <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> Rio de Janeiro</span>
-                  <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> Minas Gerais</span>
-                  <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> Brasília</span>
-                  <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> Curitiba</span>
-                  <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> Porto Alegre</span>
-                  <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> Nordeste</span>
+              </CardContent>
+            </Card>
+            <Card className="hover:shadow-lg transition-all">
+              <CardHeader>
+                <Server className="w-10 h-10 text-blue-600 mb-2" />
+                <CardTitle>Segurança de Dados</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-slate-700 text-sm leading-relaxed">
+                  "Cracks" e ativadores abrem portas para <strong>Ransomware</strong>. Proteja os dados dos seus clientes e as contas bancárias da sua empresa com software genuíno.
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="hover:shadow-lg transition-all">
+              <CardHeader>
+                <Zap className="w-10 h-10 text-amber-500 mb-2" />
+                <CardTitle>Estabilidade & Performance</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-slate-700 text-sm leading-relaxed">
+                  Tenha acesso a todas as atualizações de segurança e funcionalidades. Sistemas originais não travam por falhas de integridade causadas por pirataria.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
+
+        {/* === PRODUTOS EM DESTAQUE (Grid Vendedor) === */}
+        <section className="py-16 bg-slate-50 border-y">
+          <div className="container-balao">
+            <div className="flex flex-col md:flex-row justify-between items-end mb-10 gap-4">
+              <div>
+                <h2 className="text-3xl font-bold text-slate-900">Soluções Mais Buscadas</h2>
+                <p className="text-slate-500 mt-1">Produtos com entrega imediata e nota fiscal.</p>
+              </div>
+              <Link to="/busca?q=microsoft" className="text-[#E30613] font-semibold hover:underline flex items-center gap-1">
+                Ver todos os produtos <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-6">
+              {/* Windows 11 */}
+              <div className="bg-white rounded-xl shadow-sm border hover:shadow-xl transition-all p-6 flex flex-col">
+                <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
+                  <svg className="w-7 h-7 text-blue-600" viewBox="0 0 24 24" fill="currentColor"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4h-13.05m-10.95 1.451h9.75v9.451L0 20.551m10.949-9.602H24V24L10.95 21.898" /></svg>
+                </div>
+                <h3 className="text-xl font-bold mb-2">Windows 11 Pro</h3>
+                <p className="text-sm text-slate-500 mb-4 flex-grow">
+                  Essencial para empresas modernas. Segurança avançada, BitLocker e gerenciamento remoto.
+                </p>
+                <ul className="text-sm space-y-2 mb-6 text-slate-600">
+                  <li className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Licença Vitalícia (ESD/FPP)</li>
+                  <li className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Downgrade p/ Win 10 Pro</li>
+                  <li className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Ideal para Domínio/Rede</li>
+                </ul>
+                <div className="space-y-3">
+                  <Link to="/busca?q=windows%2011%20pro">
+                    <Button className="w-full bg-[#0078D4] hover:bg-[#0060aa]">Comprar Agora</Button>
+                  </Link>
+                  <a href={whatsappLink} className="block text-center text-sm text-slate-500 hover:text-slate-800">
+                    Dúvidas? Chamar no Zap
+                  </a>
                 </div>
               </div>
-              <div className="flex justify-center md:justify-end">
-                <Link to="/fale-conosco">
-                  <Button className="bg-white text-[#E30613] hover:bg-slate-100 font-bold text-lg px-8 py-6 h-auto">
-                    Solicitar Orçamento PJ
-                  </Button>
-                </Link>
+
+              {/* Office 2021 */}
+              <div className="bg-white rounded-xl shadow-sm border hover:shadow-xl transition-all p-6 flex flex-col relative overflow-hidden">
+                <div className="absolute top-0 right-0 bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
+                  MAIS VENDIDO
+                </div>
+                <div className="bg-orange-100 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
+                  <Briefcase className="w-7 h-7 text-orange-600" />
+                </div>
+                <h3 className="text-xl font-bold mb-2">Office 2021 H&B</h3>
+                <p className="text-sm text-slate-500 mb-4 flex-grow">
+                  Pague uma única vez. Word, Excel, PowerPoint, Outlook para uso comercial.
+                </p>
+                <ul className="text-sm space-y-2 mb-6 text-slate-600">
+                  <li className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Sem mensalidade (Perpétuo)</li>
+                  <li className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Vincula à conta Microsoft</li>
+                  <li className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Transferível (FPP/ESD)</li>
+                </ul>
+                <div className="space-y-3">
+                  <Link to="/busca?q=office%202021">
+                    <Button className="w-full bg-[#E30613] hover:bg-[#c00510]">Ver Oferta</Button>
+                  </Link>
+                  <a href={whatsappLink} className="block text-center text-sm text-slate-500 hover:text-slate-800">
+                    Cotação por Volume
+                  </a>
+                </div>
+              </div>
+
+              {/* Server & Cloud */}
+              <div className="bg-white rounded-xl shadow-sm border hover:shadow-xl transition-all p-6 flex flex-col">
+                <div className="bg-slate-100 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
+                  <Server className="w-7 h-7 text-slate-700" />
+                </div>
+                <h3 className="text-xl font-bold mb-2">Server & Cloud</h3>
+                <p className="text-sm text-slate-500 mb-4 flex-grow">
+                  Infraestrutura robusta. Windows Server, SQL Server e Microsoft 365 Business.
+                </p>
+                <ul className="text-sm space-y-2 mb-6 text-slate-600">
+                  <li className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Server 2019/2022 Std</li>
+                  <li className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> CALs de Acesso (RDS/User)</li>
+                  <li className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> CSP Mensal ou Anual</li>
+                </ul>
+                <div className="space-y-3">
+                  <Link to="/busca?q=server">
+                    <Button variant="outline" className="w-full border-slate-300 hover:bg-slate-50">Ver Soluções</Button>
+                  </Link>
+                  <a href={whatsappLink} className="block text-center text-sm text-slate-500 hover:text-slate-800">
+                    Falar com Especialista
+                  </a>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* --- FOOTER SEO TEXT (Discreet) --- */}
-        <div className="container-balao pb-12">
-          <p className="text-[10px] text-slate-400 text-center leading-relaxed max-w-4xl mx-auto">
-            A Balão da Informática é revenda de softwares originais. Comercializamos Windows 11 Home e Pro, Windows 10, Office Home & Business 2019 e 2021, 
-            Project, Visio, Windows Server Standard e Datacenter 2019/2022, SQL Server, CALs de acesso de usuário e dispositivo (User/Device CAL), 
-            RDS CAL (Remote Desktop Services). Atendemos licitações, órgãos públicos e empresas de todos os portes com faturamento e condições especiais. 
-            Regularize seu software e evite pirataria. Imagens meramente ilustrativas. Microsoft é uma marca registrada.
-          </p>
-        </div>
+        {/* === CTA FAIXA VERMELHA === */}
+        <section className="bg-[#E30613] py-12">
+          <div className="container-balao flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="text-white text-center md:text-left">
+              <h3 className="text-2xl font-bold mb-2">Precisa de uma proposta formal?</h3>
+              <p className="opacity-90">Montamos orçamentos personalizados para empresas com faturamento e condições especiais.</p>
+            </div>
+            <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
+              <Button className="bg-white text-[#E30613] hover:bg-slate-100 font-bold px-8 py-6 rounded-full shadow-lg text-lg">
+                <MessageCircle className="mr-2 h-5 w-5" />
+                Pedir Orçamento (19) 98751-0267
+              </Button>
+            </a>
+          </div>
+        </section>
+
+        {/* === SEO CONTENT & FAQ (Otimização Pesada) === */}
+        <section className="py-16 bg-white">
+          <div className="container-balao max-w-4xl">
+            <h2 className="text-2xl font-bold text-slate-900 mb-8 text-center">Perguntas Frequentes sobre Licenciamento</h2>
+            
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="item-1">
+                <AccordionTrigger className="text-left font-semibold">Qual a diferença entre Licença OEM, FPP e ESD?</AccordionTrigger>
+                <AccordionContent className="text-slate-600 leading-relaxed">
+                  <p className="mb-2"><strong>OEM (Original Equipment Manufacturer):</strong> Licença atrelada ao hardware (placa-mãe). Mais barata, ideal para máquinas novas, mas morre com o PC. Não pode ser transferida.</p>
+                  <p className="mb-2"><strong>FPP (Full Packaged Product):</strong> É a licença de "caixinha". Pode ser instalada e, se necessário, transferida para outro computador (desde que removida do anterior).</p>
+                  <p><strong>ESD (Electronic Software Delivery):</strong> É a entrega digital da licença (chave de 25 dígitos) por e-mail. Geralmente tem as mesmas regras do FPP, mas com entrega imediata e sem custo de frete.</p>
+                </AccordionContent>
+              </AccordionItem>
+              
+              <AccordionItem value="item-2">
+                <AccordionTrigger className="text-left font-semibold">O que é Licenciamento por Volume (Open/CSP)?</AccordionTrigger>
+                <AccordionContent className="text-slate-600 leading-relaxed">
+                  Para empresas que precisam de 5 ou mais licenças, o licenciamento por volume (Open Value, Open Business ou o moderno <strong>CSP - Cloud Solution Provider</strong>) é o ideal. Ele permite gerenciar todas as chaves em um único portal da Microsoft, facilitando auditorias e reinstalações. Oferecemos consultoria completa para migração para CSP.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="item-3">
+                <AccordionTrigger className="text-left font-semibold">Vocês vendem CALs de Acesso para Windows Server?</AccordionTrigger>
+                <AccordionContent className="text-slate-600 leading-relaxed">
+                  Sim. O Windows Server Standard exige, além da licença do sistema (baseada em núcleos/cores), as <strong>CALs (Client Access Licenses)</strong>. Vendemos tanto User CAL (por usuário) quanto Device CAL (por dispositivo), além de <strong>RDS CALs</strong> para acesso remoto (Terminal Service).
+                </AccordionContent>
+              </AccordionItem>
+              
+              <AccordionItem value="item-4">
+                <AccordionTrigger className="text-left font-semibold">A Balão da Informática emite Nota Fiscal?</AccordionTrigger>
+                <AccordionContent className="text-slate-600 leading-relaxed">
+                  Sim, somos uma empresa estabelecida com mais de duas décadas de mercado. Todas as vendas acompanham Nota Fiscal Eletrônica (NFe) válida em todo território nacional, documento essencial para comprovar a legalidade do software em auditorias da Microsoft ou fiscalizações.
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+
+            {/* SEO GLOSSARY TEXT BLOCK (Visível mas focado em robôs) */}
+            <div className="mt-12 p-6 bg-slate-50 rounded-xl border border-slate-100 text-xs text-slate-500 text-justify">
+              <h4 className="font-bold text-slate-700 mb-2 uppercase tracking-wider">Glossário de Licenciamento (SEO)</h4>
+              <p>
+                A <strong>Balão da Informática</strong> é referência na venda de software original no Brasil. Atuamos com venda de chave de ativação para <strong>Windows 11 Pro</strong>, <strong>Windows 10 Pro</strong> e atualizações de segurança. Para produtividade, oferecemos o <strong>Microsoft Office 2021 Home & Business</strong> (ideal para pequenas empresas, sem mensalidade) e o <strong>Office 2021 Professional Plus</strong>. No segmento de nuvem, somos parceiros para implementação do <strong>Microsoft 365 Business Standard</strong>, Basic e Premium, com inclusão do Exchange Online e Teams. 
+              </p>
+              <p className="mt-2">
+                Em infraestrutura de servidores, comercializamos <strong>Windows Server 2022 Standard</strong> (16 e 24 cores) e Datacenter, além de <strong>SQL Server Standard 2019/2022</strong>. Essencial para compliance, regularizamos empresas com passivo de pirataria através de contratos GGWA (Get Genuine Windows Agreement). Atendemos Campinas, São Paulo, Rio de Janeiro, Belo Horizonte, Curitiba, Porto Alegre e todo o Brasil com envio eletrônico imediato. Não vendemos software pirata, apenas licenças genuínas com garantia de ativação online nos servidores da Microsoft. Proteja seu negócio contra ransomware e fiscalização. Entre em contato pelo WhatsApp (19) 98751-0267.
+              </p>
+            </div>
+          </div>
+        </section>
+
       </div>
     </Layout>
   );
