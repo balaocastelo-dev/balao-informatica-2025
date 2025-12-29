@@ -1,0 +1,7 @@
+{
+  "rewrites": [
+    { "source": "/produto/:id", "has": [{ "type": "query", "key": "ssr", "value": "false" }], "destination": "/index.html" },
+    { "source": "/produto/:id", "destination": "/api/seo-product?id=:id" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
