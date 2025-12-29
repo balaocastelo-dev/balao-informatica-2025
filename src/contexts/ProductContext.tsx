@@ -13,6 +13,7 @@ interface ProductContextType {
   getProductsByCategory: (category: Category) => Product[];
   searchProducts: (query: string) => Product[];
   importProducts: (products: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>[], profitMargin: number) => Promise<void>;
+  bulkImportProducts: (products: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>[]) => Promise<void>;
   refreshProducts: () => Promise<void>;
 }
 
@@ -184,6 +185,10 @@ export function ProductProvider({ children }: { children: ReactNode }) {
         ramGb: typeof data.ram_gb === 'number' ? data.ram_gb : attrs.ramGb,
         storageGb: typeof data.storage_gb === 'number' ? data.storage_gb : attrs.storageGb,
         screenInches: typeof data.screen_inches === 'number' ? data.screen_inches : attrs.screenInches,
+        status: data.status || undefined,
+        tags: Array.isArray(data.tags) ? data.tags : undefined,
+        aiGenerated: typeof data.ai_generated === 'boolean' ? data.ai_generated : undefined,
+        aiConfidence: data.ai_confidence || undefined,
       };
 
       setProducts(current => [newProduct, ...current]);
@@ -390,6 +395,10 @@ export function ProductProvider({ children }: { children: ReactNode }) {
         ramGb: typeof p.ram_gb === 'number' ? p.ram_gb : undefined,
         storageGb: typeof p.storage_gb === 'number' ? p.storage_gb : undefined,
         screenInches: typeof p.screen_inches === 'number' ? p.screen_inches : undefined,
+        status: p.status || undefined,
+        tags: Array.isArray(p.tags) ? p.tags : undefined,
+        aiGenerated: typeof p.ai_generated === 'boolean' ? p.ai_generated : undefined,
+        aiConfidence: p.ai_confidence || undefined,
       }));
 
       setProducts(current => [...mappedProducts, ...current]);
@@ -413,6 +422,97 @@ export function ProductProvider({ children }: { children: ReactNode }) {
     await fetchProducts();
   };
 
+  const bulkImportProducts = async (
+    newProducts: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>[],
+  ) => {
+    try {
+      const payload = newProducts.map(p => ({
+        name: p.name,
+        description: p.description || null,
+        price: p.price,
+        cost_price: p.costPrice || null,
+        image: p.image || null,
+        category: p.category,
+        stock: p.stock,
+        source_url: p.sourceUrl || null,
+        ram_gb: typeof p.ramGb === 'number' ? p.ramGb : null,
+        storage_gb: typeof p.storageGb === 'number' ? p.storageGb : null,
+        screen_inches: typeof p.screenInches === 'number' ? p.screenInches : null,
+        status: p.status || null,
+        tags: p.tags || null,
+        ai_generated: typeof p.aiGenerated === 'boolean' ? p.aiGenerated : null,
+        ai_confidence: p.aiConfidence || null,
+      }));
+
+      const { data, error } = await supabase
+        .from('products')
+        .insert(payload)
+        .select();
+
+      if (error) {
+        const fallback = newProducts.map(p => ({
+          name: p.name,
+          description: p.description || null,
+          price: p.price,
+          cost_price: p.costPrice || null,
+          image: p.image || null,
+          category: p.category,
+          stock: p.stock,
+          source_url: p.sourceUrl || null,
+        }));
+        const { data: fbData, error: fbErr } = await supabase
+          .from('products')
+          .insert(fallback)
+          .select();
+        if (fbErr) throw fbErr;
+        const mappedProducts: Product[] = (fbData || []).map(p => ({
+          id: p.id,
+          name: p.name,
+          description: p.description || undefined,
+          price: Number(p.price),
+          costPrice: p.cost_price ? Number(p.cost_price) : undefined,
+          image: p.image || '/placeholder.svg',
+          category: p.category as Category,
+          stock: p.stock,
+          sourceUrl: p.source_url || undefined,
+          createdAt: new Date(p.created_at),
+          updatedAt: new Date(p.updated_at),
+        }));
+        setProducts(current => [...mappedProducts, ...current]);
+        toast({ title: "Importação concluída!", description: `${mappedProducts.length} produtos inseridos.` });
+        return;
+      }
+
+      const mappedProducts: Product[] = (data || []).map(p => ({
+        id: p.id,
+        name: p.name,
+        description: p.description || undefined,
+        price: Number(p.price),
+        costPrice: p.cost_price ? Number(p.cost_price) : undefined,
+        image: p.image || '/placeholder.svg',
+        category: p.category as Category,
+        stock: p.stock,
+        sourceUrl: p.source_url || undefined,
+        createdAt: new Date(p.created_at),
+        updatedAt: new Date(p.updated_at),
+        ramGb: typeof p.ram_gb === 'number' ? p.ram_gb : undefined,
+        storageGb: typeof p.storage_gb === 'number' ? p.storage_gb : undefined,
+        screenInches: typeof p.screen_inches === 'number' ? p.screen_inches : undefined,
+        status: p.status || undefined,
+        tags: Array.isArray(p.tags) ? p.tags : undefined,
+        aiGenerated: typeof p.ai_generated === 'boolean' ? p.ai_generated : undefined,
+        aiConfidence: p.ai_confidence || undefined,
+      }));
+
+      setProducts(current => [...mappedProducts, ...current]);
+      toast({ title: "Importação concluída!", description: `${mappedProducts.length} produtos inseridos.` });
+    } catch (error) {
+      console.error('Error bulk importing products:', error);
+      toast({ title: "Erro na importação", variant: "destructive" });
+      throw error;
+    }
+  };
+
   return (
     <ProductContext.Provider
       value={{
@@ -425,6 +525,7 @@ export function ProductProvider({ children }: { children: ReactNode }) {
         getProductsByCategory,
         searchProducts,
         importProducts,
+        bulkImportProducts,
         refreshProducts,
       }}
     >

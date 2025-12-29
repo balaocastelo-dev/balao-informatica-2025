@@ -38,6 +38,7 @@ import { BannerManagement } from '@/components/admin/BannerManagement';
 import { CategoryProductManager } from '@/components/admin/CategoryProductManager';
 import { BrandManagement } from '@/components/admin/BrandManagement';
 import { MercadoPagoConfig } from '@/components/admin/MercadoPagoConfig';
+import { ProductImporter } from '@/components/admin/ProductImporter';
 
 const ADMIN_CREDENTIALS = {
   username: 'balao2025',
@@ -59,6 +60,7 @@ const AdminPage = () => {
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [showLegacyImporter, setShowLegacyImporter] = useState(false);
   const [showBannerModal, setShowBannerModal] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -1526,121 +1528,137 @@ const AdminPage = () => {
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold text-foreground">Importação em Massa</h2>
-                <button onClick={() => setShowImportModal(false)} className="p-2 hover:bg-secondary rounded-lg">
-                  <X className="w-5 h-5" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    className={`px-3 py-1 rounded-lg text-sm ${!showLegacyImporter ? 'bg-primary text-primary-foreground' : 'bg-secondary text-foreground'}`}
+                    onClick={() => setShowLegacyImporter(false)}
+                  >
+                    Importador Inteligente
+                  </button>
+                  <button
+                    className={`px-3 py-1 rounded-lg text-sm ${showLegacyImporter ? 'bg-primary text-primary-foreground' : 'bg-secondary text-foreground'}`}
+                    onClick={() => setShowLegacyImporter(true)}
+                  >
+                    Modo Antigo
+                  </button>
+                  <button onClick={() => setShowImportModal(false)} className="p-2 hover:bg-secondary rounded-lg">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
 
-              <div className="space-y-4">
-                {/* Auto-detect toggle */}
-                <div className="flex items-center gap-3 p-3 bg-secondary/50 rounded-lg">
-                  <input
-                    type="checkbox"
-                    id="autoDetect"
-                    checked={autoDetectCategory}
-                    onChange={e => setAutoDetectCategory(e.target.checked)}
-                    className="w-4 h-4 rounded border-border"
-                  />
-                  <label htmlFor="autoDetect" className="text-sm font-medium text-foreground cursor-pointer flex-1">
-                    Identificar categorias automaticamente
-                    <span className="block text-xs text-muted-foreground font-normal">
-                      O sistema detectará a categoria com base no nome do produto
-                    </span>
-                  </label>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">
-                      Categoria {autoDetectCategory && <span className="text-muted-foreground">(padrão)</span>}
-                    </label>
-                    <select
-                      value={importCategory}
-                      onChange={e => setImportCategory(e.target.value)}
-                      className="input-field"
-                      disabled={autoDetectCategory}
-                    >
-                      <option value="">Selecione a categoria...</option>
-                      {categories.map(cat => (
-                        <option key={cat.id} value={cat.slug}>{cat.name}</option>
-                      ))}
-                    </select>
-                    {autoDetectCategory && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Produtos não identificados usarão esta categoria
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">
-                      Margem de Lucro (%)
-                    </label>
+              {!showLegacyImporter ? (
+                <ProductImporter onClose={() => setShowImportModal(false)} />
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 p-3 bg-secondary/50 rounded-lg">
                     <input
-                      type="number"
-                      value={profitMargin}
-                      onChange={e => setProfitMargin(e.target.value)}
-                      className="input-field"
+                      type="checkbox"
+                      id="autoDetect"
+                      checked={autoDetectCategory}
+                      onChange={e => setAutoDetectCategory(e.target.checked)}
+                      className="w-4 h-4 rounded border-border"
+                    />
+                    <label htmlFor="autoDetect" className="text-sm font-medium text-foreground cursor-pointer flex-1">
+                      Identificar categorias automaticamente
+                      <span className="block text-xs text-muted-foreground font-normal">
+                        O sistema detectará a categoria com base no nome do produto
+                      </span>
+                    </label>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1">
+                        Categoria {autoDetectCategory && <span className="text-muted-foreground">(padrão)</span>}
+                      </label>
+                      <select
+                        value={importCategory}
+                        onChange={e => setImportCategory(e.target.value)}
+                        className="input-field"
+                        disabled={autoDetectCategory}
+                      >
+                        <option value="">Selecione a categoria...</option>
+                        {categories.map(cat => (
+                          <option key={cat.id} value={cat.slug}>{cat.name}</option>
+                        ))}
+                      </select>
+                      {autoDetectCategory && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Produtos não identificados usarão esta categoria
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1">
+                        Margem de Lucro (%)
+                      </label>
+                      <input
+                        type="number"
+                        value={profitMargin}
+                        onChange={e => setProfitMargin(e.target.value)}
+                        className="input-field"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 p-3 bg-secondary/50 rounded-lg">
+                    <input
+                      type="checkbox"
+                      id="enhanceImages"
+                      checked={enhanceImages}
+                      onChange={e => setEnhanceImages(e.target.checked)}
+                      className="w-4 h-4 rounded border-border"
+                    />
+                    <label htmlFor="enhanceImages" className="text-sm font-medium text-foreground cursor-pointer flex-1">
+                      Buscar imagens em alta resolução
+                      <span className="block text-xs text-muted-foreground font-normal">
+                        Automaticamente substitui imagens pequenas (medium, thumb) por versões maiores quando disponíveis
+                      </span>
+                    </label>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">
+                      Dados dos Produtos
+                    </label>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Cole os dados em qualquer ordem - o sistema detecta automaticamente nome, imagem, preço e URL do produto.
+                      <br />
+                      Separadores aceitos: Tab, ponto-e-vírgula (;) ou pipe (|)
+                    </p>
+                    <textarea
+                      value={importData}
+                      onChange={e => setImportData(e.target.value)}
+                      placeholder="Exemplos aceitos:&#10;https://loja.com/produto/123 | https://imagem.com/foto.jpg | Nome do Produto | R$ 1.289,99&#10;Nome do Produto | R$ 1.289,99 | https://imagem.com/foto.jpg&#10;https://imagem.com/foto.jpg	Nome do Produto	1289.99&#10;R$ 999,00 ; Processador Ryzen 5 ; https://cdn.com/img.png"
+                      className="input-field min-h-[200px] font-mono text-sm"
                     />
                   </div>
-                </div>
 
-                {/* Enhance images toggle */}
-                <div className="flex items-center gap-3 p-3 bg-secondary/50 rounded-lg">
-                  <input
-                    type="checkbox"
-                    id="enhanceImages"
-                    checked={enhanceImages}
-                    onChange={e => setEnhanceImages(e.target.checked)}
-                    className="w-4 h-4 rounded border-border"
-                  />
-                  <label htmlFor="enhanceImages" className="text-sm font-medium text-foreground cursor-pointer flex-1">
-                    Buscar imagens em alta resolução
-                    <span className="block text-xs text-muted-foreground font-normal">
-                      Automaticamente substitui imagens pequenas (medium, thumb) por versões maiores quando disponíveis
-                    </span>
-                  </label>
+                  <div className="flex gap-3 pt-4">
+                    <button 
+                      onClick={handleImport} 
+                      className="btn-primary flex-1 flex items-center justify-center gap-2"
+                      disabled={isEnhancingImages}
+                    >
+                      {isEnhancingImages ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Processando imagens...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-4 h-4" />
+                          Importar Produtos
+                        </>
+                      )}
+                    </button>
+                    <button onClick={() => setShowImportModal(false)} className="btn-secondary" disabled={isEnhancingImages}>
+                      Cancelar
+                    </button>
+                  </div>
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">
-                    Dados dos Produtos
-                  </label>
-                  <p className="text-xs text-muted-foreground mb-2">
-                    Cole os dados em qualquer ordem - o sistema detecta automaticamente nome, imagem, preço e URL do produto.
-                    <br />
-                    Separadores aceitos: Tab, ponto-e-vírgula (;) ou pipe (|)
-                  </p>
-                  <textarea
-                    value={importData}
-                    onChange={e => setImportData(e.target.value)}
-                    placeholder="Exemplos aceitos:&#10;https://loja.com/produto/123 | https://imagem.com/foto.jpg | Nome do Produto | R$ 1.289,99&#10;Nome do Produto | R$ 1.289,99 | https://imagem.com/foto.jpg&#10;https://imagem.com/foto.jpg	Nome do Produto	1289.99&#10;R$ 999,00 ; Processador Ryzen 5 ; https://cdn.com/img.png"
-                    className="input-field min-h-[200px] font-mono text-sm"
-                  />
-                </div>
-
-                <div className="flex gap-3 pt-4">
-                  <button 
-                    onClick={handleImport} 
-                    className="btn-primary flex-1 flex items-center justify-center gap-2"
-                    disabled={isEnhancingImages}
-                  >
-                    {isEnhancingImages ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Processando imagens...
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="w-4 h-4" />
-                        Importar Produtos
-                      </>
-                    )}
-                  </button>
-                  <button onClick={() => setShowImportModal(false)} className="btn-secondary" disabled={isEnhancingImages}>
-                    Cancelar
-                  </button>
-                </div>
-              </div>
+              )}
             </div>
           </div>
         </div>

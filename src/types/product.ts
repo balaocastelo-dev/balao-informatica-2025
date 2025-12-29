@@ -13,6 +13,10 @@ export interface Product {
   ramGb?: number;
   storageGb?: number;
   screenInches?: number;
+  status?: 'draft' | 'published' | 'hidden';
+  tags?: string[];
+  aiGenerated?: boolean;
+  aiConfidence?: 'low' | 'medium' | 'high';
 }
 
 export type Category = string;
