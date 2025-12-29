@@ -242,7 +242,8 @@ export default function PCBuilderPage() {
 
   useEffect(() => {
     // Scroll ajustado para garantir visibilidade
-    if (contentRef.current && !showSummary) {
+    const isMobile = typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches;
+    if (contentRef.current && !showSummary && !isMobile) {
       setTimeout(() => {
         const headerEl = document.querySelector("header");
         const headerOffset = headerEl ? headerEl.getBoundingClientRect().height + 24 : 96;
@@ -696,27 +697,27 @@ export default function PCBuilderPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 md:gap-3">
                 {loading
                   ? Array.from({ length: 8 }).map((_, i) => (
                       <div
                         key={i}
                         className="bg-white rounded-xl border border-zinc-200 overflow-hidden animate-pulse"
                       >
-                        <div className="aspect-square p-4 bg-zinc-100" />
-                        <div className="p-3 space-y-2">
+                        <div className="aspect-[4/3] md:aspect-square p-2 md:p-4 bg-zinc-100" />
+                        <div className="p-2 md:p-3 space-y-2">
                           <div className="h-3 bg-zinc-100 rounded" />
                           <div className="h-4 bg-zinc-100 rounded w-1/2" />
                         </div>
                       </div>
                     ))
                   : filteredProducts.map((product) => {
-                  const stepId = BUILD_STEPS[currentStep].id;
-                  const currentList = selectedParts[stepId] || [];
-                  const qty = currentList.filter((p) => p.id === product.id).length;
-                  const isPromptOpen = promptProduct === product.id;
+                   const stepId = BUILD_STEPS[currentStep].id;
+                   const currentList = selectedParts[stepId] || [];
+                   const qty = currentList.filter((p) => p.id === product.id).length;
+                   const isPromptOpen = promptProduct === product.id;
 
-                  return (
+                   return (
                     <div
                       key={product.id}
                       onClick={() => handleCardClick(product)}
@@ -765,7 +766,7 @@ export default function PCBuilderPage() {
                         </Badge>
                       </div>
 
-                      <div className="aspect-square p-4 flex items-center justify-center bg-white">
+                      <div className="aspect-[4/3] md:aspect-square p-2 md:p-4 flex items-center justify-center bg-white">
                         {product.image ? (
                           <img src={product.image} className="w-full h-full object-contain" />
                         ) : (
@@ -773,14 +774,16 @@ export default function PCBuilderPage() {
                         )}
                       </div>
 
-                      <div className="p-3 border-t border-zinc-50">
-                        <h3 className="text-xs font-bold text-zinc-800 line-clamp-2 h-8 mb-1">{product.name}</h3>
-                        <p className="text-base font-black text-green-600">{formatPrice(product.price)}</p>
+                      <div className="p-2 md:p-3 border-t border-zinc-50">
+                        <h3 className="text-[11px] md:text-xs font-bold text-zinc-800 line-clamp-2 h-8 mb-1">
+                          {product.name}
+                        </h3>
+                        <p className="text-sm md:text-base font-black text-green-600">{formatPrice(product.price)}</p>
                         {qty > 0 && (
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="mt-2 w-full h-6 text-[10px] bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-700"
+                            className="mt-2 w-full h-6 text-[10px] md:text-[11px] bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-700"
                             onClick={(e) => {
                               e.stopPropagation();
                               removeOne(stepId, product.id);
