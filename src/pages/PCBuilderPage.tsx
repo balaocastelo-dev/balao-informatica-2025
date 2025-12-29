@@ -225,24 +225,27 @@ export default function PCBuilderPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white font-sans text-slate-900">
       
-      {/* HEADER SIMPLES */}
-      <header className="bg-neutral-900 text-white p-4 sticky top-0 z-50 shadow-md">
-        <div className="max-w-[1600px] mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-2 font-bold text-xl tracking-tight">
-            <span className="text-red-600 text-2xl">Balão</span>Config
+      <header className="sticky top-0 z-50 bg-neutral-950/90 backdrop-blur border-b border-neutral-800">
+        <div className="max-w-[1600px] mx-auto px-4 lg:px-8 py-3 flex justify-between items-center">
+          <div className="flex items-center gap-2 font-black text-lg lg:text-xl tracking-tight text-white">
+            <span className="text-red-500 lg:text-2xl">Balão</span>Config
           </div>
-          <div className="text-sm font-medium">
-            Total: <span className="text-red-500 font-bold text-lg">R$ {totalValue.toLocaleString('pt-BR')}</span>
+          <div className="flex items-center gap-3">
+            <span className="hidden sm:inline text-neutral-300 text-sm">Total</span>
+            <span className="text-red-400 font-black text-lg">R$ {totalValue.toLocaleString('pt-BR')}</span>
+            <Button onClick={() => isReview ? null : goToStep(STEPS.length - 1)} className="bg-red-600 hover:bg-red-700 text-white">
+              Finalizar
+            </Button>
           </div>
         </div>
       </header>
 
-      <div className="max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-[280px_1fr_320px] gap-6 p-4 lg:p-8">
+      <div className="max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-[280px_1fr_360px] gap-4 lg:gap-6 p-4 lg:p-8">
         
         {/* --- COLUNA 1: PROGRESSO (SIDEBAR) --- */}
-        <aside className="hidden lg:block space-y-2 sticky top-24 h-fit max-h-[calc(100vh-120px)] overflow-y-auto pr-2 custom-scrollbar">
+        <aside className="hidden lg:block space-y-2 sticky top-24 h-fit max-h-[calc(100vh-120px)] overflow-y-auto pr-2">
           {STEPS.map((step, idx) => {
             const hasSelection = selections[step.id]?.length > 0;
             const isCurrent = idx === currentStepIndex;
@@ -273,7 +276,6 @@ export default function PCBuilderPage() {
           })}
         </aside>
 
-        {/* --- COLUNA 2: ÁREA PRINCIPAL (VITRINE) --- */}
         <main className="min-h-[600px]">
           
           {/* BARRA DE PROGRESSO MOBILE */}
@@ -290,7 +292,7 @@ export default function PCBuilderPage() {
               </button>
             ))}
           </div>
-
+          
           <div className="mb-6">
             <h1 className="text-3xl font-black text-slate-800 flex items-center gap-3">
               {currentStep.icon} {currentStep.label}
@@ -302,21 +304,35 @@ export default function PCBuilderPage() {
 
           {!isReview ? (
             <>
-              {/* GRID DE PRODUTOS */}
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                 {loading ? (
-                  <div className="col-span-full text-center py-12 text-slate-500">
-                    Carregando produtos...
-                  </div>
+                  Array.from({ length: 6 }).map((_, i) => (
+                    <Card key={`s-${i}`} className="p-0 overflow-hidden border-2 border-transparent">
+                      <div className="aspect-video bg-slate-100 animate-pulse" />
+                      <div className="p-4 space-y-2">
+                        <div className="h-4 bg-slate-100 animate-pulse rounded w-3/4" />
+                        <div className="h-4 bg-slate-100 animate-pulse rounded w-1/3" />
+                      </div>
+                    </Card>
+                  ))
                 ) : getProductsForStep(currentStep.id).map((product) => {
                   const isSelected = selections[currentStep.id]?.find(p => p.id === product.id);
                   return (
-                    <Card key={product.id} className={`p-0 overflow-hidden group hover:shadow-xl transition-all border-2 ${isSelected ? 'border-red-600 ring-2 ring-red-100' : 'border-transparent hover:border-red-100'}`}>
-                      <div className="aspect-video bg-slate-100 flex items-center justify-center relative">
-                         {/* Placeholder Imagem */}
-                         <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center text-slate-300">
-                           {currentStep.icon}
-                         </div>
+                    <Card key={product.id} className={`p-0 overflow-hidden group hover:shadow-xl transition-all border-2 rounded-2xl ${isSelected ? 'border-red-600 ring-2 ring-red-100' : 'border-transparent hover:border-red-100'}`}>
+                      <div className="aspect-video bg-white flex items-center justify-center relative">
+                        <img
+                          src={product.image || '/placeholder.svg'}
+                          alt={product.name}
+                          className="w-full h-full object-contain p-6"
+                          loading="lazy"
+                        />
+                        {typeof product.stock === 'number' && (
+                          <span className={`absolute top-2 right-2 text-xs font-bold px-2 py-1 rounded ${
+                            product.stock > 0 ? 'bg-green-600 text-white' : 'bg-slate-400 text-white'
+                          }`}>
+                            {product.stock > 0 ? 'Em estoque' : 'Indisponível'}
+                          </span>
+                        )}
                       </div>
                       <div className="p-4">
                         <h3 className="font-bold text-slate-800 text-lg leading-tight mb-2 h-12 line-clamp-2">{product.name}</h3>
@@ -454,7 +470,6 @@ export default function PCBuilderPage() {
             </div>
           </div>
           
-          {/* Card de Ajuda */}
           <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 text-blue-900 text-sm">
              <h4 className="font-bold flex items-center gap-2 mb-2"><AlertTriangle className="w-4 h-4" /> Dúvida na peça?</h4>
              <p className="opacity-80 mb-3">Nossos técnicos estão online no WhatsApp para ajudar você a escolher.</p>
@@ -463,6 +478,19 @@ export default function PCBuilderPage() {
         </aside>
 
       </div>
+      {!isReview && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur border-t border-slate-200 p-3 sm:hidden">
+          <div className="max-w-[1600px] mx-auto flex items-center justify-between">
+            <div className="text-slate-700">
+              <p className="text-xs">Total</p>
+              <p className="text-lg font-black text-red-600">R$ {totalValue.toLocaleString('pt-BR')}</p>
+            </div>
+            <Button onClick={() => goToStep(STEPS.length - 1)} className="bg-red-600 hover:bg-red-700 text-white">
+              Ver Resumo
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
