@@ -313,7 +313,7 @@ export function EmailBuilder({ products, selectedProducts, initialSubject, onSav
   <div style="max-width:600px;margin:0 auto;background-color:#ffffff;">
     <!-- Logo Header -->
     <div style="text-align:center;padding:20px;background-color:#ffffff;border-bottom:3px solid #E60000;">
-      <img src="https://www.balao.info/media/wysiwyg/balao500.png" alt="Balão da Informática" style="max-width:200px;height:auto;">
+      <img src="https://www.balaodainformatica.com.br/media/wysiwyg/balao500.png" alt="Balão da Informática" style="max-width:200px;height:auto;">
     </div>
 `;
 
@@ -387,7 +387,7 @@ export function EmailBuilder({ products, selectedProducts, initialSubject, onSav
 
     html += `
     <div style="text-align:center;padding:24px;background:#1f2937;color:#ffffff;font-size:12px;">
-      <img src="https://www.balao.info/media/wysiwyg/balao500.png" alt="Balão da Informática" style="max-width:120px;height:auto;margin-bottom:12px;">
+      <img src="https://www.balaodainformatica.com.br/media/wysiwyg/balao500.png" alt="Balão da Informática" style="max-width:120px;height:auto;margin-bottom:12px;">
       <p style="margin:0;">© ${new Date().getFullYear()} Balão da Informática - Todos os direitos reservados</p>
       <p style="margin:8px 0 0;color:#9ca3af;">Campinas, SP - (19) 98751-0267</p>
     </div>

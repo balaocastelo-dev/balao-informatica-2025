@@ -47,7 +47,7 @@ const generateEmailHtml = (content: string, products: Product[]) => {
       <div style="max-width: 600px; margin: 0 auto; background: white;">
         <!-- Header -->
         <div style="background: #E60000; padding: 20px; text-align: center;">
-          <img src="https://www.balao.info/media/wysiwyg/balao500.png" alt="Balão da Informática" style="height: 60px; filter: brightness(0) invert(1);" />
+          <img src="https://www.balaodainformatica.com.br/media/wysiwyg/balao500.png" alt="Balão da Informática" style="height: 60px; filter: brightness(0) invert(1);" />
         </div>
         
         <!-- Content -->

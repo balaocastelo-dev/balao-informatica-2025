@@ -80,7 +80,7 @@ export default function AuthPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <img
-            src="https://www.balao.info/media/wysiwyg/balao500.png"
+            src="https://www.balaodainformatica.com.br/media/wysiwyg/balao500.png"
             alt="Balão da Informática"
             className="h-16 mx-auto mb-4"
           />

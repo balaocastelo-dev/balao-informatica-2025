@@ -21,7 +21,7 @@ export function SEOHead({
   title = 'Balão da Informática - Computadores, Notebooks e Hardware em Campinas',
   description = 'Balão da Informática: as melhores ofertas em computadores, notebooks, hardware e tecnologia em Campinas. PC Gamer, monitores, placas de vídeo e muito mais!',
   keywords = 'computadores, notebooks, hardware, tecnologia, PC Gamer, placa de vídeo, monitores, Campinas, informática',
-  image = 'https://www.balao.info/media/wysiwyg/balao500.png',
+  image = 'https://www.balaodainformatica.com.br/media/wysiwyg/balao500.png',
   url = 'https://www.balao.info',
   type = 'website',
   product
@@ -101,7 +101,7 @@ export function LocalBusinessSchema() {
     "@context": "https://schema.org",
     "@type": "ComputerStore",
     name: "Balão da Informática Castelo",
-    image: "https://www.balao.info/media/wysiwyg/balao500.png",
+    image: "https://www.balaodainformatica.com.br/media/wysiwyg/balao500.png",
     "@id": "https://www.balao.info",
     url: "https://www.balao.info",
     telephone: "+55-19-3255-1661",

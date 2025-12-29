@@ -62,7 +62,7 @@ export default async function handler(req, res) {
         ? product.description.replace(/<[^>]*>?/gm, '').substring(0, 200).replace(/"/g, '&quot;') 
         : `Compre ${product.name} na Balão da Informática.`;
       
-      const rawImage = product.image || 'https://www.balao.info/media/wysiwyg/balao500.png';
+      const rawImage = product.image || 'https://www.balaodainformatica.com.br/media/wysiwyg/balao500.png';
       const image = buildOgImage(rawImage);
       const url = `${appUrl}/produto/${id}`;
       const price = product.price ? product.price.toString() : '0';
