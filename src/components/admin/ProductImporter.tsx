@@ -35,7 +35,20 @@ interface EnrichedProduct extends Omit<Product, 'id' | 'createdAt' | 'updatedAt'
 function parseCSV(text: string): ParsedRow[] {
   const lines = text.split(/\r?\n/).filter(l => l.trim());
   const rows: ParsedRow[] = [];
-  for (const line of lines) {
+  for (let idx = 0; idx < lines.length; idx++) {
+    const line = lines[idx];
+    const lower = line.toLowerCase();
+    if (
+      idx === 0 &&
+      (
+        (lower.includes('produto') && lower.includes('preço')) ||
+        (lower.includes('nome') && lower.includes('valor')) ||
+        lower.includes('imagecard') ||
+        lower.includes('href')
+      )
+    ) {
+      continue;
+    }
     const parts = line.split(/[,;|\t]/).map(p => p.trim()).filter(Boolean);
     let name = '';
     let price: number | undefined;
@@ -131,6 +144,7 @@ export function ProductImporter({ onClose }: { onClose?: () => void }) {
   const { bulkImportProducts } = useProducts();
   const { categories } = useCategories();
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const [importMode, setImportMode] = useState<'file' | 'text'>('file');
   const [fileName, setFileName] = useState('');
   const [rawText, setRawText] = useState('');
   const [parsed, setParsed] = useState<ParsedRow[]>([]);
@@ -243,20 +257,65 @@ export function ProductImporter({ onClose }: { onClose?: () => void }) {
 
       {step === 1 && (
         <div className="space-y-4">
-          <Label>Arquivo CSV ou XLSX</Label>
-          <input
-            ref={fileRef}
-            type="file"
-            accept=".csv, .xlsx, text/csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            onChange={e => {
-              const f = e.target.files?.[0];
-              if (f) handleUpload(f);
-            }}
-            className="w-full"
-          />
-          <div className="text-sm text-muted-foreground">
-            Dica: Exporte sua planilha como CSV para melhor compatibilidade.
+          <div className="flex gap-2">
+            <Button variant={importMode === 'file' ? 'default' : 'outline'} onClick={() => setImportMode('file')} className="gap-2">
+              <FileUp className="w-4 h-4" />
+              Arquivo
+            </Button>
+            <Button variant={importMode === 'text' ? 'default' : 'outline'} onClick={() => setImportMode('text')} className="gap-2">
+              <FileText className="w-4 h-4" />
+              Texto
+            </Button>
           </div>
+          {importMode === 'file' && (
+            <>
+              <Label>Arquivo CSV ou XLSX</Label>
+              <input
+                ref={fileRef}
+                type="file"
+                accept=".csv, .xlsx, text/csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                onChange={e => {
+                  const f = e.target.files?.[0];
+                  if (f) handleUpload(f);
+                }}
+                className="w-full"
+              />
+              <div className="text-sm text-muted-foreground">
+                Dica: Exporte sua planilha como CSV para melhor compatibilidade.
+              </div>
+            </>
+          )}
+          {importMode === 'text' && (
+            <>
+              <Label>Colar produtos (um por linha, campos separados por vírgula, ponto-e-vírgula, tab ou pipe)</Label>
+              <textarea
+                value={rawText}
+                onChange={e => setRawText(e.target.value)}
+                placeholder="Ex: Notebook XYZ, R$ 1999, https://imagem.png, https://fonte.com/produto"
+                className="w-full min-h-[180px] rounded border border-border bg-background p-2"
+              />
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => {
+                    const rows = parseCSV(rawText);
+                    if (rows.length === 0) {
+                      toast({ title: 'Nenhum produto válido', description: 'Inclua ao menos nome e preço por linha.', variant: 'destructive' });
+                      return;
+                    }
+                    setParsed(rows);
+                    setStep(2);
+                  }}
+                  className="gap-2"
+                >
+                  <Wand2 className="w-4 h-4" />
+                  Prosseguir
+                </Button>
+                <Button variant="outline" onClick={() => { setRawText(''); setParsed([]); }}>
+                  Limpar
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       )}
 
