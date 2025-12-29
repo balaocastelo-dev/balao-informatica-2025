@@ -1,496 +1,754 @@
-import { useState, useMemo } from "react";
-import { 
-  CheckCircle2, 
-  Cpu, 
-  CircuitBoard, 
-  Fan, 
-  MemoryStick, 
-  HardDrive, 
-  Zap, 
-  Monitor, 
-  Box, 
-  Mouse, 
-  Key, 
-  ShoppingCart, 
-  MessageCircle, 
-  Mail, 
-  ChevronRight, 
-  ChevronLeft, 
-  Trash2, 
-  Plus,
-  AlertTriangle,
-  Trophy
-} from "lucide-react";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useProducts } from "@/contexts/ProductContext";
-import { useCategories } from "@/contexts/CategoryContext";
-import type { Product } from "@/types/product";
+import { useCart } from "@/contexts/CartContext";
+import { toast } from "sonner";
+import {
+  Cpu,
+  CircuitBoard,
+  MemoryStick,
+  HardDrive,
+  Monitor,
+  Fan,
+  Zap,
+  Box,
+  FileText,
+  Wrench,
+  Check,
+  ChevronRight,
+  ShoppingCart,
+  Trash2,
+  ArrowLeft,
+  AlertTriangle,
+  Search,
+  Minus,
+  MousePointer2,
+  Keyboard,
+  Wifi,
+  Lock,
+  Info,
+  Plus,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
-// --- 1. CONFIGURAÇÃO DOS PASSOS ---
-const STEPS = [
-  { id: "cpu", label: "Processador", icon: <Cpu />, multi: false },
-  { id: "mobo", label: "Placa Mãe", icon: <CircuitBoard />, multi: false },
-  { id: "cooler_cpu", label: "Cooler CPU", icon: <Fan />, multi: false },
-  { id: "ram", label: "Memória RAM", icon: <MemoryStick />, multi: true },
-  { id: "ssd", label: "Armazenamento", icon: <HardDrive />, multi: true },
-  { id: "psu", label: "Fonte (PSU)", icon: <Zap />, multi: false },
-  { id: "gpu", label: "Placa de Vídeo", icon: <Monitor />, multi: false },
-  { id: "case", label: "Gabinete", icon: <Box />, multi: false },
-  { id: "cooler_case", label: "Fans Gabinete", icon: <Fan className="text-blue-500" />, multi: true },
-  { id: "os", label: "Licenças", icon: <Key />, multi: true },
-  { id: "perif", label: "Acessórios", icon: <Mouse />, multi: true },
-  { id: "review", label: "Resumo & Compra", icon: <ShoppingCart />, multi: false },
+// --- CONFIGURAÇÃO DAS ETAPAS ---
+interface BuildStep {
+  id: string;
+  name: string;
+  icon: React.ReactNode;
+  categorySlugs: string[];
+  required: boolean;
+  description: string;
+  allowMultiple: boolean;
+  maxQuantity?: number;
+}
+
+const BUILD_STEPS: BuildStep[] = [
+  {
+    id: "processador",
+    name: "Processador",
+    icon: <Cpu className="w-4 h-4" />,
+    categorySlugs: ["processadores"],
+    required: true,
+    allowMultiple: false,
+    description: "Plataforma.",
+  },
+  {
+    id: "placa-mae",
+    name: "Placa Mãe",
+    icon: <CircuitBoard className="w-4 h-4" />,
+    categorySlugs: ["placas-mae"],
+    required: true,
+    allowMultiple: false,
+    description: "Base.",
+  },
+  {
+    id: "memoria",
+    name: "Memória RAM",
+    icon: <MemoryStick className="w-4 h-4" />,
+    categorySlugs: ["memoria-ram"],
+    required: true,
+    allowMultiple: true,
+    maxQuantity: 4,
+    description: "Velocidade.",
+  },
+  {
+    id: "gpu",
+    name: "Placa de Vídeo",
+    icon: <Monitor className="w-4 h-4" />,
+    categorySlugs: ["placa-de-video"],
+    required: false,
+    allowMultiple: false,
+    description: "Gráficos.",
+  },
+  {
+    id: "ssd",
+    name: "Armazenamento",
+    icon: <HardDrive className="w-4 h-4" />,
+    categorySlugs: ["ssd-hd", "ssd"],
+    required: true,
+    allowMultiple: true,
+    maxQuantity: 4,
+    description: "Dados.",
+  },
+  {
+    id: "fonte",
+    name: "Fonte",
+    icon: <Zap className="w-4 h-4" />,
+    categorySlugs: ["fontes"],
+    required: true,
+    allowMultiple: false,
+    description: "Energia.",
+  },
+  {
+    id: "gabinete",
+    name: "Gabinete",
+    icon: <Box className="w-4 h-4" />,
+    categorySlugs: ["gabinetes"],
+    required: true,
+    allowMultiple: false,
+    description: "Visual.",
+  },
+  {
+    id: "cooler",
+    name: "Cooler",
+    icon: <Fan className="w-4 h-4" />,
+    categorySlugs: ["coolers"],
+    required: false,
+    allowMultiple: false,
+    description: "Refrigeração.",
+  },
+  {
+    id: "wifi",
+    name: "Wi-Fi",
+    icon: <Wifi className="w-4 h-4" />,
+    categorySlugs: ["rede", "adaptador", "wifi", "wireless"],
+    required: false,
+    allowMultiple: false,
+    description: "Conexão.",
+  },
+  {
+    id: "monitor",
+    name: "Monitores",
+    icon: <Monitor className="w-4 h-4" />,
+    categorySlugs: ["monitores"],
+    required: false,
+    allowMultiple: true,
+    maxQuantity: 3,
+    description: "Telas.",
+  },
+  {
+    id: "teclado",
+    name: "Teclado",
+    icon: <Keyboard className="w-4 h-4" />,
+    categorySlugs: ["teclado"],
+    required: false,
+    allowMultiple: false,
+    description: "Periféricos.",
+  },
+  {
+    id: "mouse",
+    name: "Mouse",
+    icon: <MousePointer2 className="w-4 h-4" />,
+    categorySlugs: ["mouse"],
+    required: false,
+    allowMultiple: false,
+    description: "Periféricos.",
+  },
+  {
+    id: "licenca",
+    name: "Softwares",
+    icon: <FileText className="w-4 h-4" />,
+    categorySlugs: ["licencas", "software"],
+    required: false,
+    allowMultiple: true,
+    description: "Sistema.",
+  },
 ];
 
-// Mapeamento de categorias/keywords para filtrar produtos do Supabase
-const STEP_CATEGORY_MAP: Record<string, string[]> = {
-  cpu: ["cpu", "processadores", "hardware"],
-  mobo: ["placa-mae", "motherboard", "hardware", "mobo"],
-  cooler_cpu: ["cooler", "refrigeracao", "hardware"],
-  ram: ["memoria", "ram", "hardware"],
-  ssd: ["armazenamento", "ssd", "hdd", "hardware", "disco"],
-  psu: ["fonte", "psu", "hardware", "energia"],
-  gpu: ["placa-de-video", "gpu", "hardware", "video"],
-  case: ["gabinete", "case", "hardware"],
-  cooler_case: ["cooler", "fan", "ventoinha", "hardware"],
-  os: ["licencas", "software", "sistemas"],
-  perif: ["perifericos", "acessorios", "mouse", "teclado", "monitor", "audio"],
-};
+const parseProductSpecs = (name: string, description: string = "") => {
+  const text = (name + " " + description).toLowerCase();
 
-const STEP_KEYWORDS: Record<string, string[]> = {
-  cpu: ["intel", "ryzen", "cpu", "processador"],
-  mobo: ["placa mãe", "placa-mae", "motherboard", "b760", "z790", "x670"],
-  cooler_cpu: ["cooler", "aio", "water", "air"],
-  ram: ["ram", "ddr4", "ddr5", "memória", "memoria"],
-  ssd: ["ssd", "nvme", "sata", "hd", "hdd", "armazenamento"],
-  psu: ["fonte", "psu", "80 plus", "600w", "750w", "850w"],
-  gpu: ["rtx", "gtx", "rx", "placa de vídeo", "placa-de-video", "gpu"],
-  case: ["gabinete", "case", "mid tower", "atx", "m-atx"],
-  cooler_case: ["fan", "ventoinha", "cooler de gabinete", "cooler"],
-  os: ["windows", "office", "licença", "licenca", "license"],
-  perif: ["mouse", "teclado", "monitor", "headset", "webcam", "periférico", "periferico"],
-};
+  const isNotebook =
+    text.includes("sodimm") || text.includes("so-dimm") || text.includes("notebook") || text.includes("laptop");
+  const isDDR4 = text.includes("ddr4") || text.includes("d4");
+  const isDDR5 = text.includes("ddr5") || text.includes("d5");
 
-// Sinônimos que serão casados com slugs/nomes reais vindos do Supabase
-const STEP_CATEGORY_SYNONYMS: Record<string, string[]> = {
-  cpu: ["processadores", "cpu", "processador"],
-  mobo: ["placas-mae", "placa mae", "motherboard"],
-  cooler_cpu: ["coolers", "cooler", "refrigeracao", "refrigeração"],
-  ram: ["memoria-ram", "memória ram", "ram", "memoria"],
-  ssd: ["ssd-hd", "ssd", "hd", "armazenamento", "disco"],
-  psu: ["fontes", "fonte", "psu", "energia"],
-  gpu: ["placa-de-video", "placas-de-video", "video", "vídeo", "gpu"],
-  case: ["gabinetes", "gabinete", "case"],
-  cooler_case: ["coolers", "fan", "ventoinha", "cooler de gabinete"],
-  os: ["licencas", "licenças", "software", "windows", "office"],
-  perif: ["perifericos", "periféricos", "acessorios", "acessórios", "mouse", "teclado", "monitor", "monitores", "audio", "áudio"],
+  const isAMD = text.includes("amd") || text.includes("ryzen") || text.includes("am4") || text.includes("am5");
+  const isIntel = text.includes("intel") || text.includes("core i") || text.includes("lga");
+
+  let socket = "unknown";
+  if (text.includes("lga1700")) socket = "lga1700";
+  else if (text.includes("lga1200")) socket = "lga1200";
+  else if (text.includes("am5")) socket = "am5";
+  else if (text.includes("am4")) socket = "am4";
+
+  if (socket === "unknown") {
+    if (text.includes("h610") || text.includes("b660") || text.includes("b760") || text.includes("z790"))
+      socket = "lga1700";
+    if (text.includes("b650") || text.includes("x670") || text.includes("a620")) socket = "am5";
+    if (text.includes("b550") || text.includes("b450") || text.includes("a520")) socket = "am4";
+  }
+
+  return { isDDR4, isDDR5, socket, isAMD, isIntel, isNotebook };
 };
 
 export default function PCBuilderPage() {
-  const { products, loading } = useProducts();
-  const { categories } = useCategories();
-  const [currentStepIndex, setCurrentStepIndex] = useState(0);
-  const [selections, setSelections] = useState<Record<string, Product[]>>({});
-  const [userEmail, setUserEmail] = useState("");
+  const { products } = useProducts();
+  const { addToCart } = useCart();
+  const navigate = useNavigate();
+  const contentRef = useRef<HTMLDivElement>(null);
 
-  const currentStep = STEPS[currentStepIndex];
-  const isReview = currentStep.id === "review";
+  // --- STATE ---
+  const [currentStep, setCurrentStep] = useState(0);
+  const [showSummary, setShowSummary] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortOrder, setSortOrder] = useState<"price-asc" | "price-desc">("price-asc");
+  const [promptProduct, setPromptProduct] = useState<string | null>(null);
 
-  // --- LÓGICA DE SELEÇÃO ---
-  const handleSelect = (product: Product) => {
-    setSelections((prev) => {
-      const currentList = prev[currentStep.id] || [];
-      
-      // Se for multi-select, adiciona ao array
-      if (currentStep.multi) {
-        return { ...prev, [currentStep.id]: [...currentList, product] };
+  // Inicialização segura
+  const [selectedParts, setSelectedParts] = useState<Record<string, any[]>>(() => {
+    try {
+      const saved = localStorage.getItem("pc-builder-v7");
+      const parsed = saved ? JSON.parse(saved) : {};
+      if (typeof parsed !== "object" || parsed === null) return {};
+      return parsed;
+    } catch (e) {
+      return {};
+    }
+  });
+
+  // --- EFEITOS ---
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      try {
+        localStorage.setItem("pc-builder-v7", JSON.stringify(selectedParts));
+      } catch (error) {
+        console.error("Erro ao salvar progresso:", error);
       }
-      
-      // Se for single-select, substitui
-      return { ...prev, [currentStep.id]: [product] };
-    });
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [selectedParts]);
 
-    // Se for single-select, avança automaticamente para ficar fluido
-    if (!currentStep.multi) {
-      setTimeout(() => nextStep(), 300);
+  useEffect(() => {
+    // Scroll ajustado para garantir visibilidade
+    if (contentRef.current && !showSummary) {
+      setTimeout(() => {
+        const headerEl = document.querySelector("header");
+        const headerOffset = headerEl ? headerEl.getBoundingClientRect().height + 24 : 96;
+        const elementPosition = contentRef.current!.getBoundingClientRect().top + window.scrollY;
+        const offsetPosition = elementPosition - headerOffset;
+
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: "smooth",
+        });
+      }, 100);
+    }
+    setSearchTerm("");
+    setPromptProduct(null);
+  }, [currentStep, showSummary]);
+
+  // --- FILTRAGEM SEGURA ---
+  const { filteredProducts } = useMemo(() => {
+    if (showSummary || !products) return { filteredProducts: [] };
+
+    try {
+      const step = BUILD_STEPS[currentStep];
+      const categoryProducts = products.filter(
+        (p) => p.category && step.categorySlugs.some((slug) => p.category.toLowerCase().includes(slug)),
+      );
+
+      const cpuList = Array.isArray(selectedParts["processador"]) ? selectedParts["processador"] : [];
+      const moboList = Array.isArray(selectedParts["placa-mae"]) ? selectedParts["placa-mae"] : [];
+
+      const cpu = cpuList[0];
+      const mobo = moboList[0];
+
+      const cpuSpecs = cpu ? parseProductSpecs(cpu.name, cpu.description) : null;
+      const moboSpecs = mobo ? parseProductSpecs(mobo.name, mobo.description) : null;
+
+      const compatible: any[] = [];
+
+      categoryProducts.forEach((product) => {
+        if (!product.name) return;
+
+        const prodSpecs = parseProductSpecs(product.name, product.description);
+        let isCompatible = true;
+
+        if (step.id === "placa-mae" && cpuSpecs) {
+          if (cpuSpecs.isAMD && prodSpecs.isIntel) isCompatible = false;
+          if (cpuSpecs.isIntel && prodSpecs.isAMD) isCompatible = false;
+          if (cpuSpecs.socket !== "unknown" && prodSpecs.socket !== "unknown" && cpuSpecs.socket !== prodSpecs.socket) {
+            isCompatible = false;
+          }
+        }
+
+        if (step.id === "memoria") {
+          if (prodSpecs.isNotebook) isCompatible = false;
+          if (moboSpecs) {
+            if (moboSpecs.isDDR4 && !prodSpecs.isDDR4) isCompatible = false;
+            if (moboSpecs.isDDR5 && !prodSpecs.isDDR5) isCompatible = false;
+          }
+        }
+
+        if (searchTerm && !product.name.toLowerCase().includes(searchTerm.toLowerCase())) return;
+        if (isCompatible) compatible.push(product);
+      });
+
+      const sortFn = (a: any, b: any) => {
+        const priceA = a.price || 0;
+        const priceB = b.price || 0;
+        return sortOrder === "price-asc" ? priceA - priceB : priceB - priceA;
+      };
+
+      return { filteredProducts: compatible.sort(sortFn) };
+    } catch (error) {
+      console.error("Erro no filtro:", error);
+      return { filteredProducts: [] };
+    }
+  }, [products, currentStep, selectedParts, searchTerm, sortOrder, showSummary]);
+
+  // --- HANDLERS ---
+  const handleCardClick = (product: any) => {
+    const step = BUILD_STEPS[currentStep];
+    if (step.allowMultiple) {
+      addPart(product);
+      setPromptProduct(product.id);
+    } else {
+      addPart(product);
+      setTimeout(() => advanceStep(), 300);
     }
   };
 
-  const removeSelection = (stepId: string, indexToRemove: number) => {
-    setSelections((prev) => {
-      const newList = prev[stepId].filter((_, idx) => idx !== indexToRemove);
-      return { ...prev, [stepId]: newList };
-    });
-  };
-
-  const nextStep = () => {
-    if (currentStepIndex < STEPS.length - 1) {
-      setCurrentStepIndex((prev) => prev + 1);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  };
-
-  const prevStep = () => {
-    if (currentStepIndex > 0) {
-      setCurrentStepIndex((prev) => prev - 1);
-    }
-  };
-
-  const goToStep = (index: number) => setCurrentStepIndex(index);
-
-  // --- CÁLCULOS ---
-  const totalValue = Object.values(selections).flat().reduce((acc, item) => acc + (item.price || 0), 0);
-
-  // --- GERADOR DE TEXTO INTELIGENTE ---
-  const generateBuildAnalysis = () => {
-    const allParts = Object.values(selections).flat();
-    const gpu = allParts.find(p => p.name.includes("RTX") || p.name.includes("RX"));
-    const cpu = allParts.find(p => p.name.includes("Core") || p.name.includes("Ryzen"));
-    const ramTotal = (selections['ram'] || []).length * 16; // Assumindo 16GB por pente pra simplificar estimativa
-
-    let analysis = "🚀 *Análise da sua Configuração Balão:*\n\n";
-    const capabilities: string[] = [];
-
-    if (gpu?.score > 80) capabilities.push("✅ Roda Cyberpunk 2077 e Alan Wake 2 no Ultra/4K");
-    else if (gpu?.score > 50) capabilities.push("✅ Roda Warzone, GTA V e Fortnite com alto FPS");
-    else capabilities.push("✅ Ótimo para jogos leves (LoL, Valorant) e uso Office");
-
-    if (cpu?.name.includes("i9") || cpu?.name.includes("Ryzen 9")) capabilities.push("✅ Processamento Monstruoso para Render e 3D");
-    if (ramTotal >= 32) capabilities.push("✅ Perfeito para multitarefa pesada e Edição de Vídeo");
-
-    analysis += capabilities.join("\n") + "\n\n";
-    analysis += "*Pontos Fortes:*\nEsta máquina foi montada com componentes de alta durabilidade. O sistema de refrigeração escolhido garante longevidade.";
-    
-    return analysis;
-  };
-
-  const normalize = (s: string) =>
-    s
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9\- ]/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
-
-  const resolvedStepSlugs: Record<string, string[]> = useMemo(() => {
-    const map: Record<string, string[]> = {};
-    for (const step of STEPS) {
-      const synonyms = (STEP_CATEGORY_SYNONYMS[step.id] || []).map(normalize);
-      const matched = categories
-        .filter((c) => {
-          const slug = normalize(c.slug);
-          const name = normalize(c.name);
-          return synonyms.some((syn) => slug.includes(syn) || name.includes(syn));
-        })
-        .map((c) => c.slug);
-      map[step.id] = matched;
-    }
-    return map;
-  }, [categories]);
-
-  const getProductsForStep = (stepId: string): Product[] => {
-    const cats = (resolvedStepSlugs[stepId]?.length ? resolvedStepSlugs[stepId] : STEP_CATEGORY_MAP[stepId] || []).map(c => c.toLowerCase());
-    const kws = (STEP_KEYWORDS[stepId] || []).map(k => k.toLowerCase());
-    const filtered = products.filter(p => {
-      const cat = (p.category || "").toLowerCase();
-      const name = p.name.toLowerCase();
-      const desc = (p.description || "").toLowerCase();
-      const inCat = cats.some(c => cat.includes(c));
-      const hasKw = kws.some(k => name.includes(k) || desc.includes(k));
-      return inCat || hasKw;
-    });
-    return filtered.sort((a, b) => a.price - b.price);
-  };
-
-  const handleWhatsApp = () => {
-    const analysis = generateBuildAnalysis();
-    let message = `Olá Balão! Montei este PC no site:\n\n`;
-    
-    STEPS.forEach(step => {
-      if (step.id === 'review') return;
-      const items = selections[step.id];
-      if (items && items.length > 0) {
-        message += `*${step.label}:* ${items.map(i => i.name).join(" + ")}\n`;
+  const addPart = (product: any) => {
+    const step = BUILD_STEPS[currentStep];
+    setSelectedParts((prev) => {
+      const currentList = Array.isArray(prev[step.id]) ? prev[step.id] : [];
+      if (step.allowMultiple) {
+        if (step.maxQuantity && currentList.length >= step.maxQuantity) {
+          toast.error(`Máximo de ${step.maxQuantity} itens desta categoria.`);
+          return prev;
+        }
+        return { ...prev, [step.id]: [...currentList, product] };
       }
+      return { ...prev, [step.id]: [product] };
     });
+  };
 
-    message += `\n💰 *Valor Estimado:* R$ ${totalValue.toLocaleString('pt-BR')}\n\n`;
-    message += analysis;
-    message += `\n----------------\nMeu email para contato: ${userEmail}`;
+  const removeOne = (stepId: string, productId: string) => {
+    setSelectedParts((prev) => {
+      const list = Array.isArray(prev[stepId]) ? [...prev[stepId]] : [];
+      const index = list.findIndex((p) => p.id === productId);
+      if (index > -1) list.splice(index, 1);
+      return { ...prev, [stepId]: list };
+    });
+    setPromptProduct(null);
+  };
 
-    window.open(`https://wa.me/5519987510267?text=${encodeURIComponent(message)}`, "_blank");
+  const advanceStep = () => {
+    setPromptProduct(null);
+    if (currentStep < BUILD_STEPS.length - 1) {
+      setCurrentStep(currentStep + 1);
+    } else {
+      setShowSummary(true);
+    }
+  };
+
+  const handleGlobalReset = () => {
+    if (confirm("Limpar toda a montagem?")) {
+      setSelectedParts({});
+      setCurrentStep(0);
+      setShowSummary(false);
+      localStorage.removeItem("pc-builder-v7");
+    }
+  };
+
+  const calculateTotal = () => {
+    const allParts = Object.values(selectedParts).flat().filter(Boolean);
+    const partsTotal = allParts.reduce((acc, p) => acc + (p?.price || 0), 0);
+    let labor = 0;
+    if (partsTotal > 0) {
+      const rawLabor = partsTotal * 0.1;
+      labor = Math.max(150, Math.min(500, rawLabor));
+    }
+    return { partsTotal, labor, grandTotal: partsTotal + labor };
+  };
+
+  const { partsTotal, labor, grandTotal } = calculateTotal();
+  const requiredMet = BUILD_STEPS.filter((s) => s.required).every((s) => (selectedParts[s.id] || []).length > 0);
+  const formatPrice = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+  const handleFinalizeBuild = () => {
+    try {
+      const allParts = Object.values(selectedParts).flat().filter(Boolean);
+      if (allParts.length === 0) {
+        toast.error("O PC está vazio!");
+        return;
+      }
+      allParts.forEach((part) => {
+        addToCart({
+          id: part.id,
+          name: part.name,
+          price: part.price,
+          image: part.image || "",
+          category: part.category,
+          quantity: 1,
+        });
+      });
+      if (labor > 0) {
+        addToCart({
+          id: "montagem-setup-pro",
+          name: "Serviço de Montagem Profissional & Testes",
+          price: labor,
+          image: "",
+          category: "Serviço",
+          quantity: 1,
+        });
+      }
+      toast.success("Adicionado ao carrinho!");
+      localStorage.removeItem("pc-builder-v7");
+      navigate("/carrinho");
+    } catch (error) {
+      console.error("Erro ao finalizar:", error);
+      toast.error("Erro ao processar carrinho. Tente novamente.");
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white font-sans text-slate-900">
-      
-      <header className="sticky top-0 z-50 bg-neutral-950/90 backdrop-blur border-b border-neutral-800">
-        <div className="max-w-[1600px] mx-auto px-4 lg:px-8 py-3 flex justify-between items-center">
-          <div className="flex items-center gap-2 font-black text-lg lg:text-xl tracking-tight text-white">
-            <span className="text-red-500 lg:text-2xl">Balão</span>Config
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="hidden sm:inline text-neutral-300 text-sm">Total</span>
-            <span className="text-red-400 font-black text-lg">R$ {totalValue.toLocaleString('pt-BR')}</span>
-            <Button onClick={() => isReview ? null : goToStep(STEPS.length - 1)} className="bg-red-600 hover:bg-red-700 text-white">
-              Finalizar
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <div className="max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-[280px_1fr_360px] gap-4 lg:gap-6 p-4 lg:p-8">
-        
-        {/* --- COLUNA 1: PROGRESSO (SIDEBAR) --- */}
-        <aside className="hidden lg:block space-y-2 sticky top-24 h-fit max-h-[calc(100vh-120px)] overflow-y-auto pr-2">
-          {STEPS.map((step, idx) => {
-            const hasSelection = selections[step.id]?.length > 0;
-            const isCurrent = idx === currentStepIndex;
-            
-            return (
-              <button
-                key={step.id}
-                onClick={() => goToStep(idx)}
-                disabled={idx > currentStepIndex && !selections[STEPS[idx-1]?.id]} // Só pode pular se completou anterior
-                className={`w-full flex items-center gap-3 p-3 rounded-lg text-sm transition-all border
-                  ${isCurrent 
-                    ? "bg-red-600 text-white border-red-700 shadow-lg" 
-                    : hasSelection 
-                      ? "bg-white text-slate-700 border-green-200 hover:border-red-300" 
-                      : "bg-slate-100 text-slate-400 border-transparent cursor-not-allowed"
-                  }
-                `}
-              >
-                <div className={`p-1.5 rounded-md ${isCurrent ? "bg-white/20" : "bg-slate-200"}`}>
-                  {hasSelection && !isCurrent ? <CheckCircle2 className="w-4 h-4 text-green-600" /> : step.icon}
+    <Layout>
+      <div className="bg-zinc-50 min-h-screen pb-10">
+        {/* === HEADER FIXO (TOPO) === */}
+        <div className="bg-white border-b sticky top-16 sm:top-20 z-40 shadow-sm">
+          <div className="container-balao pt-2 pb-2">
+            {/* LINHA 1: Título e Preço */}
+            <div className="flex justify-between items-center mb-2">
+              <div className="flex items-center gap-2">
+                <div className="bg-[#E30613] text-white p-1.5 md:p-2 rounded-lg shrink-0">
+                  <Wrench className="w-4 h-4 md:w-5 md:h-5" />
                 </div>
-                <div className="text-left flex-1">
-                  <p className="font-bold">{step.label}</p>
-                  {hasSelection && <p className="text-xs opacity-80 truncate w-32">{selections[step.id][0].name}</p>}
-                </div>
-              </button>
-            );
-          })}
-        </aside>
+                <h1 className="font-bold text-base md:text-lg leading-tight">
+                  <span className="md:hidden block">Monte seu PC</span>
+                  <span className="hidden md:block">
+                    Monte seu PC <span className="text-[#E30613]">Inteligente</span>
+                  </span>
+                </h1>
+              </div>
+              <div className="text-right shrink-0">
+                <p className="text-[10px] text-zinc-400 font-bold uppercase">Total</p>
+                <p className="text-lg md:text-xl font-black text-green-600 leading-none">{formatPrice(grandTotal)}</p>
+              </div>
+            </div>
 
-        <main className="min-h-[600px]">
-          
-          {/* BARRA DE PROGRESSO MOBILE */}
-          <div className="lg:hidden mb-6 overflow-x-auto whitespace-nowrap pb-2 flex gap-2 no-scrollbar">
-            {STEPS.map((step, idx) => (
-              <button 
-                key={step.id}
-                onClick={() => goToStep(idx)}
-                className={`px-4 py-2 rounded-full text-xs font-bold border transition-colors ${
-                  idx === currentStepIndex ? "bg-red-600 text-white border-red-600" : "bg-white border-slate-200 text-slate-500"
-                }`}
+            {/* LINHA 2: Botões de Ação */}
+            <div className="flex justify-between items-center gap-2 mb-2 bg-zinc-50 p-1.5 rounded-lg border border-zinc-100">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleGlobalReset}
+                className="text-red-500 hover:bg-red-50 h-8 px-2 text-xs"
               >
-                {step.label}
-              </button>
-            ))}
-          </div>
-          
-          <div className="mb-6">
-            <h1 className="text-3xl font-black text-slate-800 flex items-center gap-3">
-              {currentStep.icon} {currentStep.label}
-            </h1>
-            <p className="text-slate-500">
-              {currentStep.multi ? "Você pode selecionar múltiplos itens nesta etapa." : "Escolha o componente ideal para sua máquina."}
-            </p>
-          </div>
+                <Trash2 className="w-3.5 h-3.5 mr-1" /> <span className="hidden sm:inline">Limpar</span>
+              </Button>
 
-          {!isReview ? (
-            <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                {loading ? (
-                  Array.from({ length: 6 }).map((_, i) => (
-                    <Card key={`s-${i}`} className="p-0 overflow-hidden border-2 border-transparent">
-                      <div className="aspect-video bg-slate-100 animate-pulse" />
-                      <div className="p-4 space-y-2">
-                        <div className="h-4 bg-slate-100 animate-pulse rounded w-3/4" />
-                        <div className="h-4 bg-slate-100 animate-pulse rounded w-1/3" />
-                      </div>
-                    </Card>
-                  ))
-                ) : getProductsForStep(currentStep.id).map((product) => {
-                  const isSelected = selections[currentStep.id]?.find(p => p.id === product.id);
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setCurrentStep(Math.max(0, currentStep - 1));
+                    setShowSummary(false);
+                  }}
+                  disabled={currentStep === 0 && !showSummary}
+                  className="h-8 px-2 text-xs"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5 mr-1" /> Voltar
+                </Button>
+
+                {showSummary ? (
+                  <Button
+                    size="sm"
+                    onClick={handleFinalizeBuild}
+                    disabled={!requiredMet}
+                    className="bg-green-600 hover:bg-green-700 text-white font-bold animate-pulse h-8 px-3 text-xs"
+                  >
+                    <ShoppingCart className="w-3.5 h-3.5 mr-2" /> COMPRAR
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    onClick={advanceStep}
+                    className="bg-zinc-900 text-white hover:bg-black h-8 px-3 text-xs"
+                  >
+                    {currentStep < BUILD_STEPS.length - 1 ? "Próximo" : "Resumo"}{" "}
+                    <ChevronRight className="w-3.5 h-3.5 ml-1" />
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* === LINHA 3: CATEGORIAS (MULTILINHA - VISÍVEL SEM SCROLL) === */}
+            {!showSummary && (
+              <div className="flex flex-wrap justify-center gap-1.5 pb-1">
+                {BUILD_STEPS.map((step, idx) => {
+                  const count = (selectedParts[step.id] || []).length;
+                  const isCurrent = idx === currentStep;
                   return (
-                    <Card key={product.id} className={`p-0 overflow-hidden group hover:shadow-xl transition-all border-2 rounded-2xl ${isSelected ? 'border-red-600 ring-2 ring-red-100' : 'border-transparent hover:border-red-100'}`}>
-                      <div className="aspect-video bg-white flex items-center justify-center relative">
-                        <img
-                          src={product.image || '/placeholder.svg'}
-                          alt={product.name}
-                          className="w-full h-full object-contain p-6"
-                          loading="lazy"
-                        />
-                        {typeof product.stock === 'number' && (
-                          <span className={`absolute top-2 right-2 text-xs font-bold px-2 py-1 rounded ${
-                            product.stock > 0 ? 'bg-green-600 text-white' : 'bg-slate-400 text-white'
-                          }`}>
-                            {product.stock > 0 ? 'Em estoque' : 'Indisponível'}
-                          </span>
-                        )}
-                      </div>
-                      <div className="p-4">
-                        <h3 className="font-bold text-slate-800 text-lg leading-tight mb-2 h-12 line-clamp-2">{product.name}</h3>
-                        <div className="flex justify-between items-end">
-                          <span className="text-red-600 font-black text-xl">
-                            R$ {product.price.toLocaleString('pt-BR')}
-                          </span>
-                          <Button 
-                            onClick={() => handleSelect(product)}
-                            variant={isSelected ? "secondary" : "default"}
-                            className={isSelected ? "bg-green-100 text-green-700 hover:bg-green-200" : "bg-neutral-900 hover:bg-red-600"}
-                          >
-                            {isSelected ? "Selecionado" : "Adicionar"}
-                          </Button>
-                        </div>
-                      </div>
-                    </Card>
-                  )
+                    <button
+                      key={step.id}
+                      onClick={() => setCurrentStep(idx)}
+                      className={cn(
+                        "flex items-center gap-1 px-2 py-1 rounded-md border transition-all text-center",
+                        // Classes responsivas: Menor no mobile, normal no desktop
+                        "text-[10px] sm:text-xs font-bold",
+                        isCurrent
+                          ? "bg-zinc-900 text-white border-zinc-900 shadow-sm"
+                          : count > 0
+                            ? "bg-green-100 text-green-700 border-green-200"
+                            : "bg-white text-zinc-400 border-zinc-200 hover:border-zinc-300",
+                      )}
+                    >
+                      {/* Oculta ícone no mobile super pequeno se necessário, mas mantendo por enquanto */}
+                      <span className="hidden sm:inline">{count > 0 ? <Check className="w-3 h-3" /> : step.icon}</span>
+                      <span>{step.name}</span>
+                      {count > 1 && <span className="ml-0.5 text-[9px] bg-white/20 px-1 rounded-full">{count}</span>}
+                    </button>
+                  );
                 })}
               </div>
-              
-              {/* BOTÕES DE NAVEGAÇÃO DA ETAPA */}
-              <div className="mt-8 flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-                <Button variant="ghost" onClick={prevStep} disabled={currentStepIndex === 0} className="text-slate-500">
-                  <ChevronLeft className="mr-2 h-4 w-4" /> Voltar
-                </Button>
-                
-                {currentStep.multi && (
-                   <div className="text-sm text-slate-500">
-                      {selections[currentStep.id]?.length || 0} itens selecionados
-                   </div>
-                )}
-
-                <Button onClick={nextStep} className="bg-red-600 hover:bg-red-700 text-white px-8">
-                  {currentStep.multi ? "Continuar / Próximo" : "Pular Etapa"} <ChevronRight className="ml-2 h-4 w-4" />
-                </Button>
-              </div>
-            </>
-          ) : (
-            // --- TELA DE RESUMO E ANÁLISE (IA SIMULADA) ---
-            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-               <div className="bg-neutral-900 text-white p-8 rounded-2xl shadow-2xl relative overflow-hidden">
-                  <div className="relative z-10">
-                    <h2 className="text-2xl font-bold flex items-center gap-2 mb-4">
-                      <Trophy className="text-yellow-400" /> O Veredito da Balão
-                    </h2>
-                    <div className="whitespace-pre-line leading-relaxed text-slate-200">
-                      {generateBuildAnalysis()}
-                    </div>
-                  </div>
-                  {/* Decorativo */}
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-red-600 blur-[100px] opacity-20 pointer-events-none"></div>
-               </div>
-
-               <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                 <h3 className="font-bold text-lg mb-4">Finalizar Orçamento</h3>
-                 <div className="grid md:grid-cols-2 gap-4">
-                   <Input 
-                      placeholder="Seu melhor e-mail" 
-                      value={userEmail}
-                      onChange={(e) => setUserEmail(e.target.value)}
-                      className="h-12"
-                   />
-                   <Button onClick={handleWhatsApp} className="h-12 bg-[#25D366] hover:bg-[#1ebd56] text-white font-bold text-lg w-full">
-                      <MessageCircle className="mr-2" /> Enviar pro WhatsApp
-                   </Button>
-                 </div>
-                 <p className="text-xs text-slate-400 mt-2 text-center">
-                   Ao enviar, um de nossos especialistas revisará a compatibilidade e retornará com o link de pagamento ou ajustes necessários.
-                 </p>
-               </div>
-            </div>
-          )}
-        </main>
-
-        {/* --- COLUNA 3: RESUMO LATERAL (STICKY) --- */}
-        <aside className="space-y-6">
-          <div className="sticky top-24 bg-white rounded-xl shadow-lg border border-slate-100 overflow-hidden">
-            <div className="bg-slate-900 p-4 text-white">
-              <h3 className="font-bold flex items-center gap-2">
-                <Box className="w-4 h-4" /> Meu Setup
-              </h3>
-            </div>
-            
-            <div className="p-4 max-h-[500px] overflow-y-auto custom-scrollbar space-y-3">
-              {Object.keys(selections).length === 0 && (
-                <div className="text-center py-8 text-slate-400 text-sm">
-                  <Box className="w-12 h-12 mx-auto mb-2 opacity-20" />
-                  Seu carrinho está vazio.<br/>Comece escolhendo o processador.
-                </div>
-              )}
-
-              {STEPS.map(step => {
-                const items = selections[step.id];
-                if (!items || items.length === 0) return null;
-
-                return (
-                  <div key={step.id} className="border-b border-slate-100 pb-2 last:border-0">
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">{step.label}</p>
-                    {items.map((item, idx) => (
-                      <div key={`${step.id}-${idx}`} className="flex justify-between items-start text-sm group">
-                        <span className="text-slate-700 line-clamp-1 flex-1 pr-2">{item.name}</span>
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-slate-900">R${item.price}</span>
-                          <button 
-                            onClick={() => removeSelection(step.id, idx)}
-                            className="text-slate-300 hover:text-red-500 transition-colors"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )
-              })}
-            </div>
-
-            <div className="bg-slate-50 p-4 border-t border-slate-200">
-               <div className="flex justify-between items-center text-lg font-black text-slate-900">
-                 <span>Total</span>
-                 <span>R$ {totalValue.toLocaleString('pt-BR')}</span>
-               </div>
-               <div className="flex justify-between items-center text-xs text-slate-500 mt-1">
-                 <span>À vista no PIX</span>
-                 <span>ou 12x de R$ {(totalValue * 1.15 / 12).toFixed(2)}</span>
-               </div>
-               
-               {/* Botão de ação mobile/desktop redundante para garantir conversão */}
-               {!isReview && (
-                 <Button onClick={() => goToStep(STEPS.length - 1)} variant="outline" className="w-full mt-4 border-red-200 text-red-600 hover:bg-red-50">
-                   Ver Resumo Final
-                 </Button>
-               )}
-            </div>
-          </div>
-          
-          <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 text-blue-900 text-sm">
-             <h4 className="font-bold flex items-center gap-2 mb-2"><AlertTriangle className="w-4 h-4" /> Dúvida na peça?</h4>
-             <p className="opacity-80 mb-3">Nossos técnicos estão online no WhatsApp para ajudar você a escolher.</p>
-             <a href="https://wa.me/5519987510267" target="_blank" className="text-blue-700 font-bold hover:underline">Chamar ajuda &rarr;</a>
-          </div>
-        </aside>
-
-      </div>
-      {!isReview && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur border-t border-slate-200 p-3 sm:hidden">
-          <div className="max-w-[1600px] mx-auto flex items-center justify-between">
-            <div className="text-slate-700">
-              <p className="text-xs">Total</p>
-              <p className="text-lg font-black text-red-600">R$ {totalValue.toLocaleString('pt-BR')}</p>
-            </div>
-            <Button onClick={() => goToStep(STEPS.length - 1)} className="bg-red-600 hover:bg-red-700 text-white">
-              Ver Resumo
-            </Button>
+            )}
           </div>
         </div>
-      )}
-    </div>
+
+        {/* === CONTEÚDO === */}
+        {/* Ajuste de scroll-margin para compensar o header maior */}
+        <div ref={contentRef} className="container-balao py-6 px-4 scroll-mt-16 sm:scroll-mt-20">
+          {showSummary ? (
+            <div className="grid md:grid-cols-3 gap-8 animate-in fade-in">
+              <div className="md:col-span-2 space-y-4">
+                <h2 className="text-xl font-bold flex items-center gap-2 mt-4">
+                  <Check className="w-6 h-6 text-green-500" /> Resumo do Setup
+                </h2>
+
+                {BUILD_STEPS.map((step) => {
+                  const parts = selectedParts[step.id] || [];
+                  if (parts.length === 0 && !step.required) return null;
+
+                  return (
+                    <Card
+                      key={step.id}
+                      className={cn(
+                        "transition-all",
+                        parts.length ? "border-green-200 bg-white" : "border-red-200 bg-red-50",
+                      )}
+                    >
+                      <div className="p-3 flex gap-3 items-start">
+                        <div className="p-2 bg-zinc-100 rounded-lg text-zinc-500">{step.icon}</div>
+                        <div className="flex-1">
+                          <div className="flex justify-between">
+                            <p className="text-xs font-bold uppercase text-zinc-400">{step.name}</p>
+                            {parts.length === 0 && (
+                              <span className="text-xs font-bold text-red-500">Obrigatório - Faltando</span>
+                            )}
+                          </div>
+                          {parts.length > 0 && (
+                            <div className="mt-2 space-y-2">
+                              {parts.map((p, i) => (
+                                <div key={i} className="flex justify-between items-center bg-zinc-50 p-2 rounded">
+                                  <span className="text-sm font-medium line-clamp-1">{p.name}</span>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-sm font-bold text-green-700">{formatPrice(p.price)}</span>
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      className="h-6 w-6 text-red-400"
+                                      onClick={() => removeOne(step.id, p.id)}
+                                    >
+                                      <Trash2 className="w-3 h-3" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+
+              <Card className="h-fit sticky top-16 sm:top-20 shadow-xl border-green-100">
+                <CardHeader className="bg-zinc-900 text-white py-4 rounded-t-xl">
+                  <CardTitle>Investimento</CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 space-y-4">
+                  <div className="flex justify-between text-zinc-600">
+                    <span>Peças</span> <span>{formatPrice(partsTotal)}</span>
+                  </div>
+                  <div className="flex justify-between text-zinc-600">
+                    <span className="flex items-center gap-1">
+                      Montagem Pro <Info className="w-3 h-3" />
+                    </span>
+                    <span>{formatPrice(labor)}</span>
+                  </div>
+                  <div className="border-t pt-4 flex justify-between text-2xl font-black text-green-600">
+                    <span>Total</span> <span>{formatPrice(grandTotal)}</span>
+                  </div>
+                  <Button
+                    onClick={handleFinalizeBuild}
+                    disabled={!requiredMet}
+                    className="w-full bg-green-600 hover:bg-green-700 h-14 text-lg mt-4 shadow-lg shadow-green-200"
+                  >
+                    <ShoppingCart className="w-5 h-5 mr-2" /> Confirmar Compra
+                  </Button>
+                  {!requiredMet && (
+                    <div className="bg-red-50 text-red-600 p-3 rounded text-xs text-center border border-red-200 flex items-center justify-center gap-2">
+                      <AlertTriangle className="w-4 h-4" /> Faltam peças obrigatórias!
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
+            <div className="animate-in fade-in">
+              <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6 pt-2">
+                <div className="flex items-center gap-3 self-start">
+                  <div className="p-3 bg-white rounded-xl shadow-sm border border-zinc-100 hidden md:block">
+                    {BUILD_STEPS[currentStep].icon}
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-black text-zinc-800 flex items-center gap-2">
+                      <span className="md:hidden">{BUILD_STEPS[currentStep].icon}</span>
+                      {BUILD_STEPS[currentStep].name}
+                    </h2>
+                    <p className="text-sm text-zinc-500">{BUILD_STEPS[currentStep].description}</p>
+                  </div>
+                </div>
+                <div className="flex gap-2 w-full md:w-auto">
+                  <div className="relative flex-1 md:w-64">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                    <Input
+                      placeholder="Buscar..."
+                      className="pl-9 bg-white"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+                  <Select value={sortOrder} onValueChange={(v: any) => setSortOrder(v)}>
+                    <SelectTrigger className="w-[110px] bg-white">
+                      <SelectValue placeholder="Ordem" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="price-asc">Menor $</SelectItem>
+                      <SelectItem value="price-desc">Maior $</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                {filteredProducts.map((product) => {
+                  const stepId = BUILD_STEPS[currentStep].id;
+                  const currentList = selectedParts[stepId] || [];
+                  const qty = currentList.filter((p: any) => p.id === product.id).length;
+                  const isPromptOpen = promptProduct === product.id;
+
+                  return (
+                    <div
+                      key={product.id}
+                      onClick={() => handleCardClick(product)}
+                      className={cn(
+                        "relative group bg-white rounded-xl border transition-all overflow-hidden cursor-pointer",
+                        qty > 0 ? "border-green-500 ring-2 ring-green-500/20" : "border-zinc-200 hover:border-zinc-400",
+                      )}
+                    >
+                      {isPromptOpen && (
+                        <div
+                          className="absolute inset-0 bg-white/95 z-30 flex flex-col items-center justify-center p-4 text-center animate-in zoom-in-95 duration-200"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <div className="bg-green-100 text-green-700 p-2 rounded-full mb-2">
+                            <Check className="w-6 h-6" />
+                          </div>
+                          <p className="font-bold text-zinc-800 text-sm mb-1">Adicionado!</p>
+                          <p className="text-xs text-zinc-500 mb-4">Continuar?</p>
+                          <div className="flex flex-col gap-2 w-full">
+                            <Button
+                              size="sm"
+                              className="bg-zinc-800 hover:bg-zinc-900 h-8 text-xs font-bold"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setPromptProduct(null);
+                              }}
+                            >
+                              <Plus className="w-3 h-3 mr-1" /> ESCOLHER OUTRO
+                            </Button>
+                            <Button size="sm" variant="outline" className="h-8 text-xs" onClick={advanceStep}>
+                              PRÓXIMA ETAPA <ChevronRight className="w-3 h-3 ml-1" />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+
+                      {qty > 0 && (
+                        <div className="absolute top-2 right-2 z-10 bg-green-500 text-white font-bold text-[10px] px-2 py-0.5 rounded-full shadow-sm">
+                          {qty}x
+                        </div>
+                      )}
+
+                      <div className="absolute top-2 left-2 z-10">
+                        <Badge className="bg-green-50 text-green-700 border-green-100 text-[9px] px-1.5 py-0">
+                          Compatível
+                        </Badge>
+                      </div>
+
+                      <div className="aspect-square p-4 flex items-center justify-center bg-white">
+                        {product.image ? (
+                          <img src={product.image} className="w-full h-full object-contain" />
+                        ) : (
+                          <div className="text-zinc-200">{BUILD_STEPS[currentStep].icon}</div>
+                        )}
+                      </div>
+
+                      <div className="p-3 border-t border-zinc-50">
+                        <h3 className="text-xs font-bold text-zinc-800 line-clamp-2 h-8 mb-1">{product.name}</h3>
+                        <p className="text-base font-black text-green-600">{formatPrice(product.price)}</p>
+                        {qty > 0 && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="mt-2 w-full h-6 text-[10px] bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-700"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeOne(stepId, product.id);
+                            }}
+                          >
+                            <Minus className="w-3 h-3 mr-1" /> Remover
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {filteredProducts.length === 0 && (
+                <div className="text-center py-20 bg-white rounded-xl border border-dashed border-zinc-200">
+                  <Lock className="w-8 h-8 mx-auto text-zinc-300 mb-2" />
+                  <p className="text-sm text-zinc-500">Nenhum produto compatível encontrado.</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </Layout>
   );
 }
