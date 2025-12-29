@@ -138,6 +138,21 @@ const AdminPage = () => {
   const filteredProducts = useMemo(() => {
     let list = products;
 
+    const parsePriceInput = (val: string): number | null => {
+      if (!val) return null;
+      let s = val.trim();
+      if (!s) return null;
+      s = s.replace(/\s/g, '');
+      s = s.replace(/^[Rr]\$?/, '');
+      if (s.includes(',')) {
+        s = s.replace(/\./g, '').replace(',', '.');
+      } else {
+        s = s.replace(/,/g, '');
+      }
+      const num = parseFloat(s);
+      return isNaN(num) ? null : num;
+    };
+
     if (productCategoryFilter) {
       list = list.filter(p => p.category === productCategoryFilter);
     }
@@ -165,8 +180,8 @@ const AdminPage = () => {
       list = list.filter(p => (p.stock || 0) <= 0);
     }
 
-    const min = productMinPrice ? parseFloat(productMinPrice.replace(',', '.')) : null;
-    const max = productMaxPrice ? parseFloat(productMaxPrice.replace(',', '.')) : null;
+    const min = parsePriceInput(productMinPrice);
+    const max = parsePriceInput(productMaxPrice);
     if (min !== null && !isNaN(min)) {
       list = list.filter(p => p.price >= min);
     }
