@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useProducts } from "@/contexts/ProductContext";
+import { useCategories } from "@/contexts/CategoryContext";
 import type { Product } from "@/types/product";
 
 // --- 1. CONFIGURAÇÃO DOS PASSOS ---
@@ -72,8 +73,24 @@ const STEP_KEYWORDS: Record<string, string[]> = {
   perif: ["mouse", "teclado", "monitor", "headset", "webcam", "periférico", "periferico"],
 };
 
+// Sinônimos que serão casados com slugs/nomes reais vindos do Supabase
+const STEP_CATEGORY_SYNONYMS: Record<string, string[]> = {
+  cpu: ["processadores", "cpu", "processador"],
+  mobo: ["placas-mae", "placa mae", "motherboard"],
+  cooler_cpu: ["coolers", "cooler", "refrigeracao", "refrigeração"],
+  ram: ["memoria-ram", "memória ram", "ram", "memoria"],
+  ssd: ["ssd-hd", "ssd", "hd", "armazenamento", "disco"],
+  psu: ["fontes", "fonte", "psu", "energia"],
+  gpu: ["placa-de-video", "placas-de-video", "video", "vídeo", "gpu"],
+  case: ["gabinetes", "gabinete", "case"],
+  cooler_case: ["coolers", "fan", "ventoinha", "cooler de gabinete"],
+  os: ["licencas", "licenças", "software", "windows", "office"],
+  perif: ["perifericos", "periféricos", "acessorios", "acessórios", "mouse", "teclado", "monitor", "monitores", "audio", "áudio"],
+};
+
 export default function PCBuilderPage() {
   const { products, loading } = useProducts();
+  const { categories } = useCategories();
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [selections, setSelections] = useState<Record<string, Product[]>>({});
   const [userEmail, setUserEmail] = useState("");
@@ -149,8 +166,33 @@ export default function PCBuilderPage() {
     return analysis;
   };
 
+  const normalize = (s: string) =>
+    s
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9\- ]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  const resolvedStepSlugs: Record<string, string[]> = useMemo(() => {
+    const map: Record<string, string[]> = {};
+    for (const step of STEPS) {
+      const synonyms = (STEP_CATEGORY_SYNONYMS[step.id] || []).map(normalize);
+      const matched = categories
+        .filter((c) => {
+          const slug = normalize(c.slug);
+          const name = normalize(c.name);
+          return synonyms.some((syn) => slug.includes(syn) || name.includes(syn));
+        })
+        .map((c) => c.slug);
+      map[step.id] = matched;
+    }
+    return map;
+  }, [categories]);
+
   const getProductsForStep = (stepId: string): Product[] => {
-    const cats = (STEP_CATEGORY_MAP[stepId] || []).map(c => c.toLowerCase());
+    const cats = (resolvedStepSlugs[stepId]?.length ? resolvedStepSlugs[stepId] : STEP_CATEGORY_MAP[stepId] || []).map(c => c.toLowerCase());
     const kws = (STEP_KEYWORDS[stepId] || []).map(k => k.toLowerCase());
     const filtered = products.filter(p => {
       const cat = (p.category || "").toLowerCase();
