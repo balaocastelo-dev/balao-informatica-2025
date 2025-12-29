@@ -97,7 +97,9 @@ const ATTRIBUTE_PATTERNS: Record<string, { key: string; label: string; patterns:
   // Monitores
   'monitores': [
     { key: 'brand', label: 'Marca', patterns: [/\b(LG|Samsung|Dell|ASUS|Acer|AOC|BenQ|Philips|ViewSonic)\b/i] },
-    { key: 'size', label: 'Tamanho', patterns: [/\b(\d{2})["\']?\s*(?:pol|inch|polegadas)?\b/i], extract: (m) => `${m[1]}"` },
+    { key: 'size', label: 'Tamanho', patterns: [
+      /\b(\d{2}(?:[.,]\d)?)\s*(?:["']|pol|inch|polegadas)?\b/i
+    ], extract: (m) => `${String(m[1]).replace(',', '.')}"` },
     { key: 'resolution', label: 'Resolução', patterns: [/\b(Full\s*HD|1080p|2K|QHD|1440p|4K|UHD|2160p)\b/i] },
     { key: 'refresh', label: 'Taxa de Atualização', patterns: [/\b(\d{2,3})\s*Hz\b/i], extract: (m) => `${m[1]}Hz` },
     { key: 'panel', label: 'Painel', patterns: [/\b(IPS|VA|TN|OLED)\b/i] },
@@ -106,18 +108,87 @@ const ATTRIBUTE_PATTERNS: Record<string, { key: string; label: string; patterns:
   'notebooks': [
     { key: 'brand', label: 'Marca', patterns: [/\b(Dell|HP|Lenovo|ASUS|Acer|Samsung|Apple|MSI)\b/i] },
     { key: 'processor', label: 'Processador', patterns: [/\b(Core\s*i[3579]|Ryzen\s*[3579]|M[123])\b/i] },
-    { key: 'ram', label: 'RAM', patterns: [/\b(\d+)\s*GB\s*(?:RAM)?\b/i], extract: (m) => `${m[1]}GB RAM` },
-    { key: 'storage', label: 'Armazenamento', patterns: [/\b(\d+)\s*(GB|TB)\s*(?:SSD|HD)?\b/i], extract: (m) => `${m[1]}${m[2]}` },
-    { key: 'screen', label: 'Tela', patterns: [/\b(\d{2}(?:\.\d)?)["\']?\b/i], extract: (m) => `${m[1]}"` },
+    { key: 'ram', label: 'RAM', patterns: [
+      /\b(\d{1,3})\s*(GB|G)\s*(?:RAM|Mem[oó]ria)?\b/i
+    ], extract: (m) => `${m[1]}GB` },
+    { key: 'storage', label: 'Armazenamento', patterns: [
+      /\b(\d{1,4})\s*(GB|TB)\s*(?:SSD|HD|HDD)?\b/i
+    ], extract: (m) => {
+      const n = Number(m[1]);
+      const unit = String(m[2]).toUpperCase();
+      const gb = unit === 'TB' ? n * 1024 : n;
+      return `${gb}GB`;
+    } },
+    { key: 'screen', label: 'Tela', patterns: [
+      /\b(\d{2}(?:[.,]\d)?)\s*(?:["']|pol|inch|polegadas)?\b/i
+    ], extract: (m) => `${String(m[1]).replace(',', '.')}"` },
   ],
   // Licenças
   'licencas': [
     { key: 'software', label: 'Software', patterns: [/\b(Windows|Office|Microsoft\s*365|Antivirus|Adobe)\b/i] },
     { key: 'version', label: 'Versão', patterns: [/\b(Home|Pro|Professional|Enterprise|365)\b/i] },
   ],
-  // Default for other categories
+  // PCs Office/Gamer
+  'pc-office': [
+    { key: 'ram', label: 'RAM', patterns: [
+      /\b(\d{1,3})\s*(GB|G)\s*(?:RAM|Mem[oó]ria)?\b/i
+    ], extract: (m) => `${m[1]}GB` },
+    { key: 'storage', label: 'Armazenamento', patterns: [
+      /\b(\d{1,4})\s*(GB|TB)\s*(?:SSD|HD|HDD)?\b/i
+    ], extract: (m) => {
+      const n = Number(m[1]);
+      const unit = String(m[2]).toUpperCase();
+      const gb = unit === 'TB' ? n * 1024 : n;
+      return `${gb}GB`;
+    } },
+  ],
+  'pc-gamer': [
+    { key: 'ram', label: 'RAM', patterns: [
+      /\b(\d{1,3})\s*(GB|G)\s*(?:RAM|Mem[oó]ria)?\b/i
+    ], extract: (m) => `${m[1]}GB` },
+    { key: 'storage', label: 'Armazenamento', patterns: [
+      /\b(\d{1,4})\s*(GB|TB)\s*(?:SSD|HD|HDD)?\b/i
+    ], extract: (m) => {
+      const n = Number(m[1]);
+      const unit = String(m[2]).toUpperCase();
+      const gb = unit === 'TB' ? n * 1024 : n;
+      return `${gb}GB`;
+    } },
+  ],
+  // Celulares
+  'celulares': [
+    { key: 'ram', label: 'RAM', patterns: [
+      /\b(\d{1,2})\s*(GB|G)\s*(?:RAM|Mem[oó]ria)?\b/i
+    ], extract: (m) => `${m[1]}GB` },
+    { key: 'storage', label: 'Armazenamento', patterns: [
+      /\b(\d{2,4})\s*(GB|TB)\b/i
+    ], extract: (m) => {
+      const n = Number(m[1]);
+      const unit = String(m[2]).toUpperCase();
+      const gb = unit === 'TB' ? n * 1024 : n;
+      return `${gb}GB`;
+    } },
+    { key: 'screen', label: 'Tela', patterns: [
+      /\b(\d(?:[.,]\d)?)\s*(?:["']|pol|inch|polegadas)?\b/i
+    ], extract: (m) => `${String(m[1]).replace(',', '.')}"` },
+  ],
+  // Default for outras categorias e busca
   'default': [
-    { key: 'brand', label: 'Marca', patterns: [/\b(ASUS|Gigabyte|MSI|Corsair|Kingston|Samsung|LG|Dell|HP|Lenovo|Acer|Intel|AMD)\b/i] },
+    { key: 'brand', label: 'Marca', patterns: [/\b(ASUS|Gigabyte|MSI|Corsair|Kingston|Samsung|LG|Dell|HP|Lenovo|Acer|Intel|AMD|Apple|Xiaomi|Motorola)\b/i] },
+    { key: 'ram', label: 'RAM', patterns: [
+      /\b(\d{1,3})\s*(GB|G)\s*(?:RAM|Mem[oó]ria)?\b/i
+    ], extract: (m) => `${m[1]}GB` },
+    { key: 'storage', label: 'Armazenamento', patterns: [
+      /\b(\d{2,4})\s*(GB|TB)\s*(?:SSD|HD|HDD)?\b/i
+    ], extract: (m) => {
+      const n = Number(m[1]);
+      const unit = String(m[2]).toUpperCase();
+      const gb = unit === 'TB' ? n * 1024 : n;
+      return `${gb}GB`;
+    } },
+    { key: 'screen', label: 'Tela', patterns: [
+      /\b(\d{1,2}(?:[.,]\d)?)\s*(?:["']|pol|inch|polegadas)?\b/i
+    ], extract: (m) => `${String(m[1]).replace(',', '.')}"` },
   ],
 };
 

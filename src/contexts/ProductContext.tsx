@@ -22,6 +22,36 @@ export function ProductProvider({ children }: { children: ReactNode }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const extractAttributes = (name: string, description?: string) => {
+    const text = `${name} ${description || ''}`.toLowerCase();
+    let ramGb: number | undefined;
+    let storageGb: number | undefined;
+    let screenInches: number | undefined;
+
+    const ramMatch = text.match(/\b(\d{1,3})\s*(gb|g)\s*(?:ram|mem[oó]ria)?\b/i);
+    if (ramMatch) {
+      const n = Number(ramMatch[1]);
+      if (!isNaN(n)) ramGb = n;
+    }
+
+    const storageMatch = text.match(/\b(\d{1,4})\s*(gb|tb)\s*(?:ssd|hd|hdd)?\b/i);
+    if (storageMatch) {
+      const n = Number(storageMatch[1]);
+      const unit = String(storageMatch[2]).toUpperCase();
+      const gb = unit === 'TB' ? n * 1024 : n;
+      if (!isNaN(gb)) storageGb = gb;
+    }
+
+    const screenMatch = text.match(/\b(\d{1,2}(?:[.,]\d)?)\s*(?:["']|pol|inch|polegadas)?\b/i);
+    if (screenMatch) {
+      const val = String(screenMatch[1]).replace(',', '.');
+      const num = Number(val);
+      if (!isNaN(num)) screenInches = num;
+    }
+
+    return { ramGb, storageGb, screenInches };
+  };
+
   const fetchProducts = async () => {
     try {
       // TODO: Loading all products at once will affect performance as the database grows.
@@ -54,6 +84,9 @@ export function ProductProvider({ children }: { children: ReactNode }) {
             sourceUrl: p.source_url || undefined,
             createdAt: new Date(p.created_at),
             updatedAt: new Date(p.updated_at),
+            ramGb: typeof p.ram_gb === 'number' ? p.ram_gb : undefined,
+            storageGb: typeof p.storage_gb === 'number' ? p.storage_gb : undefined,
+            screenInches: typeof p.screen_inches === 'number' ? p.screen_inches : undefined,
           }));
           allProducts.push(...mappedProducts);
           page++;
@@ -83,6 +116,7 @@ export function ProductProvider({ children }: { children: ReactNode }) {
 
   const addProduct = async (product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
+      const attrs = extractAttributes(product.name, product.description);
       const { data, error } = await supabase
         .from('products')
         .insert({
@@ -94,11 +128,46 @@ export function ProductProvider({ children }: { children: ReactNode }) {
           category: product.category,
           stock: product.stock,
           source_url: product.sourceUrl || null,
+          ram_gb: attrs.ramGb ?? null,
+          storage_gb: attrs.storageGb ?? null,
+          screen_inches: attrs.screenInches ?? null,
         })
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('products')
+          .insert({
+            name: product.name,
+            description: product.description || null,
+            price: product.price,
+            cost_price: product.costPrice || null,
+            image: product.image || null,
+            category: product.category,
+            stock: product.stock,
+            source_url: product.sourceUrl || null,
+          })
+          .select()
+          .single();
+        if (fallbackError) throw fallbackError;
+        const newProduct: Product = {
+          id: fallbackData.id,
+          name: fallbackData.name,
+          description: fallbackData.description || undefined,
+          price: Number(fallbackData.price),
+          costPrice: fallbackData.cost_price ? Number(fallbackData.cost_price) : undefined,
+          image: fallbackData.image || '/placeholder.svg',
+          category: fallbackData.category as Category,
+          stock: fallbackData.stock,
+          sourceUrl: fallbackData.source_url || undefined,
+          createdAt: new Date(fallbackData.created_at),
+          updatedAt: new Date(fallbackData.updated_at),
+          ...attrs,
+        };
+        setProducts(current => [newProduct, ...current]);
+        return;
+      }
 
       const newProduct: Product = {
         id: data.id,
@@ -112,6 +181,9 @@ export function ProductProvider({ children }: { children: ReactNode }) {
         sourceUrl: data.source_url || undefined,
         createdAt: new Date(data.created_at),
         updatedAt: new Date(data.updated_at),
+        ramGb: typeof data.ram_gb === 'number' ? data.ram_gb : attrs.ramGb,
+        storageGb: typeof data.storage_gb === 'number' ? data.storage_gb : attrs.storageGb,
+        screenInches: typeof data.screen_inches === 'number' ? data.screen_inches : attrs.screenInches,
       };
 
       setProducts(current => [newProduct, ...current]);
@@ -136,18 +208,35 @@ export function ProductProvider({ children }: { children: ReactNode }) {
       if (updates.category !== undefined) dbUpdates.category = updates.category;
       if (updates.stock !== undefined) dbUpdates.stock = updates.stock;
       if (updates.sourceUrl !== undefined) dbUpdates.source_url = updates.sourceUrl;
+      const existing = products.find(p => p.id === id);
+      const textName = updates.name ?? existing?.name ?? '';
+      const textDesc = updates.description ?? existing?.description ?? '';
+      const attrs = extractAttributes(textName, typeof textDesc === 'string' ? textDesc : undefined);
+      dbUpdates.ram_gb = attrs.ramGb ?? null;
+      dbUpdates.storage_gb = attrs.storageGb ?? null;
+      dbUpdates.screen_inches = attrs.screenInches ?? null;
 
       const { error } = await supabase
         .from('products')
         .update(dbUpdates)
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        const fallbackUpdates: Record<string, unknown> = { ...dbUpdates };
+        delete fallbackUpdates.ram_gb;
+        delete fallbackUpdates.storage_gb;
+        delete fallbackUpdates.screen_inches;
+        const { error: fallbackError } = await supabase
+          .from('products')
+          .update(fallbackUpdates)
+          .eq('id', id);
+        if (fallbackError) throw fallbackError;
+      }
 
       setProducts(current =>
         current.map(product =>
           product.id === id
-            ? { ...product, ...updates, updatedAt: new Date() }
+            ? { ...product, ...updates, ...attrs, updatedAt: new Date() }
             : product
         )
       );
@@ -223,23 +312,68 @@ export function ProductProvider({ children }: { children: ReactNode }) {
     profitMargin: number
   ) => {
     try {
-      const productsToInsert = newProducts.map(product => ({
-        name: product.name,
-        description: product.description || null,
-        price: product.costPrice ? product.costPrice * (1 + profitMargin / 100) : product.price,
-        cost_price: product.costPrice || null,
-        image: product.image || null,
-        category: product.category,
-        stock: product.stock,
-        source_url: product.sourceUrl || null,
-      }));
+      const productsToInsert = newProducts.map(product => {
+        const attrs = extractAttributes(product.name, product.description);
+        return {
+          name: product.name,
+          description: product.description || null,
+          price: product.costPrice ? product.costPrice * (1 + profitMargin / 100) : product.price,
+          cost_price: product.costPrice || null,
+          image: product.image || null,
+          category: product.category,
+          stock: product.stock,
+          source_url: product.sourceUrl || null,
+          ram_gb: attrs.ramGb ?? null,
+          storage_gb: attrs.storageGb ?? null,
+          screen_inches: attrs.screenInches ?? null,
+        };
+      });
 
       const { data, error } = await supabase
         .from('products')
         .insert(productsToInsert)
         .select();
 
-      if (error) throw error;
+      if (error) {
+        const fallback = newProducts.map(product => ({
+          name: product.name,
+          description: product.description || null,
+          price: product.costPrice ? product.costPrice * (1 + profitMargin / 100) : product.price,
+          cost_price: product.costPrice || null,
+          image: product.image || null,
+          category: product.category,
+          stock: product.stock,
+          source_url: product.sourceUrl || null,
+        }));
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('products')
+          .insert(fallback)
+          .select();
+        if (fallbackError) throw fallbackError;
+        const mappedProducts: Product[] = (fallbackData || []).map(p => {
+          const attrs = extractAttributes(p.name, p.description || undefined);
+          return {
+            id: p.id,
+            name: p.name,
+            description: p.description || undefined,
+            price: Number(p.price),
+            costPrice: p.cost_price ? Number(p.cost_price) : undefined,
+            image: p.image || '/placeholder.svg',
+            category: p.category as Category,
+            stock: p.stock,
+            sourceUrl: p.source_url || undefined,
+            createdAt: new Date(p.created_at),
+            updatedAt: new Date(p.updated_at),
+            ...attrs,
+          };
+        });
+        setProducts(current => [...mappedProducts, ...current]);
+        toast({
+          title: "Produtos importados!",
+          description: `${mappedProducts.length} produtos foram importados com sucesso.`,
+        });
+        return;
+      }
 
       const mappedProducts: Product[] = (data || []).map(p => ({
         id: p.id,
@@ -253,6 +387,9 @@ export function ProductProvider({ children }: { children: ReactNode }) {
         sourceUrl: p.source_url || undefined,
         createdAt: new Date(p.created_at),
         updatedAt: new Date(p.updated_at),
+        ramGb: typeof p.ram_gb === 'number' ? p.ram_gb : undefined,
+        storageGb: typeof p.storage_gb === 'number' ? p.storage_gb : undefined,
+        screenInches: typeof p.screen_inches === 'number' ? p.screen_inches : undefined,
       }));
 
       setProducts(current => [...mappedProducts, ...current]);

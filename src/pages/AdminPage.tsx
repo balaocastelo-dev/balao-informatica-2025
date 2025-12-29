@@ -358,6 +358,9 @@ const AdminPage = () => {
     if (nameLower.includes('placa-mãe') || nameLower.includes('placa mãe') || nameLower.includes('motherboard')) return 'placas-mae';
     if (nameLower.includes('cooler') || nameLower.includes('water') || nameLower.includes('refrigera')) return 'coolers';
     if (nameLower.includes('gabinete') || nameLower.includes('case')) return 'gabinetes';
+    if (nameLower.includes('pc gamer') || nameLower.includes('gamer')) return 'pc-gamer';
+    if (nameLower.includes('pc office') || nameLower.includes('escritorio') || nameLower.includes('office')) return 'pc-office';
+    if (nameLower.includes('celular') || nameLower.includes('smartphone') || nameLower.includes('iphone') || nameLower.includes('galaxy') || nameLower.includes('xiaomi')) return 'celulares';
     if (nameLower.includes('placa de vídeo') || nameLower.includes('placa de video') || nameLower.includes('gpu') || nameLower.includes('geforce') || nameLower.includes('radeon') || nameLower.includes('rtx') || nameLower.includes('gtx')) return 'placa-de-video';
     if (nameLower.includes('console') || nameLower.includes('playstation') || nameLower.includes('xbox') || nameLower.includes('nintendo')) return 'consoles';
     if (nameLower.includes('iphone')) return 'iphones';

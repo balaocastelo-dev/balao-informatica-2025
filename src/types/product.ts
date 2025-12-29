@@ -10,6 +10,9 @@ export interface Product {
   sourceUrl?: string;
   createdAt?: Date;
   updatedAt?: Date;
+  ramGb?: number;
+  storageGb?: number;
+  screenInches?: number;
 }
 
 export type Category = string;
