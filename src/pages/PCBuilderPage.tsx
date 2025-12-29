@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PriceFilter } from "@/components/PriceFilter";
+import { useCategories } from "@/contexts/CategoryContext";
+import type { Product } from "@/types/product";
 import { useProducts } from "@/contexts/ProductContext";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
@@ -200,7 +202,7 @@ const parseProductSpecs = (name: string, description: string = "") => {
 };
 
 export default function PCBuilderPage() {
-  const { products } = useProducts();
+  const { products, loading } = useProducts();
   const { addToCart } = useCart();
   const navigate = useNavigate();
   const contentRef = useRef<HTMLDivElement>(null);
@@ -209,11 +211,13 @@ export default function PCBuilderPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [showSummary, setShowSummary] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortOrder, setSortOrder] = useState<"price-asc" | "price-desc">("price-asc");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [minPrice, setMinPrice] = useState<number | null>(null);
+  const [maxPrice, setMaxPrice] = useState<number | null>(null);
   const [promptProduct, setPromptProduct] = useState<string | null>(null);
 
   // Inicialização segura
-  const [selectedParts, setSelectedParts] = useState<Record<string, any[]>>(() => {
+  const [selectedParts, setSelectedParts] = useState<Record<string, Product[]>>(() => {
     try {
       const saved = localStorage.getItem("pc-builder-v7");
       const parsed = saved ? JSON.parse(saved) : {};
@@ -255,14 +259,47 @@ export default function PCBuilderPage() {
     setPromptProduct(null);
   }, [currentStep, showSummary]);
 
+  const { categories } = useCategories();
+  const STEP_SYNONYMS: Record<string, string[]> = {
+    "processador": ["processadores", "cpu", "processador"],
+    "placa-mae": ["placas-mae", "motherboard", "mobo", "placa mae"],
+    "memoria": ["memoria-ram", "memoria", "ram"],
+    "gpu": ["placa-de-video", "gpu", "video"],
+    "ssd": ["ssd", "hd", "armazenamento", "disco"],
+    "fonte": ["fontes", "psu", "fonte"],
+    "gabinete": ["gabinetes", "gabinete", "case"],
+    "cooler": ["coolers", "cooler", "aircooler", "watercooler"],
+    "wifi": ["rede", "adaptador", "wifi", "wireless", "pci", "usb"],
+    "monitor": ["monitores", "monitor"],
+    "teclado": ["teclado", "teclados"],
+    "mouse": ["mouse", "mouses"],
+    "licenca": ["licencas", "software", "windows", "office"]
+  };
+  const resolvedStepSlugs: Record<string, string[]> = useMemo(() => {
+    const map: Record<string, string[]> = {};
+    BUILD_STEPS.forEach((step) => {
+      const syn = (STEP_SYNONYMS[step.id] || []).map((s) => s.toLowerCase());
+      const matched = categories
+        .filter((c) => {
+          const slug = c.slug.toLowerCase();
+          const name = c.name.toLowerCase();
+          return syn.some((s) => slug.includes(s) || name.includes(s));
+        })
+        .map((c) => c.slug.toLowerCase());
+      map[step.id] = matched.length ? matched : step.categorySlugs.map((s) => s.toLowerCase());
+    });
+    return map;
+  }, [categories, STEP_SYNONYMS]);
+
   // --- FILTRAGEM SEGURA ---
   const { filteredProducts } = useMemo(() => {
     if (showSummary || !products) return { filteredProducts: [] };
 
     try {
       const step = BUILD_STEPS[currentStep];
+      const slugs = (resolvedStepSlugs[step.id] || step.categorySlugs).map((s) => s.toLowerCase());
       const categoryProducts = products.filter(
-        (p) => p.category && step.categorySlugs.some((slug) => p.category.toLowerCase().includes(slug)),
+        (p) => p.category && slugs.some((slug) => (p.category as string).toLowerCase().includes(slug)),
       );
 
       const cpuList = Array.isArray(selectedParts["processador"]) ? selectedParts["processador"] : [];
@@ -274,7 +311,7 @@ export default function PCBuilderPage() {
       const cpuSpecs = cpu ? parseProductSpecs(cpu.name, cpu.description) : null;
       const moboSpecs = mobo ? parseProductSpecs(mobo.name, mobo.description) : null;
 
-      const compatible: any[] = [];
+      const compatible: Product[] = [];
 
       categoryProducts.forEach((product) => {
         if (!product.name) return;
@@ -299,24 +336,29 @@ export default function PCBuilderPage() {
         }
 
         if (searchTerm && !product.name.toLowerCase().includes(searchTerm.toLowerCase())) return;
+        const price = product.price || 0;
+        if (minPrice !== null && price < minPrice) return;
+        if (maxPrice !== null && price > maxPrice) return;
         if (isCompatible) compatible.push(product);
       });
 
-      const sortFn = (a: any, b: any) => {
+      const sortFn = (a: Product, b: Product) => {
         const priceA = a.price || 0;
         const priceB = b.price || 0;
-        return sortOrder === "price-asc" ? priceA - priceB : priceB - priceA;
+        return sortOrder === "asc" ? priceA - priceB : priceB - priceA;
       };
 
-      return { filteredProducts: compatible.sort(sortFn) };
+      const sortedCompat = compatible.sort(sortFn);
+      if (sortedCompat.length > 0) return { filteredProducts: sortedCompat };
+      return { filteredProducts: categoryProducts.sort(sortFn) };
     } catch (error) {
       console.error("Erro no filtro:", error);
       return { filteredProducts: [] };
     }
-  }, [products, currentStep, selectedParts, searchTerm, sortOrder, showSummary]);
+  }, [products, currentStep, selectedParts, searchTerm, sortOrder, showSummary, minPrice, maxPrice, resolvedStepSlugs]);
 
   // --- HANDLERS ---
-  const handleCardClick = (product: any) => {
+  const handleCardClick = (product: Product) => {
     const step = BUILD_STEPS[currentStep];
     if (step.allowMultiple) {
       addPart(product);
@@ -327,7 +369,7 @@ export default function PCBuilderPage() {
     }
   };
 
-  const addPart = (product: any) => {
+  const addPart = (product: Product) => {
     const step = BUILD_STEPS[currentStep];
     setSelectedParts((prev) => {
       const currentList = Array.isArray(prev[step.id]) ? prev[step.id] : [];
@@ -641,23 +683,37 @@ export default function PCBuilderPage() {
                       onChange={(e) => setSearchTerm(e.target.value)}
                     />
                   </div>
-                  <Select value={sortOrder} onValueChange={(v: any) => setSortOrder(v)}>
-                    <SelectTrigger className="w-[110px] bg-white">
-                      <SelectValue placeholder="Ordem" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="price-asc">Menor $</SelectItem>
-                      <SelectItem value="price-desc">Maior $</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <PriceFilter
+                    minPrice={minPrice}
+                    maxPrice={maxPrice}
+                    onFilterChange={(min, max) => {
+                      setMinPrice(min);
+                      setMaxPrice(max);
+                    }}
+                    sortOrder={sortOrder}
+                    onSortChange={(order) => setSortOrder(order)}
+                  />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                {filteredProducts.map((product) => {
+                {loading
+                  ? Array.from({ length: 8 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="bg-white rounded-xl border border-zinc-200 overflow-hidden animate-pulse"
+                      >
+                        <div className="aspect-square p-4 bg-zinc-100" />
+                        <div className="p-3 space-y-2">
+                          <div className="h-3 bg-zinc-100 rounded" />
+                          <div className="h-4 bg-zinc-100 rounded w-1/2" />
+                        </div>
+                      </div>
+                    ))
+                  : filteredProducts.map((product) => {
                   const stepId = BUILD_STEPS[currentStep].id;
                   const currentList = selectedParts[stepId] || [];
-                  const qty = currentList.filter((p: any) => p.id === product.id).length;
+                  const qty = currentList.filter((p) => p.id === product.id).length;
                   const isPromptOpen = promptProduct === product.id;
 
                   return (
