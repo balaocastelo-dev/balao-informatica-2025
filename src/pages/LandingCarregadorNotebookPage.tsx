@@ -53,20 +53,6 @@ export default function LandingCarregadorZapPage() {
   return (
     <Layout>
       <SEOHead title={title} description={description} keywords={keywords} url={url} type="product" />
-      
-      {/* --- BOTÃO FLUTUANTE STICKY (O MAIS IMPORTANTE) --- */}
-      <a 
-        href={openZap("Olá! Estou no site e preciso de um carregador com urgência.")}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="fixed bottom-4 right-4 z-[9999] flex items-center gap-3 bg-[#25D366] hover:bg-[#1da851] text-white px-6 py-4 rounded-full shadow-[0_4px_20px_rgba(37,211,102,0.6)] transition-all hover:scale-110 animate-pulse"
-      >
-        <MessageCircle className="w-8 h-8 fill-white text-[#25D366]" />
-        <div className="flex flex-col text-left leading-none">
-          <span className="text-xs font-bold text-green-100">Precisa agora?</span>
-          <span className="text-lg font-extrabold">Chamar no Zap</span>
-        </div>
-      </a>
 
       {/* --- FAIXA DE URGÊNCIA --- */}
       <div className="bg-yellow-400 text-zinc-900 font-black text-center py-3 px-4 flex items-center justify-center gap-2 animate-in slide-in-from-top duration-700">
