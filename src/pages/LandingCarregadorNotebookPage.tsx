@@ -29,8 +29,8 @@ export default function LandingCarregadorZapPage() {
   };
 
   const title = "Carregador de Notebook em Campinas | Entrega Imediata via Motoboy";
-  const description = "Notebook parou? Entrega em 30 minutos em Campinas. Fontes Dell, Acer, Samsung, Lenovo e Apple. Mande uma foto no WhatsApp e receba agora.";
-  const keywords = "carregador notebook campinas, fonte dell, fonte acer, entrega motoboy informatica, sos carregadores";
+  const description = "Carregador de Notebook em Campinas com entrega imediata via motoboy. Envie a foto no WhatsApp e receba o carregador correto hoje.";
+  const keywords = "carregador de notebook campinas, carregadores campinas, fonte notebook campinas, entrega motoboy campinas, carregador notebook original, assistência notebook campinas";
   const url = "https://www.balao.info/carregador-express";
 
   // Marcas agora são botões de atalho para o chat
@@ -118,8 +118,8 @@ export default function LandingCarregadorZapPage() {
       <div className="bg-white py-12 -mt-8 relative z-20 rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)]">
         <div className="container-balao">
             <div className="text-center mb-10">
-                <h2 className="text-3xl font-bold text-zinc-900 mb-2">Não sabe o modelo da sua fonte?</h2>
-                <p className="text-zinc-500">Não arrisque comprar errado. Deixe com nossos técnicos.</p>
+                <h2 className="text-3xl font-bold text-zinc-900 mb-2">Carregador de Notebook em Campinas: envie foto no WhatsApp</h2>
+                <p className="text-zinc-500">Não arrisque comprar errado. Nossos técnicos identificam o carregador correto e entregam em Campinas hoje.</p>
             </div>
 
             <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
@@ -187,51 +187,7 @@ export default function LandingCarregadorZapPage() {
         </div>
       </div>
 
-      {/* --- VITRINE SIMULADA (TUDO LEVA AO ZAP) --- */}
-      <div className="py-16 container-balao">
-        <div className="flex items-center justify-center mb-10 gap-2">
-            <Zap className="text-[#E30613] w-6 h-6 fill-current" />
-            <h2 className="text-3xl font-bold text-zinc-900">Modelos Disponíveis Agora</h2>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-            {commonModels.map((item, idx) => (
-                <a 
-                    key={idx}
-                    href={openZap(`Tenho interesse no ${item.name}`)}
-                    target="_blank"
-                    className="group"
-                >
-                    <Card className="overflow-hidden hover:shadow-xl transition-all border-zinc-200 hover:border-green-400 relative">
-                        {item.tag && (
-                            <Badge className="absolute top-2 right-2 bg-[#E30613] hover:bg-red-700">
-                                {item.tag}
-                            </Badge>
-                        )}
-                        <CardContent className="p-6 text-center">
-                            <div className="w-full aspect-video bg-zinc-100 rounded-lg mb-4 flex items-center justify-center text-zinc-300">
-                                <BatteryCharging className="w-16 h-16 group-hover:text-zinc-400 transition-colors" />
-                            </div>
-                            <h3 className="font-bold text-zinc-900 mb-1 group-hover:text-[#E30613] transition-colors">{item.name}</h3>
-                            <p className="text-xs text-zinc-500 mb-4">Garantia Balão + Nota Fiscal</p>
-                            
-                            <Button className="w-full bg-green-500 hover:bg-green-600 font-bold gap-2">
-                                <MessageCircle className="w-4 h-4" /> Consultar Preço
-                            </Button>
-                        </CardContent>
-                    </Card>
-                </a>
-            ))}
-        </div>
-        
-        <div className="mt-10 text-center">
-             <a href={openZap("Não achei meu modelo na lista, pode me ajudar?")} target="_blank">
-                <span className="text-zinc-500 hover:text-[#E30613] underline cursor-pointer text-sm">
-                    Não encontrou seu modelo? Clique aqui que nós temos no estoque.
-                </span>
-             </a>
-        </div>
-      </div>
+      
 
       {/* --- FOOTER SIMPLIFICADO --- */}
       <div className="bg-[#111] text-zinc-400 py-8 border-t border-zinc-800">
