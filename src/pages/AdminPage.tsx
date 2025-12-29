@@ -104,6 +104,8 @@ const AdminPage = () => {
   const [productMinPrice, setProductMinPrice] = useState<string>('');
   const [productMaxPrice, setProductMaxPrice] = useState<string>('');
   const [productModelFilter, setProductModelFilter] = useState<string>('');
+  const [productNameFilter, setProductNameFilter] = useState<string>('');
+  const [productIdFilter, setProductIdFilter] = useState<string>('');
 
   // Integrações removidas
 
@@ -157,16 +159,14 @@ const AdminPage = () => {
       list = list.filter(p => p.category === productCategoryFilter);
     }
 
-    const q = productSearchQuery.trim().toLowerCase();
-    if (q) {
-      list = list.filter(p => {
-        return (
-          p.name.toLowerCase().includes(q) ||
-          p.id.toLowerCase().includes(q) ||
-          (p.description || '').toLowerCase().includes(q) ||
-          (p.sourceUrl || '').toLowerCase().includes(q)
-        );
-      });
+    const nameQ = productNameFilter.trim().toLowerCase();
+    if (nameQ) {
+      list = list.filter(p => p.name.toLowerCase().includes(nameQ));
+    }
+
+    const idQ = productIdFilter.trim().toLowerCase();
+    if (idQ) {
+      list = list.filter(p => p.id.toLowerCase().includes(idQ));
     }
 
     const modelQ = productModelFilter.trim().toLowerCase();
@@ -1210,16 +1210,16 @@ const AdminPage = () => {
               <div className="flex-1 flex items-center gap-2">
                 <div className="relative flex-1">
                   <input
-                    value={productSearchQuery}
-                    onChange={(e) => setProductSearchQuery(e.target.value)}
+                    value={productNameFilter}
+                    onChange={(e) => setProductNameFilter(e.target.value)}
                     className="input-field w-full pr-10"
-                    placeholder="Pesquisar por nome, ID, descrição ou link..."
+                    placeholder="Nome do produto (estrito)"
                     disabled={isRunning}
                   />
-                  {productSearchQuery.trim() && (
+                  {productNameFilter.trim() && (
                     <button
                       type="button"
-                      onClick={() => setProductSearchQuery('')}
+                      onClick={() => setProductNameFilter('')}
                       className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 hover:bg-secondary rounded-lg transition-colors"
                       title="Limpar"
                     >
@@ -1227,6 +1227,13 @@ const AdminPage = () => {
                     </button>
                   )}
                 </div>
+                <input
+                  value={productIdFilter}
+                  onChange={(e) => setProductIdFilter(e.target.value)}
+                  className="input-field w-auto min-w-[160px]"
+                  placeholder="ID"
+                  disabled={isRunning}
+                />
                 <button
                   type="button"
                   onClick={() => refreshProducts()}
