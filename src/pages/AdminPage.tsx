@@ -38,7 +38,6 @@ import { BannerManagement } from '@/components/admin/BannerManagement';
 import { CategoryProductManager } from '@/components/admin/CategoryProductManager';
 import { BrandManagement } from '@/components/admin/BrandManagement';
 import { MercadoPagoConfig } from '@/components/admin/MercadoPagoConfig';
-import { ProductImporter } from '@/components/admin/ProductImporter';
 
 const ADMIN_CREDENTIALS = {
   username: 'balao2025',
@@ -60,7 +59,6 @@ const AdminPage = () => {
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
-  const [showLegacyImporter, setShowLegacyImporter] = useState(false);
   const [showBannerModal, setShowBannerModal] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -1529,27 +1527,12 @@ const AdminPage = () => {
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold text-foreground">Importação em Massa</h2>
                 <div className="flex items-center gap-2">
-                  <button
-                    className={`px-3 py-1 rounded-lg text-sm ${!showLegacyImporter ? 'bg-primary text-primary-foreground' : 'bg-secondary text-foreground'}`}
-                    onClick={() => setShowLegacyImporter(false)}
-                  >
-                    Importador Inteligente
-                  </button>
-                  <button
-                    className={`px-3 py-1 rounded-lg text-sm ${showLegacyImporter ? 'bg-primary text-primary-foreground' : 'bg-secondary text-foreground'}`}
-                    onClick={() => setShowLegacyImporter(true)}
-                  >
-                    Modo Antigo
-                  </button>
                   <button onClick={() => setShowImportModal(false)} className="p-2 hover:bg-secondary rounded-lg">
                     <X className="w-5 h-5" />
                   </button>
                 </div>
               </div>
 
-              {!showLegacyImporter ? (
-                <ProductImporter onClose={() => setShowImportModal(false)} />
-              ) : (
                 <div className="space-y-4">
                   <div className="flex items-center gap-3 p-3 bg-secondary/50 rounded-lg">
                     <input
@@ -1658,7 +1641,7 @@ const AdminPage = () => {
                     </button>
                   </div>
                 </div>
-              )}
+            
             </div>
           </div>
         </div>
