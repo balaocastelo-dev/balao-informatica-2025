@@ -3,8 +3,6 @@ import { SEOHead, BreadcrumbSchema } from "@/components/SEOHead";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useMemo } from "react";
-import { useProducts } from "@/contexts/ProductContext";
 import {
   BatteryCharging,
   Truck,
@@ -28,18 +26,6 @@ export default function LandingCarregadorZapPage() {
   const openZap = (msg: string) => {
     const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
     return url;
-  };
-  const { products, loading, searchProducts } = useProducts();
-  const fonteNotebookProducts = useMemo(() => {
-    if (loading) return [];
-    const list = searchProducts ? searchProducts("fonte notebook") : products.filter(p => {
-      const n = p.name.toLowerCase();
-      return /fonte|carregador|notebook|usb.?c|type.?c|macbook|dell|acer|hp|lenovo|samsung|asus|apple/.test(n);
-    });
-    return list;
-  }, [products, loading, searchProducts]);
-  const formatPrice = (price: number) => {
-    return price.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
   };
 
   const title = "Carregador de Notebook em Campinas | Entrega Imediata via Motoboy";
@@ -258,35 +244,6 @@ export default function LandingCarregadorZapPage() {
                     Não encontrou seu modelo? Clique aqui que nós temos no estoque.
                 </span>
              </a>
-        </div>
-      </div>
-
-      <div className="py-6 container-balao">
-        <div className="flex items-center justify-center mb-6 gap-2">
-          <Zap className="text-[#E30613] w-6 h-6 fill-current" />
-          <h2 className="text-2xl font-bold text-zinc-900">Produtos da busca: fonte notebook</h2>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-          {fonteNotebookProducts.map((p) => (
-            <Card key={p.id} className="overflow-hidden hover:shadow-xl transition-all border-zinc-200">
-              <CardContent className="p-4">
-                <div className="w-full aspect-square bg-white rounded-lg mb-3 flex items-center justify-center">
-                  <img src={p.image} alt={p.name} className="w-full h-full object-contain" />
-                </div>
-                <h3 className="font-bold text-zinc-900 mb-1 line-clamp-2">{p.name}</h3>
-                <p className="text-primary font-extrabold mb-3">{formatPrice(p.price)}</p>
-                <a
-                  href={openZap(`Tenho interesse em '${p.name}' por ${formatPrice(p.price)}.`)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <Button className="w-full bg-[#25D366] hover:bg-[#1EB954] font-bold gap-2">
-                    <MessageCircle className="w-4 h-4" /> Chamar no WhatsApp
-                  </Button>
-                </a>
-              </CardContent>
-            </Card>
-          ))}
         </div>
       </div>
 
