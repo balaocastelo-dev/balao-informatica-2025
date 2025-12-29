@@ -101,6 +101,9 @@ const AdminPage = () => {
   const [productSearchQuery, setProductSearchQuery] = useState('');
   const [productStockFilter, setProductStockFilter] = useState<'all' | 'in' | 'out'>('all');
   const [productSort, setProductSort] = useState<'newest' | 'name_asc' | 'price_asc' | 'price_desc' | 'stock_asc' | 'stock_desc'>('newest');
+  const [productMinPrice, setProductMinPrice] = useState<string>('');
+  const [productMaxPrice, setProductMaxPrice] = useState<string>('');
+  const [productModelFilter, setProductModelFilter] = useState<string>('');
 
   // Integrações removidas
 
@@ -151,10 +154,24 @@ const AdminPage = () => {
       });
     }
 
+    const modelQ = productModelFilter.trim().toLowerCase();
+    if (modelQ) {
+      list = list.filter(p => p.name.toLowerCase().includes(modelQ));
+    }
+
     if (productStockFilter === 'in') {
       list = list.filter(p => (p.stock || 0) > 0);
     } else if (productStockFilter === 'out') {
       list = list.filter(p => (p.stock || 0) <= 0);
+    }
+
+    const min = productMinPrice ? parseFloat(productMinPrice.replace(',', '.')) : null;
+    const max = productMaxPrice ? parseFloat(productMaxPrice.replace(',', '.')) : null;
+    if (min !== null && !isNaN(min)) {
+      list = list.filter(p => p.price >= min);
+    }
+    if (max !== null && !isNaN(max)) {
+      list = list.filter(p => p.price <= max);
     }
 
     const sortKey = productSort;
@@ -169,7 +186,7 @@ const AdminPage = () => {
     });
 
     return list;
-  }, [products, productCategoryFilter, productSearchQuery, productStockFilter, productSort]);
+  }, [products, productCategoryFilter, productSearchQuery, productModelFilter, productStockFilter, productMinPrice, productMaxPrice, productSort]);
 
   // Check session
   useEffect(() => {
@@ -1152,6 +1169,27 @@ const AdminPage = () => {
                   <option value="stock_asc">Estoque (menor)</option>
                   <option value="stock_desc">Estoque (maior)</option>
                 </select>
+                <input
+                  value={productMinPrice}
+                  onChange={(e) => setProductMinPrice(e.target.value)}
+                  className="input-field w-auto min-w-[140px]"
+                  placeholder="Preço mín."
+                  disabled={isRunning}
+                />
+                <input
+                  value={productMaxPrice}
+                  onChange={(e) => setProductMaxPrice(e.target.value)}
+                  className="input-field w-auto min-w-[140px]"
+                  placeholder="Preço máx."
+                  disabled={isRunning}
+                />
+                <input
+                  value={productModelFilter}
+                  onChange={(e) => setProductModelFilter(e.target.value)}
+                  className="input-field w-auto min-w-[200px]"
+                  placeholder="Modelo (ex.: Galaxy, iPhone)"
+                  disabled={isRunning}
+                />
               </div>
 
               <div className="flex-1 flex items-center gap-2">
