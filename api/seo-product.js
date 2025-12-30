@@ -13,6 +13,21 @@ export default async function handler(req, res) {
   const userAgent = req.headers['user-agent'] || '';
   const supabase = getSupabaseClient();
 
+  const isBot = (ua) => {
+    if (!ua) return false;
+    return /facebookexternalhit|WhatsApp|Twitterbot|Slackbot|TelegramBot|Discordbot|LinkedInBot|Googlebot|bingbot|DuckDuckGo|Pinterest|Yahoo|Applebot/i.test(
+      ua,
+    );
+  };
+  const formatBRL = (n) => {
+    const num = typeof n === 'number' ? n : Number(n || 0);
+    try {
+      return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(num);
+    } catch {
+      return `R$ ${num.toFixed(2)}`;
+    }
+  };
+
   const buildOgImage = (raw) => {
     if (!raw || typeof raw !== 'string') return raw;
     if (!raw.startsWith('http://') && !raw.startsWith('https://')) return raw;
@@ -42,6 +57,13 @@ export default async function handler(req, res) {
   };
 
   try {
+    // For navegadores humanos, pule SSR para evitar loops de rewrite
+    if (!isBot(userAgent)) {
+      const fallbackUrl = id ? `/produto/${id}?ssr=false` : '/?ssr=false';
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      return res.redirect(307, fallbackUrl);
+    }
+
     if (!supabase) throw new Error('Missing Supabase env vars (SUPABASE_URL and SUPABASE_ANON_KEY)');
     // 1. Fetch product
     const { data: product } = await supabase
@@ -58,9 +80,11 @@ export default async function handler(req, res) {
     if (product) {
       const title = `${product.name} | Balão da Informática`;
       // Clean description: remove HTML tags if any, limit length
-      const cleanDescription = product.description 
+      const cleanDescriptionRaw = product.description 
         ? product.description.replace(/<[^>]*>?/gm, '').substring(0, 200).replace(/"/g, '&quot;') 
         : `Compre ${product.name} na Balão da Informática.`;
+      const priceStr = formatBRL(product.price);
+      const cleanDescription = `${priceStr} • ${cleanDescriptionRaw}`;
       
       const rawImage = product.image || 'https://www.balaodainformatica.com.br/media/wysiwyg/balao500.png';
       const image = buildOgImage(rawImage);
@@ -95,7 +119,7 @@ export default async function handler(req, res) {
 
       Object.entries(tags).forEach(([key, value]) => {
         // Regex to find meta tag with property or name
-        const regex = new RegExp(`<meta (property|name)="${key}" content=".*?" />`, 'g');
+        const regex = new RegExp(`<meta (property|name)="${key}" content=".*?"\\s*/?>`, 'g');
         if (regex.test(html)) {
           html = html.replace(regex, `<meta $1="${key}" content="${value}" />`);
         } else {
