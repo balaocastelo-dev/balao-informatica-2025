@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ProductGrid } from "@/components/ProductGrid";
 import { useProducts } from "@/contexts/ProductContext";
+import { filterProductsByQuery, mergeUniqueProductsById } from "@/lib/productFilter";
 import { useMemo } from "react";
 import {
   Truck,
@@ -41,32 +42,16 @@ export default function LandingCarregadorZapPage() {
   ];
 
   const relatedProducts = useMemo(() => {
-    const kw = [
-      "carregador",
-      "fonte",
-      "notebook",
-      "laptop",
-      "magsafe",
-      "mag safe",
-      "usb-c",
-      "type-c",
-      "type c",
-      "dell",
-      "acer",
-      "lenovo",
-      "hp",
-      "asus",
-      "samsung",
-      "macbook",
-    ];
-    const list = (products || [])
-      .filter((p) => {
-        const name = (p.name || "").toLowerCase();
-        if (!name) return false;
-        return kw.some((k) => name.includes(k));
-      })
-      .slice(0, 36);
-    return list;
+    const primary = filterProductsByQuery(products || [], "carregador");
+    if (primary.length >= 12) return primary.slice(0, 36);
+    const extra = mergeUniqueProductsById([
+      primary,
+      filterProductsByQuery(products || [], "fonte"),
+      filterProductsByQuery(products || [], "usb-c"),
+      filterProductsByQuery(products || [], "magsafe"),
+      filterProductsByQuery(products || [], "notebook"),
+    ]);
+    return extra.slice(0, 36);
   }, [products]);
 
   return (

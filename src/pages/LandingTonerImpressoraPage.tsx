@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ProductGrid } from "@/components/ProductGrid";
 import { useProducts } from "@/contexts/ProductContext";
+import { filterProductsByQuery, mergeUniqueProductsById } from "@/lib/productFilter";
 import { useMemo } from "react";
 import { 
   Printer, 
@@ -46,16 +47,18 @@ export default function LandingTonerImpressoraPage() {
   ];
 
   const relatedProducts = useMemo(() => {
-    const byCategory = (products || []).filter((p) => (p.category || "").toLowerCase() === "impressoras");
-    if (byCategory.length) return byCategory.slice(0, 36);
-    const kw = ["toner", "laser", "laserjet", "brother", "hp", "samsung", "canon", "cartucho"];
-    return (products || [])
-      .filter((p) => {
-        const name = (p.name || "").toLowerCase();
-        if (!name) return false;
-        return kw.some((k) => name.includes(k));
-      })
-      .slice(0, 36);
+    const primary = filterProductsByQuery(products || [], "toner");
+    if (primary.length >= 12) return primary.slice(0, 36);
+    const extra = mergeUniqueProductsById([
+      primary,
+      filterProductsByQuery(products || [], "cartucho"),
+      filterProductsByQuery(products || [], "laserjet"),
+      filterProductsByQuery(products || [], "brother"),
+      filterProductsByQuery(products || [], "hp"),
+      filterProductsByQuery(products || [], "samsung"),
+      filterProductsByQuery(products || [], "canon"),
+    ]);
+    return extra.slice(0, 36);
   }, [products]);
 
   return (

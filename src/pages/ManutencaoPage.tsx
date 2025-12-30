@@ -3,6 +3,7 @@ import { Layout } from "@/components/Layout";
 import { SEOHead, BreadcrumbSchema } from "@/components/SEOHead";
 import { ProductGrid } from "@/components/ProductGrid";
 import { useProducts } from "@/contexts/ProductContext";
+import { filterProductsByQuery, mergeUniqueProductsById } from "@/lib/productFilter";
 import {
   Wrench,
   Cpu,
@@ -32,6 +33,8 @@ export default function ManutencaoPage() {
   const { products } = useProducts();
 
   const relatedProducts = useMemo(() => {
+    const primary = filterProductsByQuery(products || [], "manutenção");
+    if (primary.length >= 12) return primary.slice(0, 36);
     const cats = new Set([
       "ssd-hd",
       "memoria-ram",
@@ -43,8 +46,16 @@ export default function ManutencaoPage() {
       "placas-mae",
       "impressoras",
     ]);
-    const list = (products || []).filter((p) => cats.has((p.category || "").toLowerCase())).slice(0, 36);
-    return list;
+    const byCategory = (products || []).filter((p) => cats.has((p.category || "").toLowerCase()));
+    const extra = mergeUniqueProductsById([
+      primary,
+      filterProductsByQuery(products || [], "upgrade"),
+      filterProductsByQuery(products || [], "ssd"),
+      filterProductsByQuery(products || [], "memória"),
+      filterProductsByQuery(products || [], "memoria"),
+      byCategory,
+    ]);
+    return extra.slice(0, 36);
   }, [products]);
 
   return (

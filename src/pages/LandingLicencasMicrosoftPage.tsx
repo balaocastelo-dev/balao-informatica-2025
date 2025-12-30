@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/componen
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ProductGrid } from "@/components/ProductGrid";
 import { useProducts } from "@/contexts/ProductContext";
+import { filterProductsByQuery, mergeUniqueProductsById } from "@/lib/productFilter";
 import { useMemo } from "react";
 import { 
   BadgeCheck, ShieldAlert, Phone, CheckCircle2, 
@@ -29,16 +30,19 @@ export default function LandingLicencasMicrosoftPage() {
   const url = "https://www.balao.info/licencas-microsoft";
 
   const relatedProducts = useMemo(() => {
-    const byCategory = (products || []).filter((p) => (p.category || "").toLowerCase() === "licencas");
-    if (byCategory.length) return byCategory.slice(0, 36);
-    const kw = ["microsoft", "windows", "office", "365", "server", "sql", "licen", "chave"];
-    return (products || [])
-      .filter((p) => {
-        const name = (p.name || "").toLowerCase();
-        if (!name) return false;
-        return kw.some((k) => name.includes(k));
-      })
-      .slice(0, 36);
+    const primary = filterProductsByQuery(products || [], "microsoft");
+    if (primary.length >= 12) return primary.slice(0, 36);
+    const extra = mergeUniqueProductsById([
+      primary,
+      filterProductsByQuery(products || [], "windows"),
+      filterProductsByQuery(products || [], "office"),
+      filterProductsByQuery(products || [], "365"),
+      filterProductsByQuery(products || [], "server"),
+      filterProductsByQuery(products || [], "sql"),
+      filterProductsByQuery(products || [], "licença"),
+      filterProductsByQuery(products || [], "licenca"),
+    ]);
+    return extra.slice(0, 36);
   }, [products]);
 
   return (
