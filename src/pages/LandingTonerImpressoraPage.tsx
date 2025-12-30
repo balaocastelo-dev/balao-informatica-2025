@@ -2,6 +2,9 @@ import { Layout } from "@/components/Layout";
 import { SEOHead, BreadcrumbSchema } from "@/components/SEOHead";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ProductGrid } from "@/components/ProductGrid";
+import { useProducts } from "@/contexts/ProductContext";
+import { useMemo } from "react";
 import { 
   Printer, 
   Truck, 
@@ -11,7 +14,10 @@ import {
   Star, 
   ArrowRight, 
   MapPin, 
-  Zap 
+  Zap,
+  MessageCircle,
+  Timer,
+  Phone
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -21,6 +27,8 @@ export default function LandingTonerImpressoraPage() {
   const description = "Compre Toner HP, Brother, Samsung e Canon com qualidade profissional. Pronta entrega, garantia total e envio rápido para todo o Brasil.";
   const keywords = "toner premium, toner barato, toner hp laserjet, toner brother tn, toner samsung, suprimentos de impressão, balão da informática";
   const url = "https://www.balao.info/toner-para-impressora";
+  const { products } = useProducts();
+  const whatsappLink = `https://wa.me/5519987510267?text=${encodeURIComponent("Olá! Preciso de toner para minha impressora. Vou informar modelo e cartucho.")}`;
 
   // Dados para renderização dinâmica (mais limpo)
   const features = [
@@ -37,9 +45,22 @@ export default function LandingTonerImpressoraPage() {
     { name: "Canon", query: "toner canon", models: "128, 137, 045" },
   ];
 
+  const relatedProducts = useMemo(() => {
+    const byCategory = (products || []).filter((p) => (p.category || "").toLowerCase() === "impressoras");
+    if (byCategory.length) return byCategory.slice(0, 36);
+    const kw = ["toner", "laser", "laserjet", "brother", "hp", "samsung", "canon", "cartucho"];
+    return (products || [])
+      .filter((p) => {
+        const name = (p.name || "").toLowerCase();
+        if (!name) return false;
+        return kw.some((k) => name.includes(k));
+      })
+      .slice(0, 36);
+  }, [products]);
+
   return (
     <Layout>
-      <SEOHead title={title} description={description} keywords={keywords} url={url} type="product.group" />
+      <SEOHead title={title} description={description} keywords={keywords} url={url} type="product" />
       <BreadcrumbSchema
         items={[
           { name: "Início", url: "https://www.balao.info" },
@@ -48,6 +69,13 @@ export default function LandingTonerImpressoraPage() {
       />
 
       <div className="bg-white min-h-screen font-sans">
+
+        <div className="bg-yellow-400 text-zinc-900 font-black text-center py-3 px-4 flex items-center justify-center gap-2 animate-in slide-in-from-top duration-700">
+          <Timer className="w-6 h-6 animate-pulse text-[#E30613]" />
+          <span className="text-sm md:text-base uppercase tracking-wide">
+            PRONTA ENTREGA + ENVIO RÁPIDO: NÃO FIQUE SEM IMPRIMIR
+          </span>
+        </div>
         
         {/* --- HERO SECTION: Inspirado em Ghost White Toner (Fundo escuro, alto contraste) --- */}
         <section className="relative bg-zinc-950 text-white overflow-hidden py-16 md:py-24">
@@ -79,11 +107,11 @@ export default function LandingTonerImpressoraPage() {
                     <ArrowRight className="ml-2 w-5 h-5" />
                   </Button>
                 </Link>
-                <Link to="/fale-conosco">
+                <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto">
                   <Button variant="outline" className="w-full sm:w-auto h-12 px-8 border-zinc-700 text-white hover:bg-zinc-800 rounded-full">
-                    Cotação PJ
+                    Cotar no WhatsApp
                   </Button>
-                </Link>
+                </a>
               </div>
               
               <div className="pt-4 flex items-center gap-4 text-sm text-zinc-400">
@@ -109,6 +137,25 @@ export default function LandingTonerImpressoraPage() {
                  </div>
               </div>
             </div>
+          </div>
+        </section>
+
+        <section className="bg-white py-16 border-b">
+          <div className="container-balao">
+            <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
+              <div>
+                <h2 className="text-3xl font-bold text-zinc-900">Toners e suprimentos em destaque</h2>
+                <p className="text-zinc-600 mt-2">Seleção de produtos relacionados. Se preferir, peça ajuda pelo WhatsApp.</p>
+              </div>
+              <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
+                <Button className="h-12 px-6 bg-[#25D366] hover:bg-[#1EB954] text-white font-bold rounded-xl shadow-lg">
+                  <MessageCircle className="w-5 h-5 mr-2" />
+                  Ajuda para escolher
+                </Button>
+              </a>
+            </div>
+
+            <ProductGrid products={relatedProducts} initialLimit={18} loadMoreCount={18} showViewToggle={false} />
           </div>
         </section>
 
@@ -161,6 +208,83 @@ export default function LandingTonerImpressoraPage() {
             </Link>
           </div>
         </section>
+
+        <section className="py-0 relative border-t border-zinc-200">
+          <div className="grid md:grid-cols-2 min-h-[520px]">
+            <div className="bg-neutral-900 text-white p-10 md:p-20 flex flex-col justify-center">
+              <div className="max-w-md">
+                <h2 className="text-3xl font-bold mb-8 text-white">Retire na loja ou receba rápido</h2>
+
+                <div className="space-y-8">
+                  <div className="flex gap-4">
+                    <div className="bg-[#E30613] w-12 h-12 rounded-lg flex items-center justify-center shrink-0">
+                      <MapPin className="text-white w-6 h-6" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-lg mb-1">Endereço</h4>
+                      <p className="text-neutral-300">Av. Anchieta, 789<br />Cambuí - Campinas, SP</p>
+                      <p className="text-sm text-neutral-500 mt-2">Próximo à Prefeitura</p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-4">
+                    <div className="bg-neutral-800 w-12 h-12 rounded-lg flex items-center justify-center shrink-0">
+                      <Truck className="text-green-400 w-6 h-6" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-lg mb-1">Envio</h4>
+                      <p className="text-neutral-300">Despacho rápido para todo o Brasil</p>
+                      <p className="text-neutral-300">Campinas: retirada imediata</p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-4">
+                    <div className="bg-neutral-800 w-12 h-12 rounded-lg flex items-center justify-center shrink-0">
+                      <Phone className="text-green-400 w-6 h-6" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-lg mb-1">Contato</h4>
+                      <p className="text-neutral-300">WhatsApp: (19) 98751-0267</p>
+                      <p className="text-neutral-300">Fixo: (19) 3255-1661</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-10 pt-8 border-t border-neutral-800">
+                  <Button asChild className="w-full bg-[#E30613] hover:bg-[#c00510] text-white font-bold py-6 rounded-xl">
+                    <a href="https://www.google.com/maps/dir/?api=1&destination=Av.+Anchieta,+789+-+Cambuí,+Campinas+-+SP" target="_blank" rel="noopener noreferrer">
+                      Traçar rota no Maps
+                    </a>
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <div className="h-full min-h-[400px] w-full bg-neutral-200">
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3675.356779435064!2d-47.05686002380766!3d-22.90020497925974!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94c8cf4f3f3f3f3f%3A0x1234567890abcdef!2sAv.%20Anchieta%2C%20789%20-%20Cambu%C3%AD%2C%20Campinas%20-%20SP!5e0!3m2!1spt-BR!2sbr!4v1700000000000!5m2!1spt-BR!2sbr"
+                width="100%"
+                height="100%"
+                style={{ border: 0, minHeight: "100%" }}
+                allowFullScreen={true}
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="Mapa Balão da Informática"
+                className="grayscale hover:grayscale-0 transition-all duration-700"
+              ></iframe>
+            </div>
+          </div>
+        </section>
+
+        <a
+          href={whatsappLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="fixed bottom-6 left-6 z-50 flex items-center gap-2 bg-[#25D366] hover:bg-[#1EB954] text-white px-5 py-3 rounded-full shadow-2xl transition-all hover:scale-105"
+        >
+          <MessageCircle className="w-6 h-6" />
+          <span className="font-bold hidden md:inline">WhatsApp</span>
+        </a>
 
         {/* --- SEO & INFO AREA: Mantendo a utilidade do original, mas com design melhor --- */}
         <section className="bg-zinc-100 py-16">

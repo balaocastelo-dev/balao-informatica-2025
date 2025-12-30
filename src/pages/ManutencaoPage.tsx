@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Layout } from "@/components/Layout";
 import { SEOHead, BreadcrumbSchema } from "@/components/SEOHead";
+import { ProductGrid } from "@/components/ProductGrid";
+import { useProducts } from "@/contexts/ProductContext";
 import {
   Wrench,
   Cpu,
@@ -27,6 +29,23 @@ export default function ManutencaoPage() {
   const whatsappNumber = "5519987510267";
   const defaultMessage = "Olá, vi o site e gostaria de um orçamento para manutenção.";
   const whatsappLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(defaultMessage)}`;
+  const { products } = useProducts();
+
+  const relatedProducts = useMemo(() => {
+    const cats = new Set([
+      "ssd-hd",
+      "memoria-ram",
+      "coolers",
+      "fontes",
+      "gabinetes",
+      "processadores",
+      "placa-de-video",
+      "placas-mae",
+      "impressoras",
+    ]);
+    const list = (products || []).filter((p) => cats.has((p.category || "").toLowerCase())).slice(0, 36);
+    return list;
+  }, [products]);
 
   return (
     <Layout>
@@ -238,6 +257,25 @@ export default function ManutencaoPage() {
             </div>
         </section>
 
+        <section className="bg-white py-16 border-b border-neutral-100">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
+              <div>
+                <h2 className="text-3xl font-bold text-neutral-900">Peças e upgrades mais procurados</h2>
+                <p className="text-neutral-600 mt-2">Produtos relacionados a manutenção, upgrade e performance.</p>
+              </div>
+              <Button asChild className="bg-[#25D366] hover:bg-[#1ebc57] text-white font-bold h-12 px-6 rounded-xl shadow-lg">
+                <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
+                  <MessageCircle className="w-5 h-5 mr-2" />
+                  Pedir indicação
+                </a>
+              </Button>
+            </div>
+
+            <ProductGrid products={relatedProducts} initialLimit={18} loadMoreCount={18} showViewToggle={false} />
+          </div>
+        </section>
+
         {/* --- 5. FAQ (PERGUNTAS FREQUENTES) --- */}
         <section className="py-20 bg-neutral-50">
           <div className="max-w-4xl mx-auto px-4">
@@ -339,7 +377,7 @@ export default function ManutencaoPage() {
         </section>
 
         {/* --- FLOAT BUTTON (Conversão Móvel) --- */}
-        <div className="fixed bottom-6 right-6 z-50 animate-bounce-slow">
+        <div className="fixed bottom-6 left-6 z-50 animate-bounce-slow">
             <a 
                 href={whatsappLink} 
                 target="_blank" 

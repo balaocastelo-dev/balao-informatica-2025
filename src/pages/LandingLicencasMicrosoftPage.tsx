@@ -3,10 +3,13 @@ import { SEOHead, BreadcrumbSchema } from "@/components/SEOHead";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { ProductGrid } from "@/components/ProductGrid";
+import { useProducts } from "@/contexts/ProductContext";
+import { useMemo } from "react";
 import { 
   BadgeCheck, ShieldAlert, Phone, CheckCircle2, 
   Server, Lock, FileText, Zap, MessageCircle, 
-  ArrowRight, Download, Users, Briefcase
+  ArrowRight, Download, Users, Briefcase, MapPin, Timer
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -15,6 +18,7 @@ export default function LandingLicencasMicrosoftPage() {
   const whatsappNumber = "5519987510267";
   const whatsappMessage = "Olá! Gostaria de cotar licenças Microsoft para minha empresa.";
   const whatsappLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
+  const { products } = useProducts();
   
   const title = "Licenças Microsoft Originais e Corporativas | Regularize sua Empresa | Balão da Informática";
   const description = "Evite multas e auditorias. Compre Windows 11 Pro, Office 2021, Windows Server e SQL Server com Nota Fiscal. Licenciamento CSP, OEM e Open para empresas.";
@@ -24,19 +28,39 @@ export default function LandingLicencasMicrosoftPage() {
   
   const url = "https://www.balao.info/licencas-microsoft";
 
+  const relatedProducts = useMemo(() => {
+    const byCategory = (products || []).filter((p) => (p.category || "").toLowerCase() === "licencas");
+    if (byCategory.length) return byCategory.slice(0, 36);
+    const kw = ["microsoft", "windows", "office", "365", "server", "sql", "licen", "chave"];
+    return (products || [])
+      .filter((p) => {
+        const name = (p.name || "").toLowerCase();
+        if (!name) return false;
+        return kw.some((k) => name.includes(k));
+      })
+      .slice(0, 36);
+  }, [products]);
+
   return (
     <Layout>
       <SEOHead title={title} description={description} keywords={keywords} url={url} type="article" />
       <BreadcrumbSchema items={[{ name: "Início", url: "https://www.balao.info" }, { name: "Licenciamento Microsoft", url }]} />
 
       <div className="bg-white min-h-screen font-sans selection:bg-[#E30613] selection:text-white">
+
+        <div className="bg-yellow-400 text-zinc-900 font-black text-center py-3 px-4 flex items-center justify-center gap-2 animate-in slide-in-from-top duration-700">
+          <Timer className="w-6 h-6 animate-pulse text-[#E30613]" />
+          <span className="text-sm md:text-base uppercase tracking-wide">
+            REGULARIZE HOJE: ENTREGA DIGITAL RÁPIDA + NOTA FISCAL
+          </span>
+        </div>
         
         {/* === FLOATING WHATSAPP BUTTON (CONVERSÃO MÁXIMA) === */}
         <a 
           href={whatsappLink} 
           target="_blank" 
           rel="noopener noreferrer"
-          className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-5 py-3 rounded-full shadow-2xl transition-all hover:scale-105 animate-in slide-in-from-bottom-4 duration-500"
+          className="fixed bottom-6 left-6 z-50 flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-5 py-3 rounded-full shadow-2xl transition-all hover:scale-105 animate-in slide-in-from-bottom-4 duration-500"
         >
           <MessageCircle className="w-6 h-6" />
           <span className="font-bold hidden md:inline">Falar com Consultor</span>
@@ -273,6 +297,17 @@ export default function LandingLicencasMicrosoftPage() {
                 </div>
               </div>
             </div>
+
+            <div className="mt-12">
+              <ProductGrid products={relatedProducts} initialLimit={18} loadMoreCount={18} showViewToggle={false} />
+              <div className="mt-8 text-center">
+                <Link to="/busca?q=microsoft">
+                  <Button className="bg-[#E30613] hover:bg-[#c00510] text-white font-bold px-8 h-12 rounded-full">
+                    Ver catálogo completo
+                  </Button>
+                </Link>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -338,6 +373,62 @@ export default function LandingLicencasMicrosoftPage() {
               <p className="mt-2">
                 Em infraestrutura de servidores, comercializamos <strong>Windows Server 2022 Standard</strong> (16 e 24 cores) e Datacenter, além de <strong>SQL Server Standard 2019/2022</strong>. Essencial para compliance, regularizamos empresas com passivo de pirataria através de contratos GGWA (Get Genuine Windows Agreement). Atendemos Campinas, São Paulo, Rio de Janeiro, Belo Horizonte, Curitiba, Porto Alegre e todo o Brasil com envio eletrônico imediato. Não vendemos software pirata, apenas licenças genuínas com garantia de ativação online nos servidores da Microsoft. Proteja seu negócio contra ransomware e fiscalização. Entre em contato pelo WhatsApp (19) 98751-0267.
               </p>
+            </div>
+          </div>
+        </section>
+
+        <section className="py-0 relative border-t border-slate-100">
+          <div className="grid md:grid-cols-2 min-h-[520px]">
+            <div className="bg-neutral-900 text-white p-10 md:p-20 flex flex-col justify-center">
+              <div className="max-w-md">
+                <h2 className="text-3xl font-bold mb-8 text-white">Fale com a equipe e retire na loja</h2>
+
+                <div className="space-y-8">
+                  <div className="flex gap-4">
+                    <div className="bg-[#E30613] w-12 h-12 rounded-lg flex items-center justify-center shrink-0">
+                      <MapPin className="text-white w-6 h-6" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-lg mb-1">Endereço</h4>
+                      <p className="text-neutral-300">Av. Anchieta, 789<br />Cambuí - Campinas, SP</p>
+                      <p className="text-sm text-neutral-500 mt-2">Próximo à Prefeitura</p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-4">
+                    <div className="bg-neutral-800 w-12 h-12 rounded-lg flex items-center justify-center shrink-0">
+                      <Phone className="text-green-400 w-6 h-6" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-lg mb-1">Contato</h4>
+                      <p className="text-neutral-300">WhatsApp: (19) 98751-0267</p>
+                      <p className="text-neutral-300">Fixo: (19) 3255-1661</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-10 pt-8 border-t border-neutral-800">
+                  <Button asChild className="w-full bg-[#E30613] hover:bg-[#c00510] text-white font-bold py-6 rounded-xl">
+                    <a href="https://www.google.com/maps/dir/?api=1&destination=Av.+Anchieta,+789+-+Cambuí,+Campinas+-+SP" target="_blank" rel="noopener noreferrer">
+                      Traçar rota no Maps
+                    </a>
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <div className="h-full min-h-[400px] w-full bg-neutral-200">
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3675.356779435064!2d-47.05686002380766!3d-22.90020497925974!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94c8cf4f3f3f3f3f%3A0x1234567890abcdef!2sAv.%20Anchieta%2C%20789%20-%20Cambu%C3%AD%2C%20Campinas%20-%20SP!5e0!3m2!1spt-BR!2sbr!4v1700000000000!5m2!1spt-BR!2sbr"
+                width="100%"
+                height="100%"
+                style={{ border: 0, minHeight: "100%" }}
+                allowFullScreen={true}
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="Mapa Balão da Informática"
+                className="grayscale hover:grayscale-0 transition-all duration-700"
+              ></iframe>
             </div>
           </div>
         </section>

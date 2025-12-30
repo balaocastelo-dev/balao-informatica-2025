@@ -3,12 +3,13 @@ import { SEOHead, BreadcrumbSchema } from "@/components/SEOHead";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { ProductGrid } from "@/components/ProductGrid";
+import { useProducts } from "@/contexts/ProductContext";
+import { useMemo } from "react";
 import {
-  BatteryCharging,
   Truck,
   ShieldCheck,
   Phone,
-  Zap,
   CheckCircle2,
   MapPin,
   MessageCircle,
@@ -21,6 +22,7 @@ export default function LandingCarregadorZapPage() {
   
   // --- CONFIGURAÇÃO CENTRAL DO WHATSAPP ---
   const WHATSAPP_NUMBER = "5519987510267";
+  const { products } = useProducts();
   
   // Gera o link dinâmico
   const openZap = (msg: string) => {
@@ -38,17 +40,34 @@ export default function LandingCarregadorZapPage() {
     "Dell", "Acer", "Samsung", "Lenovo", "HP", "Asus", "Apple (Macbook)", "Positivo/Vaio"
   ];
 
-  // Produtos "Fake" para vitrine (Clicou = WhatsApp)
-  const commonModels = [
-    { name: "Fonte Dell Pino Fino 45W/65W", tag: "Mais Vendido" },
-    { name: "Fonte Acer Aspire (Pino Azul/Amarelo)", tag: "Promoção" },
-    { name: "Carregador Samsung Original", tag: "Oferta" },
-    { name: "Fonte Lenovo Quadrada (Yoga/Thinkpad)", tag: "Disponível" },
-    { name: "Carregador Universal USB-C (Type-C)", tag: "Moderno" },
-    { name: "Fonte MacBook Magsafe 1 e 2", tag: "Apple" },
-    { name: "Fonte Asus Vivobook / Zenbook", tag: "Disponível" },
-    { name: "Carregador Sony / Toshiba / Multilaser", tag: "Universal" },
-  ];
+  const relatedProducts = useMemo(() => {
+    const kw = [
+      "carregador",
+      "fonte",
+      "notebook",
+      "laptop",
+      "magsafe",
+      "mag safe",
+      "usb-c",
+      "type-c",
+      "type c",
+      "dell",
+      "acer",
+      "lenovo",
+      "hp",
+      "asus",
+      "samsung",
+      "macbook",
+    ];
+    const list = (products || [])
+      .filter((p) => {
+        const name = (p.name || "").toLowerCase();
+        if (!name) return false;
+        return kw.some((k) => name.includes(k));
+      })
+      .slice(0, 36);
+    return list;
+  }, [products]);
 
   return (
     <Layout>
@@ -187,6 +206,105 @@ export default function LandingCarregadorZapPage() {
         </div>
       </div>
 
+      <section className="bg-white py-16 border-t border-zinc-200">
+        <div className="container-balao">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
+            <div>
+              <h2 className="text-3xl font-bold text-zinc-900">Carregadores em estoque</h2>
+              <p className="text-zinc-600 mt-2">
+                Produtos relacionados a fonte/carregador de notebook. Se tiver dúvida, envie a foto no WhatsApp e confirmamos compatibilidade.
+              </p>
+            </div>
+            <a href={openZap("Vou mandar a foto da etiqueta da fonte / modelo do notebook para confirmar compatibilidade.")} target="_blank" rel="noopener noreferrer">
+              <Button className="h-12 px-6 bg-[#25D366] hover:bg-[#1EB954] text-white font-bold rounded-xl shadow-lg">
+                <MessageCircle className="w-5 h-5 mr-2" />
+                Confirmar no WhatsApp
+              </Button>
+            </a>
+          </div>
+
+          <ProductGrid products={relatedProducts} initialLimit={18} loadMoreCount={18} showViewToggle={false} />
+        </div>
+      </section>
+
+      <section className="py-0 relative border-t border-zinc-200">
+        <div className="grid md:grid-cols-2 min-h-[520px]">
+          <div className="bg-neutral-900 text-white p-10 md:p-20 flex flex-col justify-center">
+            <div className="max-w-md">
+              <h2 className="text-3xl font-bold mb-8 text-white">Retire na loja ou peça motoboy</h2>
+
+              <div className="space-y-8">
+                <div className="flex gap-4">
+                  <div className="bg-[#E30613] w-12 h-12 rounded-lg flex items-center justify-center shrink-0">
+                    <MapPin className="text-white w-6 h-6" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-lg mb-1">Endereço</h4>
+                    <p className="text-neutral-300">Av. Anchieta, 789<br />Cambuí - Campinas, SP</p>
+                    <p className="text-sm text-neutral-500 mt-2">Próximo à Prefeitura</p>
+                  </div>
+                </div>
+
+                <div className="flex gap-4">
+                  <div className="bg-neutral-800 w-12 h-12 rounded-lg flex items-center justify-center shrink-0">
+                    <Timer className="text-yellow-400 w-6 h-6" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-lg mb-1">Entrega rápida</h4>
+                    <p className="text-neutral-300">Motoboy em Campinas e região</p>
+                    <p className="text-neutral-300">Retirada no balcão imediata</p>
+                  </div>
+                </div>
+
+                <div className="flex gap-4">
+                  <div className="bg-neutral-800 w-12 h-12 rounded-lg flex items-center justify-center shrink-0">
+                    <Phone className="text-green-400 w-6 h-6" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-lg mb-1">Contato</h4>
+                    <p className="text-neutral-300">WhatsApp: (19) 98751-0267</p>
+                    <p className="text-neutral-300">Fixo: (19) 3255-1661</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-10 pt-8 border-t border-neutral-800">
+                <Button asChild className="w-full bg-[#E30613] hover:bg-[#c00510] text-white font-bold py-6 rounded-xl">
+                  <a href="https://www.google.com/maps/dir/?api=1&destination=Av.+Anchieta,+789+-+Cambuí,+Campinas+-+SP" target="_blank" rel="noopener noreferrer">
+                    Traçar rota no Maps
+                  </a>
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <div className="h-full min-h-[400px] w-full bg-neutral-200">
+            <iframe
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3675.356779435064!2d-47.05686002380766!3d-22.90020497925974!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94c8cf4f3f3f3f3f%3A0x1234567890abcdef!2sAv.%20Anchieta%2C%20789%20-%20Cambu%C3%AD%2C%20Campinas%20-%20SP!5e0!3m2!1spt-BR!2sbr!4v1700000000000!5m2!1spt-BR!2sbr"
+              width="100%"
+              height="100%"
+              style={{ border: 0, minHeight: "100%" }}
+              allowFullScreen={true}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              title="Mapa Balão da Informática"
+              className="grayscale hover:grayscale-0 transition-all duration-700"
+            ></iframe>
+          </div>
+        </div>
+      </section>
+
+      <div className="fixed bottom-6 left-6 z-50">
+        <a
+          href={openZap("Oi! Preciso de um carregador/fonte para notebook. Vou mandar foto do modelo/etiqueta.")}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 bg-[#25D366] text-white py-3 px-5 rounded-full shadow-2xl hover:bg-[#20bd5a] transition-colors font-bold text-lg"
+        >
+          <MessageCircle className="w-6 h-6" />
+          <span className="hidden md:inline">WhatsApp</span>
+        </a>
+      </div>
       
 
       {/* --- FOOTER SIMPLIFICADO --- */}
