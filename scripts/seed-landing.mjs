@@ -30,7 +30,7 @@ const payload = {
 
 const run = async () => {
   const { data, error } = await supabase
-    .from('landing_pages')
+    .from('landing_page_configs')
     .upsert({
       page_key: payload.page_key,
       label: payload.label,

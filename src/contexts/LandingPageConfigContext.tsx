@@ -54,13 +54,13 @@ export function LandingPageConfigProvider({ children }: { children: ReactNode })
   const refresh = async () => {
     setLoading(true);
     try {
-      const lp = await supabase.from("landing_pages").select("*");
-      if (!lp.error && Array.isArray(lp.data) && lp.data.length > 0) {
-        const nextPages: LandingPageMeta[] = lp.data.map((row: any) => ({
+      const cfg = await supabase.from("landing_page_configs").select("*");
+      if (!cfg.error && Array.isArray(cfg.data) && cfg.data.length > 0) {
+        const nextPages: LandingPageMeta[] = cfg.data.map((row: any) => ({
           pageKey: row.page_key,
-          label: row.label,
-          route: row.route,
-          active: !!row.active,
+          label: row.label || row.page_key,
+          route: row.route || `/lp/${row.page_key}`,
+          active: row.active ?? true,
           gridQuery: row.grid_query || "",
           fallbackQueries: Array.isArray(row.fallback_queries) ? row.fallback_queries : [],
         }));
@@ -90,15 +90,16 @@ export function LandingPageConfigProvider({ children }: { children: ReactNode })
     try {
       const payload = {
         page_key: config.pageKey,
+        label: config.pageKey,
+        route: `/lp/${config.pageKey}`,
+        active: true,
         grid_query: config.gridQuery || "",
         fallback_queries: config.fallbackQueries || [],
         updated_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
       };
 
-      let res = await supabase.from("landing_pages").upsert(
-        { ...payload, label: config.pageKey, route: `/lp/${config.pageKey}`, active: true },
-        { onConflict: "page_key" }
-      );
+      let res = await supabase.from("landing_page_configs").upsert(payload, { onConflict: "page_key" });
       if (res.error) throw res.error;
 
       setConfigs((current) => ({
@@ -128,7 +129,7 @@ export function LandingPageConfigProvider({ children }: { children: ReactNode })
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
-      const { error } = await supabase.from("landing_pages").upsert(payload, { onConflict: "page_key" });
+      const { error } = await supabase.from("landing_page_configs").upsert(payload, { onConflict: "page_key" });
       if (error) throw error;
       setPages((cur) => [
         ...cur.filter((p) => p.pageKey !== meta.pageKey),
@@ -153,7 +154,7 @@ export function LandingPageConfigProvider({ children }: { children: ReactNode })
       if (updates.active !== undefined) payload.active = updates.active;
       if (updates.gridQuery !== undefined) payload.grid_query = updates.gridQuery;
       if (updates.fallbackQueries !== undefined) payload.fallback_queries = updates.fallbackQueries;
-      const { error } = await supabase.from("landing_pages").update(payload).eq("page_key", pageKey);
+      const { error } = await supabase.from("landing_page_configs").update(payload).eq("page_key", pageKey);
       if (error) throw error;
       setPages((cur) =>
         cur.map((p) =>
@@ -188,7 +189,7 @@ export function LandingPageConfigProvider({ children }: { children: ReactNode })
 
   const deletePage = async (pageKey: string) => {
     try {
-      const { error } = await supabase.from("landing_pages").delete().eq("page_key", pageKey);
+      const { error } = await supabase.from("landing_page_configs").delete().eq("page_key", pageKey);
       if (error) throw error;
       setPages((cur) => cur.filter((p) => p.pageKey !== pageKey));
       setConfigs((current) => {
