@@ -13,11 +13,15 @@ interface ReqBody {
 }
 
 function normalizeText(html: string) {
-  let text = html.replace(/<script[\s\S]*?<\/script>/gi, " ");
+  const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+  const onlyBody = bodyMatch ? bodyMatch[1] : html;
+  let text = onlyBody.replace(/<script[\s\S]*?<\/script>/gi, " ");
   text = text.replace(/<style[\s\S]*?<\/style>/gi, " ");
   text = text.replace(/<noscript[\s\S]*?<\/noscript>/gi, " ");
   text = text.replace(/<[^>]+>/g, " ");
   text = text.replace(/\s+/g, " ").trim();
+  // Remove blocos comuns de navegação/ação
+  text = text.replace(/\b(adicionar ao carrinho|frete grátis|quem viu isso comprou|recomendações|veja também)\b/gi, " ");
   return text.slice(0, 15000);
 }
 
@@ -116,16 +120,24 @@ serve(async (req) => {
     }
 
     const system = [
-      "Você recebe o texto bruto de uma página de produto de e-commerce.",
-      "Ignore menus, rodapés, recomendações e anúncios.",
-      "Responda em JSON com as chaves: sucesso, produto.nome_refinado, produto.descricao_comercial (HTML simples <p>/<b>), produto.ficha_tecnica (HTML <ul>/<li> com chaves/valores), produto.sobre_produto.",
-      "Mantenha termos técnicos como 8GB GDDR6 sem alterar.",
-      "Se faltar 'sobre_produto', gere um breve resumo coerente.",
+      "Role: Especialista em Processamento de Dados de E-commerce e Web Scraping.",
+      "Objetivo: Você receberá metadados básicos (Nome, Preço, Link) e o conteúdo bruto (HTML/texto) da página de vendas.",
+      "Sua tarefa: agir como um filtro inteligente e estruturar os dados do produto em JSON limpo.",
+      "Campos obrigatórios de saída:",
+      "- produto.descricao_comercial: texto persuasivo de vendas em HTML básico (<p>, <b>).",
+      "- produto.ficha_tecnica: lista de especificações em HTML (<ul><li><b>Chave:</b> Valor</li></ul>).",
+      "- produto.sobre_produto: resumo geral explicativo sobre tecnologias e proposta.",
+      "Regras de processamento:",
+      "- Link como Verdade: use o conteúdo do link como fonte principal. Se o nome de entrada estiver vago, refine pelo título da página.",
+      "- Limpeza: ignore menus, rodapés, 'Adicionar ao Carrinho', 'Frete Grátis', 'Quem viu isso comprou', recomendações e anúncios.",
+      "- Formatação: preserve termos técnicos (ex.: 8GB GDDR6, PCI-E 4.0) sem alterar.",
+      "- Fallback: se não houver 'sobre_produto', gere um resumo breve coerente com a descrição.",
+      "Responda apenas em JSON com as chaves: sucesso, produto.nome_refinado, produto.descricao_comercial, produto.ficha_tecnica, produto.sobre_produto.",
     ].join("\n");
     const user = [
-      name ? `Metadados: ${name}` : "",
+      name ? `Metadados Básicos: ${name}` : "",
       `URL: ${url}`,
-      "Conteúdo bruto:",
+      "Conteúdo Bruto (HTML do body):",
       text || "(vazio)",
     ].join("\n\n");
 

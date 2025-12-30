@@ -404,6 +404,16 @@ const AdminPage = () => {
     const nameLower = productName.toLowerCase();
     
     // Check for specific keywords and map to categories
+    if (
+      nameLower.includes('placa de vídeo') ||
+      nameLower.includes('placa de video') ||
+      nameLower.includes('gpu') ||
+      nameLower.includes('rtx') ||
+      nameLower.includes('gtx') ||
+      nameLower.includes('radeon') ||
+      nameLower.includes('rx') ||
+      nameLower.includes('geforce')
+    ) return 'placa-de-video';
     if (nameLower.includes('monitor') || nameLower.includes('tela')) return 'monitores';
     if (nameLower.includes('notebook') || nameLower.includes('laptop')) return 'notebooks';
     if (nameLower.includes('processador') || nameLower.includes('cpu') || nameLower.includes('ryzen') || nameLower.includes('intel core')) return 'processadores';
