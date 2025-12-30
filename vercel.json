@@ -1,6 +1,17 @@
 {
   "rewrites": [
     { "source": "/produto/:id", "has": [{ "type": "query", "key": "ssr", "value": "false" }], "destination": "/index.html" },
+    {
+      "source": "/produto/:id",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i)(facebookexternalhit|WhatsApp|Twitterbot|Slackbot|TelegramBot|Discordbot|LinkedInBot|Googlebot|bingbot|DuckDuckGo|Pinterest|Yahoo|Applebot)"
+        }
+      ],
+      "destination": "https://eossaxfosnmtjksefekk.supabase.co/functions/v1/og-product?id=:id"
+    },
     { "source": "/produto/:id", "destination": "/api/seo-product?id=:id" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
