@@ -39,6 +39,7 @@ import { BannerManagement } from '@/components/admin/BannerManagement';
 import { CategoryProductManager } from '@/components/admin/CategoryProductManager';
 import { BrandManagement } from '@/components/admin/BrandManagement';
 import { MercadoPagoConfig } from '@/components/admin/MercadoPagoConfig';
+import { LandingPagesManager } from '@/components/admin/LandingPagesManager';
 
 const ADMIN_CREDENTIALS = {
   username: 'balao2025',
@@ -56,7 +57,7 @@ const AdminPage = () => {
   const [loginForm, setLoginForm] = useState({ username: '', password: '' });
   const [loginError, setLoginError] = useState('');
 
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'banners' | 'categories' | 'brands' | 'layout' | 'email' | 'orders' | 'payments'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'banners' | 'categories' | 'brands' | 'layout' | 'landings' | 'email' | 'orders' | 'payments'>('dashboard');
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
@@ -1262,6 +1263,17 @@ const AdminPage = () => {
             Layout
           </button>
           <button
+            onClick={() => setActiveTab('landings')}
+            className={`px-3 py-2 font-medium transition-colors border-b-2 -mb-px flex items-center gap-2 whitespace-nowrap ${
+              activeTab === 'landings' 
+                ? 'text-primary border-primary' 
+                : 'text-muted-foreground border-transparent hover:text-foreground'
+            }`}
+          >
+            <Sparkles className="w-4 h-4" />
+            Landing Pages
+          </button>
+          <button
             onClick={() => setActiveTab('email')}
             className={`px-3 py-2 font-medium transition-colors border-b-2 -mb-px flex items-center gap-2 whitespace-nowrap ${
               activeTab === 'email' 
@@ -1299,6 +1311,12 @@ const AdminPage = () => {
 
         {/* Dashboard Tab */}
         {activeTab === 'dashboard' && <Dashboard />}
+
+        {activeTab === 'landings' && (
+          <div className="admin-card">
+            <LandingPagesManager />
+          </div>
+        )}
 
         {/* Email Marketing Tab */}
         {activeTab === 'email' && <EmailMarketing />}

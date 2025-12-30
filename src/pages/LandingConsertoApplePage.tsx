@@ -3,6 +3,7 @@ import { SEOHead, BreadcrumbSchema } from "@/components/SEOHead";
 import { ProductGrid } from "@/components/ProductGrid";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useLandingPageConfig } from "@/contexts/LandingPageConfigContext";
 import { useProducts } from "@/contexts/ProductContext";
 import { filterProductsByQuery, mergeUniqueProductsById } from "@/lib/productFilter";
 import { useMemo } from "react";
@@ -23,6 +24,12 @@ export default function LandingConsertoApplePage() {
   const url = "https://www.balao.info/conserto-apple";
 
   const { products } = useProducts();
+
+  const { config } = useLandingPageConfig("conserto-apple", {
+    pageKey: "conserto-apple",
+    gridQuery: "iphone",
+    fallbackQueries: ["ipad", "macbook", "imac", "airpods", "apple"],
+  });
 
   const repairs = [
     "Troca de tela iPhone (trincada, sem imagem, touch falhando)",
@@ -58,17 +65,15 @@ export default function LandingConsertoApplePage() {
   ];
 
   const relatedProducts = useMemo(() => {
-    const primary = filterProductsByQuery(products || [], "iphone");
+    const base = products || [];
+    const primary = filterProductsByQuery(base, config.gridQuery || "");
+    if (primary.length >= 12) return primary.slice(0, 36);
     const extra = mergeUniqueProductsById([
       primary,
-      filterProductsByQuery(products || [], "ipad"),
-      filterProductsByQuery(products || [], "macbook"),
-      filterProductsByQuery(products || [], "imac"),
-      filterProductsByQuery(products || [], "airpods"),
-      filterProductsByQuery(products || [], "apple"),
+      ...(config.fallbackQueries || []).map((q) => filterProductsByQuery(base, q)),
     ]);
     return extra.slice(0, 36);
-  }, [products]);
+  }, [products, config.gridQuery, config.fallbackQueries]);
 
   return (
     <Layout>
@@ -259,4 +264,3 @@ export default function LandingConsertoApplePage() {
     </Layout>
   );
 }
-

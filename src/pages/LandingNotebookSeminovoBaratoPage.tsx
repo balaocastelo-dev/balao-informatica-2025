@@ -3,6 +3,7 @@ import { SEOHead, BreadcrumbSchema } from "@/components/SEOHead";
 import { ProductGrid } from "@/components/ProductGrid";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useLandingPageConfig } from "@/contexts/LandingPageConfigContext";
 import { useProducts } from "@/contexts/ProductContext";
 import { filterProductsByQuery, mergeUniqueProductsById } from "@/lib/productFilter";
 import { useMemo } from "react";
@@ -23,6 +24,12 @@ export default function LandingNotebookSeminovoBaratoPage() {
   const url = "https://www.balao.info/notebook-seminovo-barato";
 
   const { products } = useProducts();
+
+  const { config } = useLandingPageConfig("notebook-seminovo-barato", {
+    pageKey: "notebook-seminovo-barato",
+    gridQuery: "seminovo",
+    fallbackQueries: ["notebook", "laptop", "ssd", "memoria"],
+  });
 
   const highlights = [
     { title: "Revisado e testado", text: "Checklist de funcionamento: bateria, teclado, portas, tela e desempenho." },
@@ -47,18 +54,15 @@ export default function LandingNotebookSeminovoBaratoPage() {
   ];
 
   const relatedProducts = useMemo(() => {
-    const primary = filterProductsByQuery(products || [], "seminovo");
+    const base = products || [];
+    const primary = filterProductsByQuery(base, config.gridQuery || "");
     if (primary.length >= 12) return primary.slice(0, 36);
     const extra = mergeUniqueProductsById([
       primary,
-      filterProductsByQuery(products || [], "notebook"),
-      filterProductsByQuery(products || [], "laptop"),
-      filterProductsByQuery(products || [], "ssd"),
-      filterProductsByQuery(products || [], "memoria"),
-      filterProductsByQuery(products || [], "memória"),
+      ...(config.fallbackQueries || []).map((q) => filterProductsByQuery(base, q)),
     ]);
     return extra.slice(0, 36);
-  }, [products]);
+  }, [products, config.gridQuery, config.fallbackQueries]);
 
   return (
     <Layout>
@@ -263,4 +267,3 @@ export default function LandingNotebookSeminovoBaratoPage() {
     </Layout>
   );
 }
-

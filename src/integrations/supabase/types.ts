@@ -124,6 +124,30 @@ export type Database = {
           },
         ]
       }
+      landing_page_configs: {
+        Row: {
+          created_at: string
+          fallback_queries: string[]
+          grid_query: string
+          page_key: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          fallback_queries?: string[]
+          grid_query?: string
+          page_key: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          fallback_queries?: string[]
+          grid_query?: string
+          page_key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       email_campaigns: {
         Row: {
           content: string

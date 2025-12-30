@@ -3,6 +3,7 @@ import { SEOHead, BreadcrumbSchema } from "@/components/SEOHead";
 import { ProductGrid } from "@/components/ProductGrid";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useLandingPageConfig } from "@/contexts/LandingPageConfigContext";
 import { useProducts } from "@/contexts/ProductContext";
 import { filterProductsByQuery, mergeUniqueProductsById } from "@/lib/productFilter";
 import { useMemo } from "react";
@@ -23,6 +24,12 @@ export default function LandingConsertoConsolePage() {
   const url = "https://www.balao.info/conserto-console";
 
   const { products } = useProducts();
+
+  const { config } = useLandingPageConfig("conserto-console", {
+    pageKey: "conserto-console",
+    gridQuery: "console",
+    fallbackQueries: ["playstation", "ps5", "ps4", "xbox", "nintendo", "switch", "controle"],
+  });
 
   const repairs = [
     "PS5: troca de porta HDMI (sem imagem / falhando)",
@@ -46,19 +53,15 @@ export default function LandingConsertoConsolePage() {
   ];
 
   const relatedProducts = useMemo(() => {
-    const primary = filterProductsByQuery(products || [], "console");
+    const base = products || [];
+    const primary = filterProductsByQuery(base, config.gridQuery || "");
+    if (primary.length >= 12) return primary.slice(0, 36);
     const extra = mergeUniqueProductsById([
       primary,
-      filterProductsByQuery(products || [], "playstation"),
-      filterProductsByQuery(products || [], "ps5"),
-      filterProductsByQuery(products || [], "ps4"),
-      filterProductsByQuery(products || [], "xbox"),
-      filterProductsByQuery(products || [], "nintendo"),
-      filterProductsByQuery(products || [], "switch"),
-      filterProductsByQuery(products || [], "controle"),
+      ...(config.fallbackQueries || []).map((q) => filterProductsByQuery(base, q)),
     ]);
     return extra.slice(0, 36);
-  }, [products]);
+  }, [products, config.gridQuery, config.fallbackQueries]);
 
   return (
     <Layout>
@@ -264,4 +267,3 @@ export default function LandingConsertoConsolePage() {
     </Layout>
   );
 }
-

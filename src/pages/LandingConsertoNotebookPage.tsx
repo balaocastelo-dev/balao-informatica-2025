@@ -3,6 +3,7 @@ import { SEOHead, BreadcrumbSchema } from "@/components/SEOHead";
 import { ProductGrid } from "@/components/ProductGrid";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useLandingPageConfig } from "@/contexts/LandingPageConfigContext";
 import { useProducts } from "@/contexts/ProductContext";
 import { filterProductsByQuery, mergeUniqueProductsById } from "@/lib/productFilter";
 import { useMemo } from "react";
@@ -23,6 +24,12 @@ export default function LandingConsertoNotebookPage() {
   const url = "https://www.balao.info/conserto-de-notebook";
 
   const { products } = useProducts();
+
+  const { config } = useLandingPageConfig("conserto-de-notebook", {
+    pageKey: "conserto-de-notebook",
+    gridQuery: "notebook",
+    fallbackQueries: ["ssd", "memória", "memoria", "fonte notebook", "carregador"],
+  });
 
   const repairs = [
     "Notebook não liga / não dá vídeo",
@@ -45,17 +52,15 @@ export default function LandingConsertoNotebookPage() {
   ];
 
   const relatedProducts = useMemo(() => {
-    const primary = filterProductsByQuery(products || [], "notebook");
+    const base = products || [];
+    const primary = filterProductsByQuery(base, config.gridQuery || "");
+    if (primary.length >= 12) return primary.slice(0, 36);
     const extra = mergeUniqueProductsById([
       primary,
-      filterProductsByQuery(products || [], "ssd"),
-      filterProductsByQuery(products || [], "memoria"),
-      filterProductsByQuery(products || [], "memória"),
-      filterProductsByQuery(products || [], "fonte notebook"),
-      filterProductsByQuery(products || [], "carregador"),
+      ...(config.fallbackQueries || []).map((q) => filterProductsByQuery(base, q)),
     ]);
     return extra.slice(0, 36);
-  }, [products]);
+  }, [products, config.gridQuery, config.fallbackQueries]);
 
   return (
     <Layout>
@@ -191,4 +196,3 @@ export default function LandingConsertoNotebookPage() {
     </Layout>
   );
 }
-
