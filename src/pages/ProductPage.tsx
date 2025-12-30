@@ -41,17 +41,51 @@ export default function ProductPage() {
     const fetchTech = async () => {
       if (!product?.sourceUrl || !product.name) return;
       try {
+        type ScrapeExtractResult = {
+          produto?: {
+            ficha_tecnica?: string;
+            sobre_produto?: string;
+          };
+        };
+        const asScrapeResult = (value: unknown): ScrapeExtractResult | null => {
+          if (!value || typeof value !== "object") return null;
+          if (!("produto" in value)) return null;
+          const produto = (value as { produto?: unknown }).produto;
+          if (!produto || typeof produto !== "object") return { produto: undefined };
+          const p = produto as Record<string, unknown>;
+          return {
+            produto: {
+              ficha_tecnica: typeof p.ficha_tecnica === "string" ? p.ficha_tecnica : undefined,
+              sobre_produto: typeof p.sobre_produto === "string" ? p.sobre_produto : undefined,
+            }
+          };
+        };
+        const postApi = async (): Promise<unknown | null> => {
+          try {
+            const resp = await fetch("/api/scrape-extract-product", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ url: product.sourceUrl, name: product.name }),
+            });
+            if (!resp.ok) return null;
+            return await resp.json();
+          } catch {
+            return null;
+          }
+        };
+
         const { data, error } = await supabase.functions.invoke("scrape-extract-product", {
           body: { url: product.sourceUrl, name: product.name }
         });
-        if (!error && data && typeof (data as any) === "object") {
-          const produto = (data as any).produto;
-          const ficha = produto && typeof produto.ficha_tecnica === "string" ? produto.ficha_tecnica : "";
-          const sobre = produto && typeof produto.sobre_produto === "string" ? produto.sobre_produto : "";
-          setTechHtml(sanitizeHtml(ficha));
-          setAboutText(sobre.trim());
-        }
-      } catch {}
+        const raw = !error ? data : null;
+        const parsed = asScrapeResult(raw) || asScrapeResult(await postApi());
+        const ficha = parsed?.produto?.ficha_tecnica || "";
+        const sobre = parsed?.produto?.sobre_produto || "";
+        if (ficha) setTechHtml(sanitizeHtml(ficha));
+        if (sobre) setAboutText(sobre.trim());
+      } catch (err) {
+        console.error(err);
+      }
     };
     fetchTech();
   }, [product?.sourceUrl, product?.name]);

@@ -508,6 +508,19 @@ const AdminPage = () => {
         .filter((p): p is Product => !!p && !!p.name);
       const concurrency = 3;
       let index = 0;
+      const postApi = async (path: string, body: unknown): Promise<unknown | null> => {
+        try {
+          const resp = await fetch(`/api/${path}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+          });
+          if (!resp.ok) return null;
+          return await resp.json();
+        } catch {
+          return null;
+        }
+      };
       const runNext = async () => {
         if (index >= tasks.length) return;
         const current = tasks[index++];
@@ -517,13 +530,17 @@ const AdminPage = () => {
           });
           let text = '';
           if (!error && typeof data?.description === 'string' && data.description.trim()) {
-            text = data.description.trim();
+            text = `<p>${data.description.trim()}</p>`;
           } else {
-            text = generateFallbackDescription(current.name);
+            const apiData = await postApi('generate-product-description', { name: current.name, source_url: current.sourceUrl || undefined });
+            const apiDesc = apiData && typeof (apiData as { description?: unknown }).description === 'string'
+              ? String((apiData as { description?: unknown }).description).trim()
+              : '';
+            text = apiDesc ? `<p>${apiDesc}</p>` : `<p>${generateFallbackDescription(current.name)}</p>`;
           }
           await updateProduct(current.id, { description: text, aiGenerated: true });
         } catch {
-          const text = generateFallbackDescription(current.name);
+          const text = `<p>${generateFallbackDescription(current.name)}</p>`;
           await updateProduct(current.id, { description: text, aiGenerated: true });
         } finally {
           setBulkProgress(prev => ({ done: prev.done + 1, total: prev.total }));
@@ -814,6 +831,19 @@ const AdminPage = () => {
       const desc = (value as Record<string, unknown>).description;
       return { description: typeof desc === 'string' ? desc : undefined };
     };
+    const postApi = async (path: string, body: unknown): Promise<unknown | null> => {
+      try {
+        const resp = await fetch(`/api/${path}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        if (!resp.ok) return null;
+        return await resp.json();
+      } catch {
+        return null;
+      }
+    };
     const runEnrich = async () => {
       if (idx >= parsedProducts.length) return;
       const i = idx++;
@@ -824,7 +854,11 @@ const AdminPage = () => {
           const { data, error } = await supabase.functions.invoke('scrape-extract-product', {
             body: { url: product.sourceUrl, name: product.name }
           });
-          const scrape = !error ? asScrapeResult(data) : null;
+          let scrapeData: unknown | null = !error ? data : null;
+          if (!scrapeData) {
+            scrapeData = await postApi('scrape-extract-product', { url: product.sourceUrl, name: product.name });
+          }
+          const scrape = asScrapeResult(scrapeData);
           if (scrape?.produto) {
             const htmlDesc = scrape.produto.descricao_comercial || '';
             const htmlFicha = scrape.produto.ficha_tecnica || '';
@@ -839,7 +873,11 @@ const AdminPage = () => {
             const { data: genData, error: genError } = await supabase.functions.invoke('generate-product-description', {
               body: { name: product.name, source_url: product.sourceUrl }
             });
-            const genParsed = !genError ? asGenDescResult(genData) : null;
+            let genRaw: unknown | null = !genError ? genData : null;
+            if (!genRaw) {
+              genRaw = await postApi('generate-product-description', { name: product.name, source_url: product.sourceUrl });
+            }
+            const genParsed = asGenDescResult(genRaw);
             const genText = typeof genParsed?.description === 'string' ? genParsed.description.trim() : '';
             if (genText) text = `<p>${genText}</p>`;
           }
@@ -1817,24 +1855,33 @@ const AdminPage = () => {
                           const { data, error } = await supabase.functions.invoke('generate-product-description', {
                             body: { name: formData.name, source_url: formData.sourceUrl || undefined }
                           });
-                          if (error) {
-                            const fallback = generateFallbackDescription(formData.name);
-                            setFormData({ ...formData, description: fallback });
-                            toast({ title: 'Descrição gerada (simulada)' });
-                          } else {
-                            const text = (data?.description || '').trim();
-                            if (text) {
-                              setFormData({ ...formData, description: text });
-                              toast({ title: 'Descrição gerada com IA' });
-                            } else {
-                              const fallback = generateFallbackDescription(formData.name);
-                              setFormData({ ...formData, description: fallback });
-                              toast({ title: 'Descrição gerada (simulada)' });
+                          let text = !error && typeof data?.description === 'string' ? data.description.trim() : '';
+                          if (!text) {
+                            try {
+                              const resp = await fetch('/api/generate-product-description', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ name: formData.name, source_url: formData.sourceUrl || undefined }),
+                              });
+                              if (resp.ok) {
+                                const apiJson = await resp.json();
+                                text = apiJson && typeof apiJson.description === 'string' ? String(apiJson.description).trim() : '';
+                              }
+                            } catch (err) {
+                              console.error(err);
                             }
+                          }
+                          if (text) {
+                            setFormData({ ...formData, description: `<p>${text}</p>` });
+                            toast({ title: 'Descrição gerada com IA' });
+                          } else {
+                            const fallback = generateFallbackDescription(formData.name);
+                            setFormData({ ...formData, description: `<p>${fallback}</p>` });
+                            toast({ title: 'Descrição gerada (simulada)' });
                           }
                         } catch {
                           const fallback = generateFallbackDescription(formData.name);
-                          setFormData({ ...formData, description: fallback });
+                          setFormData({ ...formData, description: `<p>${fallback}</p>` });
                           toast({ title: 'Descrição gerada (simulada)' });
                         } finally {
                           setIsGeneratingDescription(false);
