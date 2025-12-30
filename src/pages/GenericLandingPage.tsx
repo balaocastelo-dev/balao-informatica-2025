@@ -47,10 +47,27 @@ export default function GenericLandingPage() {
   const title = `${meta.label} | Balão da Informática Campinas`;
   const description = `${meta.label} com atendimento em Campinas. Clique e fale no WhatsApp para agilidade.`;
   const url = `https://www.balao.info${meta.route}`;
+  const keywords = [
+    meta.label.toLowerCase(),
+    "campinas",
+    "cambuí",
+    "av anchieta 789",
+    "balão da informática",
+    config.gridQuery || "",
+    ...(config.fallbackQueries || []),
+    "loja de informática campinas",
+    "suporte técnico campinas",
+    "entrega rápida campinas",
+    "garantia",
+    "atendimento whatsapp",
+  ]
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .join(", ");
 
   return (
     <Layout>
-      <SEOHead title={title} description={description} url={url} type="article" />
+      <SEOHead title={title} description={description} keywords={keywords} url={url} type="article" />
       <BreadcrumbSchema items={[{ name: "Início", url: "https://www.balao.info" }, { name: meta.label, url }]} />
       <div className="bg-white min-h-screen">
         <div className="bg-yellow-400 text-zinc-900 font-black text-center py-3 px-4 flex items-center justify-center gap-2">
@@ -108,6 +125,57 @@ export default function GenericLandingPage() {
               </div>
             </div>
             <ProductGrid products={relatedProducts} initialLimit={18} loadMoreCount={18} showViewToggle={false} />
+          </div>
+        </section>
+        <section className="py-0 relative border-t border-zinc-200">
+          <div className="grid md:grid-cols-2 min-h-[520px]">
+            <div className="bg-neutral-900 text-white p-10 md:p-20 flex flex-col justify-center">
+              <div className="max-w-md">
+                <h2 className="text-3xl font-bold mb-8 text-white">Retire na loja em Campinas</h2>
+                <div className="space-y-8">
+                  <div className="flex gap-4">
+                    <div className="bg-[#E30613] w-12 h-12 rounded-lg flex items-center justify-center shrink-0">
+                      <MapPin className="text-white w-6 h-6" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-lg mb-1">Endereço</h4>
+                      <p className="text-neutral-300">Av. Anchieta, 789<br />Cambuí - Campinas, SP</p>
+                      <p className="text-sm text-neutral-500 mt-2">Próximo à Prefeitura</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-4">
+                    <div className="bg-neutral-800 w-12 h-12 rounded-lg flex items-center justify-center shrink-0">
+                      <Phone className="text-green-400 w-6 h-6" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-lg mb-1">Contato</h4>
+                      <p className="text-neutral-300">WhatsApp: (19) 98751-0267</p>
+                      <p className="text-neutral-300">Fixo: (19) 3255-1661</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-10 pt-8 border-t border-neutral-800">
+                  <Button asChild className="w-full bg-[#E30613] hover:bg-[#c00510] text-white font-bold py-6 rounded-xl">
+                    <a href="https://www.google.com/maps/dir/?api=1&destination=Av.+Anchieta,+789+-+Cambuí,+Campinas+-+SP" target="_blank" rel="noopener noreferrer">
+                      Traçar rota no Maps
+                    </a>
+                  </Button>
+                </div>
+              </div>
+            </div>
+            <div className="h-full min-h-[400px] w-full bg-neutral-200">
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3675.356779435064!2d-47.05686002380766!3d-22.90020497925974!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94c8cf4f3f3f3f3f%3A0x1234567890abcdef!2sAv.%20Anchieta%2C%20789%20-%20Cambu%C3%AD%2C%20Campinas%20-%20SP!5e0!3m2!1spt-BR!2sbr!4v1700000000000!5m2!1spt-BR!2sbr"
+                width="100%"
+                height="100%"
+                style={{ border: 0, minHeight: "100%" }}
+                allowFullScreen={true}
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="Mapa Balão da Informática"
+                className="grayscale hover:grayscale-0 transition-all duration-700"
+              ></iframe>
+            </div>
           </div>
         </section>
         <section className="container-balao py-12">
