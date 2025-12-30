@@ -1,8 +1,14 @@
 import { createClient } from '@supabase/supabase-js';
 
 const getSupabaseClient = () => {
-  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  const DEFAULT_URL = 'https://eossaxfosnmtjksefekk.supabase.co';
+  const DEFAULT_PUBLISHABLE_KEY = 'sb_publishable_2fOzpgED10xOerEYIN7WRg_vrpvCC6M';
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || DEFAULT_URL;
+  const supabaseKey =
+    process.env.SUPABASE_ANON_KEY ||
+    process.env.VITE_SUPABASE_ANON_KEY ||
+    process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+    DEFAULT_PUBLISHABLE_KEY;
 
   if (!supabaseUrl || !supabaseKey) return null;
   return createClient(supabaseUrl, supabaseKey);
