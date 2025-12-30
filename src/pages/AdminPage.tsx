@@ -1728,6 +1728,17 @@ const AdminPage = () => {
                   />
                 </div>
 
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">Link do Produto</label>
+                  <input
+                    type="url"
+                    value={formData.sourceUrl}
+                    onChange={e => setFormData({ ...formData, sourceUrl: e.target.value })}
+                    className="input-field"
+                    placeholder="https://www.kabum.com.br/produto/..."
+                  />
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-1">Categoria</label>
