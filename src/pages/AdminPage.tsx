@@ -810,11 +810,9 @@ const AdminPage = () => {
           const { data: genData, error: genError } = await supabase.functions.invoke('generate-product-description', {
             body: { name: product.name, source_url: product.sourceUrl }
           });
-          const genText = (!genError && typeof (genData as any)?.description === 'string')
-            ? String((genData as any).description).trim()
-            : '';
+          const genText = (!genError && typeof (genData as any)?.description === 'string') ? String((genData as any).description).trim() : '';
           if (genText) {
-            text = genText;
+            text = `<p>${genText}</p>`;
           } else {
             const { data, error } = await supabase.functions.invoke('scrape-extract-product', {
               body: { url: product.sourceUrl, name: product.name }
@@ -824,21 +822,19 @@ const AdminPage = () => {
               const htmlDesc: string = produto && typeof produto.descricao_comercial === 'string' ? produto.descricao_comercial : '';
               const htmlFicha: string = produto && typeof produto.ficha_tecnica === 'string' ? produto.ficha_tecnica : '';
               const sobre: string = produto && typeof produto.sobre_produto === 'string' ? produto.sobre_produto : '';
-              const descPlain = htmlToPlain(htmlDesc);
-              const fichaPlain = fichaToPlain(htmlFicha);
               const blocks: string[] = [];
-              if (descPlain) blocks.push(descPlain);
-              if (sobre && sobre.trim()) blocks.push(sobre.trim());
-              if (fichaPlain) blocks.push(`Ficha técnica:\n${fichaPlain}`);
-              text = blocks.join('\n\n').trim();
+              if (htmlDesc && htmlDesc.trim()) blocks.push(htmlDesc.trim());
+              if (sobre && sobre.trim()) blocks.push(`<p>${sobre.trim()}</p>`);
+              if (htmlFicha && htmlFicha.trim()) blocks.push(`<h3>Ficha técnica</h3>\n${htmlFicha.trim()}`);
+              text = blocks.join('\n').trim();
             }
           }
-          descs[i] = text || generateFallbackDescription(product.name);
+          descs[i] = text || `<p>${generateFallbackDescription(product.name)}</p>`;
         } else {
-          descs[i] = generateFallbackDescription(product.name);
+          descs[i] = `<p>${generateFallbackDescription(product.name)}</p>`;
         }
       } catch {
-        descs[i] = generateFallbackDescription(product.name);
+        descs[i] = `<p>${generateFallbackDescription(product.name)}</p>`;
       } finally {
         await runEnrich();
       }
