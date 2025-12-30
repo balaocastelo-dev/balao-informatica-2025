@@ -209,7 +209,7 @@ const AdminPage = () => {
     });
 
     return list;
-  }, [products, productCategoryFilter, productSearchQuery, productModelFilter, productStockFilter, productMinPrice, productMaxPrice, productSort]);
+  }, [products, productCategoryFilter, productNameFilter, productIdFilter, productModelFilter, productStockFilter, productMinPrice, productMaxPrice, productSort]);
 
   // Check session
   useEffect(() => {

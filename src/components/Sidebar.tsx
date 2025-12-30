@@ -335,6 +335,61 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 <Handshake className="w-4 h-4" />
                 Consignação
               </Link>
+              <Link
+                to="/lp/placa-de-video-promocao"
+                onClick={onClose}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+                  isActive('/lp/placa-de-video-promocao') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
+                )}
+              >
+                <Cpu className="w-4 h-4" />
+                Placa de Vídeo Promoção
+              </Link>
+              <Link
+                to="/lp/promocao-pc-gamer"
+                onClick={onClose}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+                  isActive('/lp/promocao-pc-gamer') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
+                )}
+              >
+                <Gamepad2 className="w-4 h-4" />
+                Promoção PC Gamer
+              </Link>
+              <Link
+                to="/lp/conserto-android"
+                onClick={onClose}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+                  isActive('/lp/conserto-android') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
+                )}
+              >
+                <Smartphone className="w-4 h-4" />
+                Conserto Android
+              </Link>
+              <Link
+                to="/lp/acessorios-gamer"
+                onClick={onClose}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+                  isActive('/lp/acessorios-gamer') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
+                )}
+              >
+                <Globe className="w-4 h-4" />
+                Acessórios Gamer
+              </Link>
+              <Link
+                to="/lp/visita-tecnica"
+                onClick={onClose}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+                  isActive('/lp/visita-tecnica') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
+                )}
+              >
+                <Wrench className="w-4 h-4" />
+                Visita Técnica
+              </Link>
             </nav>
           </div>
 
