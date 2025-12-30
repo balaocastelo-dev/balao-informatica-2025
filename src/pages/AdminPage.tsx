@@ -770,6 +770,19 @@ const AdminPage = () => {
     const descs: string[] = Array(parsedProducts.length).fill('');
     const enrichConcurrency = 2;
     let idx = 0;
+    const htmlToPlain = (html: string): string => {
+      return (html || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    };
+    const fichaToPlain = (html: string): string => {
+      let s = (html || '');
+      s = s.replace(/<\/li>/gi, '\n');
+      s = s.replace(/<li[^>]*>/gi, '- ');
+      s = s.replace(/<br\s*\/?>/gi, '\n');
+      s = s.replace(/<[^>]+>/g, '');
+      s = s.replace(/[ \t]+\n/g, '\n');
+      s = s.replace(/\n{3,}/g, '\n\n');
+      return s.trim();
+    };
     const runEnrich = async () => {
       if (idx >= parsedProducts.length) return;
       const i = idx++;
@@ -782,12 +795,16 @@ const AdminPage = () => {
           let text = '';
           if (!error && data && typeof (data as any) === 'object') {
             const produto = (data as any).produto;
-            const htmlDesc: string | undefined = produto && typeof produto.descricao_comercial === 'string'
-              ? produto.descricao_comercial
-              : undefined;
-            if (htmlDesc) {
-              text = htmlDesc.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-            }
+            const htmlDesc: string = produto && typeof produto.descricao_comercial === 'string' ? produto.descricao_comercial : '';
+            const htmlFicha: string = produto && typeof produto.ficha_tecnica === 'string' ? produto.ficha_tecnica : '';
+            const sobre: string = produto && typeof produto.sobre_produto === 'string' ? produto.sobre_produto : '';
+            const descPlain = htmlToPlain(htmlDesc);
+            const fichaPlain = fichaToPlain(htmlFicha);
+            const blocks: string[] = [];
+            if (descPlain) blocks.push(descPlain);
+            if (sobre && sobre.trim()) blocks.push(sobre.trim());
+            if (fichaPlain) blocks.push(`Ficha técnica:\n${fichaPlain}`);
+            text = blocks.join('\n\n').trim();
           }
           descs[i] = text || generateFallbackDescription(product.name);
         } else {
