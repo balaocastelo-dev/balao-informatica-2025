@@ -35,6 +35,7 @@ import LandingNotebookSeminovoBaratoPage from "./pages/LandingNotebookSeminovoBa
 import LandingMontagemSetupGamerPage from "./pages/LandingMontagemSetupGamerPage";
 import LandingConsertoNotebookPage from "./pages/LandingConsertoNotebookPage";
 import LandingCriacaoSiteServicosTIPage from "./pages/LandingCriacaoSiteServicosTIPage";
+import GenericLandingPage from "./pages/GenericLandingPage";
 import ThankYouPage from "./pages/ThankYouPage";
 import ChatCentralPage from "./pages/ChatCentralPage";
 import BlingCallbackPage from "./pages/BlingCallbackPage";
@@ -85,6 +86,7 @@ const App = () => (
                           <Route path="/carregador-de-notebook" element={<LandingCarregadorNotebookPage />} />
                           <Route path="/toner-para-impressora" element={<LandingTonerImpressoraPage />} />
                           <Route path="/licencas-microsoft" element={<LandingLicencasMicrosoftPage />} />
+                          <Route path="/lp/:pageKey" element={<GenericLandingPage />} />
                           <Route path="/obrigado" element={<ThankYouPage />} />
                           <Route path="*" element={<NotFound />} />
                         </Routes>

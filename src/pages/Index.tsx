@@ -21,6 +21,7 @@ import {
 
 import { bannerImageMap } from "@/config/banners";
 import { DEPARTMENTS } from "@/config/departments";
+import { useLandingPageConfigs } from "@/contexts/LandingPageConfigContext";
 
 interface Banner {
   id: string;
@@ -36,6 +37,7 @@ interface Banner {
 const Index = () => {
   const { products, getProductsByCategory } = useProducts();
   const { blocks, loading } = usePageBlocks();
+  const { pages } = useLandingPageConfigs();
   const [banners, setBanners] = useState<Banner[]>([]);
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get("q");
@@ -322,6 +324,26 @@ const Index = () => {
             <p className="text-zinc-400 text-lg">Carregando vitrine...</p>
           </div>
         )}
+
+        <section className="container-balao mt-12">
+          <div className="flex items-center gap-3 mb-6 border-b border-zinc-200 pb-4">
+            <div className="w-1.5 h-8 bg-[#E30613] rounded-full"></div>
+            <h2 className="text-2xl md:text-3xl font-black text-zinc-800 uppercase">Landing Pages</h2>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {pages.filter((p) => p.active).map((p) => (
+              <Link key={p.pageKey} to={p.route} className="border border-zinc-200 rounded-xl bg-white p-5 hover:shadow-md transition-shadow">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold text-zinc-800">{p.label}</p>
+                    <p className="text-xs text-zinc-500">{p.route}</p>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-[#E30613]" />
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
 
         {/* BANNERS DE DESTAQUE FINAL */}
         {footerTopBanners.length > 0 && (
