@@ -19,7 +19,7 @@ import {
   ArrowRight
 } from "lucide-react";
 
-export default function LandingCarregadorZapPage() {
+export default function LandingFonteNotebookPage() {
   
   // --- CONFIGURAÇÃO CENTRAL DO WHATSAPP ---
   const WHATSAPP_NUMBER = "5519987510267";
@@ -31,10 +31,12 @@ export default function LandingCarregadorZapPage() {
     return url;
   };
 
-  const title = "Carregador de Notebook em Campinas | Entrega Imediata via Motoboy";
-  const description = "Carregador de Notebook em Campinas com entrega imediata via motoboy. Envie a foto no WhatsApp e receba o carregador correto hoje.";
-  const keywords = "carregador de notebook campinas, carregadores campinas, fonte notebook campinas, entrega motoboy campinas, carregador notebook original, assistência notebook campinas";
-  const url = "https://www.balao.info/carregador-express";
+  const title = "Fonte de Notebook em Campinas | Entrega Rápida e Pronta Entrega | Balão da Informática";
+  const description =
+    "Fonte de notebook em Campinas com pronta entrega e entrega rápida. Envie a foto da etiqueta no WhatsApp e confirmamos a fonte correta. Atendemos Campinas e região e também enviamos para o Brasil todo.";
+  const keywords =
+    "fonte notebook campinas, fonte de notebook campinas, carregador notebook campinas, fonte original notebook campinas, fonte compatível notebook, fonte notebook dell, fonte notebook acer, fonte notebook lenovo, fonte notebook hp, fonte notebook asus, fonte macbook magsafe, fonte usb-c notebook, fonte type-c notebook, fonte notebook 19v, fonte notebook 20v, fonte notebook 45w, fonte notebook 65w, fonte notebook 90w, fonte notebook 120w, entrega rápida campinas, motoboy campinas fonte notebook, pronta entrega campinas, loja de informática campinas cambui, av anchieta 789 campinas, fonte notebook são paulo, fonte notebook brasil, envio fonte notebook correios, valinhos, vinhedo, paulínia, sumaré, hortolândia, indaiatuba";
+  const url = "https://www.balao.info/fonte-de-notebook";
 
   // Marcas agora são botões de atalho para o chat
   const brands = [
@@ -42,11 +44,11 @@ export default function LandingCarregadorZapPage() {
   ];
 
   const relatedProducts = useMemo(() => {
-    const primary = filterProductsByQuery(products || [], "carregador");
+    const primary = filterProductsByQuery(products || [], "fonte notebook");
     if (primary.length >= 12) return primary.slice(0, 36);
     const extra = mergeUniqueProductsById([
       primary,
-      filterProductsByQuery(products || [], "fonte notebook"),
+      filterProductsByQuery(products || [], "carregador"),
       filterProductsByQuery(products || [], "usb-c"),
       filterProductsByQuery(products || [], "magsafe"),
       filterProductsByQuery(products || [], "notebook"),
@@ -57,6 +59,12 @@ export default function LandingCarregadorZapPage() {
   return (
     <Layout>
       <SEOHead title={title} description={description} keywords={keywords} url={url} type="product" />
+      <BreadcrumbSchema
+        items={[
+          { name: "Início", url: "https://www.balao.info" },
+          { name: "Fonte de Notebook", url },
+        ]}
+      />
 
       {/* --- FAIXA DE URGÊNCIA --- */}
       <div className="bg-yellow-400 text-zinc-900 font-black text-center py-3 px-4 flex items-center justify-center gap-2 animate-in slide-in-from-top duration-700">
@@ -122,8 +130,8 @@ export default function LandingCarregadorZapPage() {
       <div className="bg-white py-12 -mt-8 relative z-20 rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)]">
         <div className="container-balao">
             <div className="text-center mb-10">
-                <h2 className="text-3xl font-bold text-zinc-900 mb-2">Carregador de Notebook em Campinas: envie foto no WhatsApp</h2>
-                <p className="text-zinc-500">Não arrisque comprar errado. Nossos técnicos identificam o carregador correto e entregam em Campinas hoje.</p>
+                <h2 className="text-3xl font-bold text-zinc-900 mb-2">Fonte de Notebook em Campinas: envie foto no WhatsApp</h2>
+                <p className="text-zinc-500">Não arrisque comprar errado. Nossos técnicos identificam a fonte correta e entregam em Campinas hoje.</p>
             </div>
 
             <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
@@ -195,7 +203,7 @@ export default function LandingCarregadorZapPage() {
         <div className="container-balao">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
             <div>
-              <h2 className="text-3xl font-bold text-zinc-900">Carregadores em estoque</h2>
+              <h2 className="text-3xl font-bold text-zinc-900">Fontes em estoque</h2>
               <p className="text-zinc-600 mt-2">
                 Produtos relacionados a fonte/carregador de notebook. Se tiver dúvida, envie a foto no WhatsApp e confirmamos compatibilidade.
               </p>

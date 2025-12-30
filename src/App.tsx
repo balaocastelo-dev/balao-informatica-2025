@@ -28,6 +28,12 @@ import ManutencaoPage from "./pages/ManutencaoPage";
 import LandingCarregadorNotebookPage from "./pages/LandingCarregadorNotebookPage";
 import LandingTonerImpressoraPage from "./pages/LandingTonerImpressoraPage";
 import LandingLicencasMicrosoftPage from "./pages/LandingLicencasMicrosoftPage";
+import LandingConsertoApplePage from "./pages/LandingConsertoApplePage";
+import LandingConsertoConsolePage from "./pages/LandingConsertoConsolePage";
+import LandingNotebookSeminovoBaratoPage from "./pages/LandingNotebookSeminovoBaratoPage";
+import LandingMontagemSetupGamerPage from "./pages/LandingMontagemSetupGamerPage";
+import LandingConsertoNotebookPage from "./pages/LandingConsertoNotebookPage";
+import LandingCriacaoSiteServicosTIPage from "./pages/LandingCriacaoSiteServicosTIPage";
 import ThankYouPage from "./pages/ThankYouPage";
 import ChatCentralPage from "./pages/ChatCentralPage";
 import BlingCallbackPage from "./pages/BlingCallbackPage";
@@ -66,6 +72,14 @@ const App = () => (
                         <Route path="/sobre" element={<SobreNosPage />} />
                         <Route path="/consignacao" element={<ConsignacaoPage />} />
                         <Route path="/manutencao" element={<ManutencaoPage />} />
+                        <Route path="/conserto-apple" element={<LandingConsertoApplePage />} />
+                        <Route path="/conserto-console" element={<LandingConsertoConsolePage />} />
+                        <Route path="/notebook-seminovo-barato" element={<LandingNotebookSeminovoBaratoPage />} />
+                        <Route path="/montagem-setup-gamer" element={<LandingMontagemSetupGamerPage />} />
+                        <Route path="/conserto-de-notebook" element={<LandingConsertoNotebookPage />} />
+                        <Route path="/criacao-de-site-e-servicos-ti" element={<LandingCriacaoSiteServicosTIPage />} />
+                        <Route path="/criacao-de-site-e-servicos-de-ti" element={<LandingCriacaoSiteServicosTIPage />} />
+                        <Route path="/fonte-de-notebook" element={<LandingCarregadorNotebookPage />} />
                         <Route path="/carregador-de-notebook" element={<LandingCarregadorNotebookPage />} />
                         <Route path="/toner-para-impressora" element={<LandingTonerImpressoraPage />} />
                         <Route path="/licencas-microsoft" element={<LandingLicencasMicrosoftPage />} />

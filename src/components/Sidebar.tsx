@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useCategories, CategoryData } from '@/contexts/CategoryContext';
-import { ChevronRight, Home, Cpu, X, Info, Handshake, Wrench, BatteryCharging, Printer, BadgeCheck } from 'lucide-react';
+import { ChevronRight, Home, Cpu, X, Info, Handshake, Wrench, BatteryCharging, Printer, BadgeCheck, Gamepad2, Globe, Laptop, Smartphone } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Auto-generate emoji based on category name
@@ -110,104 +110,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         </button>
 
         <div className="p-4 pt-4">
-          {/* Navigation Section */}
-          <div className="mb-6">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-              Navegação
-            </h3>
-            <nav className="space-y-1">
-              <Link
-                to="/"
-                onClick={onClose}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
-                  isActive('/') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
-                )}
-              >
-                <Home className="w-4 h-4" />
-                Início
-              </Link>
-              <Link
-                to="/montar-pc"
-                onClick={onClose}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
-                  isActive('/montar-pc') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
-                )}
-              >
-                <Cpu className="w-4 h-4" />
-                Monte seu PC
-              </Link>
-              <Link
-                to="/manutencao"
-                onClick={onClose}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
-                  isActive('/manutencao') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
-                )}
-              >
-                <Wrench className="w-4 h-4" />
-                Manutenção
-              </Link>
-              <Link
-                to="/carregador-de-notebook"
-                onClick={onClose}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
-                  isActive('/carregador-de-notebook') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
-                )}
-              >
-                <BatteryCharging className="w-4 h-4" />
-                Carregador de Notebook
-              </Link>
-              <Link
-                to="/toner-para-impressora"
-                onClick={onClose}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
-                  isActive('/toner-para-impressora') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
-                )}
-              >
-                <Printer className="w-4 h-4" />
-                Toner para Impressora
-              </Link>
-              <Link
-                to="/licencas-microsoft"
-                onClick={onClose}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
-                  isActive('/licencas-microsoft') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
-                )}
-              >
-                <BadgeCheck className="w-4 h-4" />
-                Licenças Microsoft
-              </Link>
-              <Link
-                to="/sobre"
-                onClick={onClose}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
-                  isActive('/sobre') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
-                )}
-              >
-                <Info className="w-4 h-4" />
-                Sobre Nós
-              </Link>
-              <Link
-                to="/consignacao"
-                onClick={onClose}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
-                  isActive('/consignacao') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
-                )}
-              >
-                <Handshake className="w-4 h-4" />
-                Consignação
-              </Link>
-            </nav>
-          </div>
-
-          {/* Categories Section */}
           <div className="mb-6">
             <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
               Categorias
@@ -271,6 +173,168 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                   </div>
                 );
               })}
+            </nav>
+          </div>
+
+          <div className="mb-6">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+              Navegação
+            </h3>
+            <nav className="space-y-1">
+              <Link
+                to="/"
+                onClick={onClose}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+                  isActive('/') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
+                )}
+              >
+                <Home className="w-4 h-4" />
+                Início
+              </Link>
+              <Link
+                to="/manutencao"
+                onClick={onClose}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+                  isActive('/manutencao') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
+                )}
+              >
+                <Wrench className="w-4 h-4" />
+                Assistência Técnica
+              </Link>
+              <Link
+                to="/conserto-apple"
+                onClick={onClose}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+                  isActive('/conserto-apple') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
+                )}
+              >
+                <Smartphone className="w-4 h-4" />
+                Conserto Apple
+              </Link>
+              <Link
+                to="/conserto-console"
+                onClick={onClose}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+                  isActive('/conserto-console') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
+                )}
+              >
+                <Gamepad2 className="w-4 h-4" />
+                Conserto Console
+              </Link>
+              <Link
+                to="/fonte-de-notebook"
+                onClick={onClose}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+                  isActive('/fonte-de-notebook') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
+                )}
+              >
+                <BatteryCharging className="w-4 h-4" />
+                Fonte de Notebook
+              </Link>
+              <Link
+                to="/conserto-de-notebook"
+                onClick={onClose}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+                  isActive('/conserto-de-notebook') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
+                )}
+              >
+                <Laptop className="w-4 h-4" />
+                Conserto de Notebook
+              </Link>
+              <Link
+                to="/notebook-seminovo-barato"
+                onClick={onClose}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+                  isActive('/notebook-seminovo-barato') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
+                )}
+              >
+                <Laptop className="w-4 h-4" />
+                Notebook Seminovo
+              </Link>
+              <Link
+                to="/montagem-setup-gamer"
+                onClick={onClose}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+                  isActive('/montagem-setup-gamer') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
+                )}
+              >
+                <Cpu className="w-4 h-4" />
+                Montagem Setup Gamer
+              </Link>
+              <Link
+                to="/montar-pc"
+                onClick={onClose}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+                  isActive('/montar-pc') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
+                )}
+              >
+                <Cpu className="w-4 h-4" />
+                Monte seu PC
+              </Link>
+              <Link
+                to="/toner-para-impressora"
+                onClick={onClose}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+                  isActive('/toner-para-impressora') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
+                )}
+              >
+                <Printer className="w-4 h-4" />
+                Toner para Impressora
+              </Link>
+              <Link
+                to="/licencas-microsoft"
+                onClick={onClose}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+                  isActive('/licencas-microsoft') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
+                )}
+              >
+                <BadgeCheck className="w-4 h-4" />
+                Licenças Microsoft
+              </Link>
+              <Link
+                to="/criacao-de-site-e-servicos-ti"
+                onClick={onClose}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+                  isActive('/criacao-de-site-e-servicos-ti') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
+                )}
+              >
+                <Globe className="w-4 h-4" />
+                Criação de Site e TI
+              </Link>
+              <Link
+                to="/sobre"
+                onClick={onClose}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+                  isActive('/sobre') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
+                )}
+              >
+                <Info className="w-4 h-4" />
+                Sobre Nós
+              </Link>
+              <Link
+                to="/consignacao"
+                onClick={onClose}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+                  isActive('/consignacao') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
+                )}
+              >
+                <Handshake className="w-4 h-4" />
+                Consignação
+              </Link>
             </nav>
           </div>
 
