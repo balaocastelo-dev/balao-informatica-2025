@@ -6,6 +6,8 @@ import { SEOHead, BreadcrumbSchema } from "@/components/SEOHead";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, ArrowLeft, Share2 } from "lucide-react";
 import { toast } from "sonner";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function ProductPage() {
   const { productId } = useParams<{ productId: string }>();
@@ -14,6 +16,8 @@ export default function ProductPage() {
   const { addToCart } = useCart();
 
   const product = products.find((p) => p.id === productId);
+  const [techHtml, setTechHtml] = useState<string>("");
+  const [aboutText, setAboutText] = useState<string>("");
 
   const formatPrice = (price: number) => {
     return price.toLocaleString("pt-BR", {
@@ -21,6 +25,36 @@ export default function ProductPage() {
       currency: "BRL",
     });
   };
+
+  const sanitizeHtml = (input: string) => {
+    if (!input) return "";
+    let out = input;
+    out = out.replace(/<script[\s\S]*?<\/script>/gi, "");
+    out = out.replace(/<style[\s\S]*?<\/style>/gi, "");
+    out = out.replace(/<noscript[\s\S]*?<\/noscript>/gi, "");
+    out = out.replace(/<(\w+)[^>]*>/g, "<$1>");
+    out = out.replace(/<(?!\/?(ul|li|b|strong|p|br)\b)[^>]*>/gi, "");
+    return out;
+  };
+
+  useEffect(() => {
+    const fetchTech = async () => {
+      if (!product?.sourceUrl || !product.name) return;
+      try {
+        const { data, error } = await supabase.functions.invoke("scrape-extract-product", {
+          body: { url: product.sourceUrl, name: product.name }
+        });
+        if (!error && data && typeof (data as any) === "object") {
+          const produto = (data as any).produto;
+          const ficha = produto && typeof produto.ficha_tecnica === "string" ? produto.ficha_tecnica : "";
+          const sobre = produto && typeof produto.sobre_produto === "string" ? produto.sobre_produto : "";
+          setTechHtml(sanitizeHtml(ficha));
+          setAboutText(sobre.trim());
+        }
+      } catch {}
+    };
+    fetchTech();
+  }, [product?.sourceUrl, product?.name]);
 
   const handleShare = async () => {
     const url = window.location.href;
@@ -151,6 +185,20 @@ export default function ProductPage() {
                 <p className="text-muted-foreground text-xs md:text-base mt-2 line-clamp-3 md:line-clamp-none">
                   {product.description}
                 </p>
+              )}
+              {aboutText && (
+                <p className="text-muted-foreground text-xs md:text-base mt-3">
+                  {aboutText}
+                </p>
+              )}
+              {techHtml && (
+                <div className="mt-4 text-xs md:text-sm text-foreground">
+                  <h2 className="text-sm md:text-lg font-semibold mb-2">Ficha Técnica</h2>
+                  <div
+                    className="prose prose-sm max-w-none"
+                    dangerouslySetInnerHTML={{ __html: techHtml }}
+                  />
+                </div>
               )}
             </div>
 

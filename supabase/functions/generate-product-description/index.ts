@@ -12,6 +12,38 @@ interface GenerateRequest {
   source_url?: string;
 }
 
+function normalizeText(html: string) {
+  let text = html.replace(/<script[\s\S]*?<\/script>/gi, " ");
+  text = text.replace(/<style[\s\S]*?<\/style>/gi, " ");
+  text = text.replace(/<noscript[\s\S]*?<\/noscript>/gi, " ");
+  text = text.replace(/<[^>]+>/g, " ");
+  text = text.replace(/\s+/g, " ").trim();
+  return text.slice(0, 15000);
+}
+
+function extractSpecs(text: string) {
+  const specs: string[] = [];
+  const mem = text.match(/\b(\d{1,3})\s*GB\s*(GDDR[56])\b/i);
+  if (mem) specs.push(`${mem[1]}GB ${mem[2].toUpperCase()}`);
+  const bus = text.match(/\b(128|192|256)\s*bits?\b/i);
+  if (bus) specs.push(`${bus[1]} bits`);
+  const dp = text.match(/Display\s*Port\s*2\.?1/i);
+  if (dp) specs.push("DisplayPort 2.1");
+  const hdmi = text.match(/HDMI\s*2\.?1/i);
+  if (hdmi) specs.push("HDMI 2.1");
+  const pcie = text.match(/PCI[-\s]?E\s*(\d(\.0)?)\b/i);
+  if (pcie) specs.push(`PCI-E ${pcie[1]}`);
+  const clockBoost = text.match(/boost[^0-9]*([\d.,]{3,6})\s*mhz/i);
+  if (clockBoost) specs.push(`Boost até ${clockBoost[1].replace(",", ".")}MHz`);
+  const gameClock = text.match(/game\s*clock[^0-9]*([\d.,]{3,6})\s*mhz/i);
+  if (gameClock) specs.push(`Game Clock ${gameClock[1].replace(",", ".")}MHz`);
+  const tgp = text.match(/\bTGP\s*(\d{2,3})\s*W\b/i);
+  if (tgp) specs.push(`TGP ${tgp[1]}W`);
+  const infinityCache = text.match(/Infinity\s*Cache\s*(\d{1,3})\s*MB/i);
+  if (infinityCache) specs.push(`Infinity Cache ${infinityCache[1]}MB`);
+  return specs;
+}
+
 const fallbackGenerate = (name: string) => {
   const lower = name.toLowerCase();
   const isNotebook = lower.includes("notebook") || lower.includes("laptop");
@@ -51,8 +83,32 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
+    let pageText = "";
+    if (source_url && source_url.startsWith("http")) {
+      try {
+        const resp = await fetch(source_url, {
+          headers: {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+            "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7",
+            "Cache-Control": "no-cache",
+            "Pragma": "no-cache",
+          },
+        });
+        if (resp.ok) {
+          const html = await resp.text();
+          pageText = normalizeText(html);
+        }
+      } catch {}
+    }
+
     if (!OPENAI_API_KEY) {
-      return new Response(JSON.stringify({ description: fallbackGenerate(name), simulated: true }), {
+      const specs = pageText ? extractSpecs(pageText) : [];
+      const base = fallbackGenerate(name);
+      const unique = specs.length > 0
+        ? `${name}. ${specs.join(", ")}. Pensada para entregar performance consistente em jogos e aplicativos modernos, com excelente relação custo-benefício e compatibilidade com monitores atuais. Disponível na Balão da Informática.`
+        : base;
+      return new Response(JSON.stringify({ description: unique, simulated: true }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -61,23 +117,25 @@ const handler = async (req: Request): Promise<Response> => {
     const system = [
       "Você é um redator de e-commerce especializado em tecnologia.",
       "Escreva em português (Brasil), com tom persuasivo e claro.",
-      "Use tipicamente 100–180 palavras.",
-      "Nunca invente especificações; seja conservador quando não tiver certeza.",
-      "Destaque benefícios para diferentes perfis (trabalho, estudos, games, escritório).",
-      "Se possível, inclua pontos técnicos do produto pesquisando na internet antes de redigir.",
-      "Evite linguagem exagerada, foque em benefícios reais e diferenciais.",
+      "Use tipicamente 100–160 palavras.",
+      "Não invente especificações.",
+      "Use apenas informações presentes no conteúdo fornecido.",
+      "Destaque benefícios reais para jogos, trabalho e estudos quando aplicável.",
+      "Evite exageros.",
     ].join("\n");
 
     const userPrompt = [
       `Produto: ${name}`,
-      source_url ? `Fonte/URL do produto (se útil): ${source_url}` : "",
+      source_url ? `Link: ${source_url}` : "",
+      "",
+      "Conteúdo extraído do link:",
+      pageText || "(vazio)",
       "",
       "Tarefa:",
-      "- Pesquise características técnicas reais do produto na internet (se possível).",
-      "- Redija uma descrição de vendas persuasiva com 100–180 palavras.",
-      "- Inclua especificações-chave se confirmadas (ex.: RAM, armazenamento, polegadas, série da GPU/CPU).",
-      "- Adapte benefícios para trabalho/estudos/jogos conforme o produto.",
-      "- Termine com uma chamada de ação sutil.",
+      "- Redija uma descrição de vendas única e objetiva baseada apenas no conteúdo fornecido.",
+      "- Inclua especificações-chave encontradas (ex.: memória, barramento, saídas, clock, TGP).",
+      "- Evite HTML; responda em texto puro.",
+      "- Termine com uma chamada de ação discreta.",
     ].join("\n");
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -92,7 +150,7 @@ const handler = async (req: Request): Promise<Response> => {
           { role: "system", content: system },
           { role: "user", content: userPrompt },
         ],
-        temperature: 0.7,
+        temperature: 0.3,
       }),
     });
 
