@@ -49,6 +49,15 @@ export function LandingPageConfigProvider({ children }: { children: ReactNode })
     { pageKey: "criacao-de-site-e-servicos-ti", label: "Criação de Site e TI", route: "/criacao-de-site-e-servicos-ti", active: true, gridQuery: "microsoft", fallbackQueries: ["office", "windows", "server"] },
     { pageKey: "sobre-nos", label: "Sobre Nós", route: "/sobre", active: true, gridQuery: "", fallbackQueries: [] },
     { pageKey: "consignacao", label: "Consignação", route: "/consignacao", active: true, gridQuery: "", fallbackQueries: [] },
+    { pageKey: "placa-de-video-promocao", label: "Placa de Vídeo Promoção", route: "/lp/placa-de-video-promocao", active: true, gridQuery: "placa de video", fallbackQueries: ["rtx", "geforce", "radeon", "gpu", "placa de vídeo"] },
+    { pageKey: "upgrade-pc-office", label: "Upgrade PC Office", route: "/lp/upgrade-pc-office", active: true, gridQuery: "ssd", fallbackQueries: ["memoria", "monitor", "teclado", "mouse", "office"] },
+    { pageKey: "upgrade-notebook", label: "Upgrade de Notebook", route: "/lp/upgrade-notebook", active: true, gridQuery: "ssd", fallbackQueries: ["memória", "memoria", "fonte notebook", "bateria"] },
+    { pageKey: "promocao-pc-gamer", label: "Promoção PC Gamer", route: "/lp/promocao-pc-gamer", active: true, gridQuery: "pc gamer", fallbackQueries: ["setup gamer", "rtx", "ryzen", "intel"] },
+    { pageKey: "conserto-android", label: "Conserto Android", route: "/lp/conserto-android", active: true, gridQuery: "android", fallbackQueries: ["smartphone", "celular", "samsung", "xiaomi"] },
+    { pageKey: "reparo-de-carcaca-notebook", label: "Reparo de Carcaça Notebook", route: "/lp/reparo-de-carcaca-notebook", active: true, gridQuery: "carcaça", fallbackQueries: ["carcaca", "dobradiça", "tampa", "gabinete notebook"] },
+    { pageKey: "acessorios-gamer", label: "Acessórios Gamer", route: "/lp/acessorios-gamer", active: true, gridQuery: "gamer", fallbackQueries: ["mouse gamer", "teclado gamer", "headset", "monitor", "mousepad"] },
+    { pageKey: "promocao-ps5", label: "Promoção PS5", route: "/lp/promocao-ps5", active: true, gridQuery: "ps5", fallbackQueries: ["playstation", "jogo", "controle ps5"] },
+    { pageKey: "visita-tecnica", label: "Visita Técnica", route: "/lp/visita-tecnica", active: true, gridQuery: "", fallbackQueries: ["suporte", "ti", "network", "wifi", "roteador"] },
   ];
 
   const refresh = async () => {

@@ -7,7 +7,7 @@ import { useProducts } from "@/contexts/ProductContext";
 import { useLandingPageConfigs } from "@/contexts/LandingPageConfigContext";
 import { filterProductsByQuery, mergeUniqueProductsById } from "@/lib/productFilter";
 import { Button } from "@/components/ui/button";
-import { MapPin, MessageCircle, Phone, Truck, ShieldCheck, Timer } from "lucide-react";
+import { MapPin, MessageCircle, Phone, Truck, ShieldCheck, Timer, Star, CheckCircle2 } from "lucide-react";
 
 export default function GenericLandingPage() {
   const { pageKey } = useParams();
@@ -86,8 +86,85 @@ export default function GenericLandingPage() {
               <div className="px-4 py-3 bg-zinc-100 rounded-lg text-zinc-800 inline-flex items-center gap-2">
                 <ShieldCheck className="w-5 h-5" /> Garantia Oficial
               </div>
+              <div className="px-4 py-3 bg-zinc-100 rounded-lg text-zinc-800 inline-flex items-center gap-2">
+                <Star className="w-5 h-5 text-yellow-500" /> Melhor custo‑benefício
+              </div>
+              <div className="px-4 py-3 bg-zinc-100 rounded-lg text-zinc-800 inline-flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-green-600" /> Pronta entrega
+              </div>
+            </div>
+            <div className="grid md:grid-cols-3 gap-6 mb-10">
+              <div className="p-5 border rounded-xl">
+                <p className="font-bold mb-2">Escolha rápida</p>
+                <p className="text-sm text-zinc-600">Mande no WhatsApp o que precisa e indicamos a opção certa.</p>
+              </div>
+              <div className="p-5 border rounded-xl">
+                <p className="font-bold mb-2">Atendimento local</p>
+                <p className="text-sm text-zinc-600">Cambuí, Campinas. Retirada imediata ou envio expresso.</p>
+              </div>
+              <div className="p-5 border rounded-xl">
+                <p className="font-bold mb-2">Suporte pós‑compra</p>
+                <p className="text-sm text-zinc-600">Garantia e orientação para instalação e uso.</p>
+              </div>
             </div>
             <ProductGrid products={relatedProducts} initialLimit={18} loadMoreCount={18} showViewToggle={false} />
+          </div>
+        </section>
+        <section className="container-balao py-12">
+          <div className="grid md:grid-cols-2 gap-8">
+            <div className="space-y-4">
+              <h3 className="text-2xl font-black">Como funciona</h3>
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5" />
+                  <p className="text-sm text-zinc-700">Envie no WhatsApp o que precisa ou o problema.</p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5" />
+                  <p className="text-sm text-zinc-700">Indicamos a solução com preço e prazo.</p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5" />
+                  <p className="text-sm text-zinc-700">Retire no balcão ou receba em Campinas.</p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
+                  <Button className="h-12 px-6 bg-[#25D366] hover:bg-[#1EB954] text-white font-bold rounded-xl">Falar no WhatsApp</Button>
+                </a>
+                <a href="tel:+551932551661">
+                  <Button variant="outline" className="h-12 px-6">Ligar</Button>
+                </a>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <h3 className="text-2xl font-black">Por que {meta.label} com a Balão?</h3>
+              <div className="grid sm:grid-cols-2 gap-3">
+                {["Agilidade e transparência", "Preço justo de Campinas", "Garantia oficial", "Suporte real pós‑venda"].map((t) => (
+                  <div key={t} className="p-4 border rounded-xl">
+                    <p className="text-sm font-semibold text-zinc-800">{t}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+        <section className="bg-zinc-50 py-12 border-t">
+          <div className="container-balao">
+            <h3 className="text-2xl font-black mb-6">Perguntas frequentes</h3>
+            <div className="grid md:grid-cols-2 gap-4">
+              {[
+                "Posso retirar hoje no Cambuí?",
+                "Vocês enviam para bairros de Campinas?",
+                "Tem garantia oficial dos produtos e serviços?",
+                "Como confirmar compatibilidade?",
+              ].map((q) => (
+                <div key={q} className="p-5 bg-white border rounded-xl">
+                  <p className="font-semibold text-zinc-800">{q}</p>
+                  <p className="text-sm text-zinc-600 mt-2">Chame no WhatsApp e respondemos em minutos.</p>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
       </div>
