@@ -21,23 +21,30 @@ function normalizeText(html: string) {
   return text.slice(0, 15000);
 }
 
-function fallbackCompose(name: string) {
+function fallbackProduto(name: string) {
   const lower = name.toLowerCase();
   const isGPU = lower.includes("gpu") || lower.includes("rtx") || lower.includes("rx") || lower.includes("radeon") || lower.includes("geforce");
   const isCPU = lower.includes("cpu") || lower.includes("ryzen") || lower.includes("intel");
   const isMonitor = lower.includes("monitor");
   const isNotebook = lower.includes("notebook") || lower.includes("laptop");
-  const desc =
-    isGPU ? "Placa de vídeo com desempenho sólido para jogos e criação de conteúdo."
-    : isCPU ? "Processador com performance eficiente para multitarefa e produtividade."
-    : isMonitor ? "Monitor com ótima nitidez e fluidez para trabalho e entretenimento."
-    : isNotebook ? "Notebook pensado para quem precisa de mobilidade e desempenho."
+  const base =
+    isGPU ? "Placa de vídeo com desempenho sólido para jogos em 1080p e criação de conteúdo."
+    : isCPU ? "Processador com performance eficiente para multitarefa e produtividade diária."
+    : isMonitor ? "Monitor com nitidez e fluidez para trabalho e entretenimento."
+    : isNotebook ? "Notebook pensado para mobilidade e desempenho equilibrado."
     : "Produto com excelente custo-benefício e confiabilidade.";
-  const descricaoComercial = `Descrição: ${desc}`;
-  const informacoesTecnicas = "Informações Técnicas: Consulte as especificações oficiais do fabricante.";
-  const sobre = "Sobre: Ideal para quem busca qualidade e suporte com condições especiais.";
-  const combined = [descricaoComercial, informacoesTecnicas, sobre].join("\n\n");
-  return { descricaoComercial, informacoesTecnicas, sobre, combined };
+  const descricao = `<p>${base}</p>`;
+  const ficha = `<ul><li><b>Especificações:</b> consulte o fabricante</li></ul>`;
+  const sobre = "Ideal para quem busca qualidade, suporte e condições especiais.";
+  return {
+    sucesso: true,
+    produto: {
+      nome_refinado: name,
+      descricao_comercial: descricao,
+      ficha_tecnica: ficha,
+      sobre_produto: sobre,
+    },
+  };
 }
 
 serve(async (req) => {
@@ -47,7 +54,7 @@ serve(async (req) => {
   try {
     const { url, name }: ReqBody = await req.json();
     if (!url || !url.startsWith("http")) {
-      return new Response(JSON.stringify({ error: "URL inválida" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ sucesso: false, error: "URL inválida" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
     const resp = await fetch(url, {
       headers: {
@@ -63,22 +70,20 @@ serve(async (req) => {
     const text = html ? normalizeText(html) : "";
 
     if (!OPENAI_API_KEY) {
-      const fb = fallbackCompose(name || url);
-      return new Response(JSON.stringify({ description: fb.combined, sections: fb, simulated: true }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      const fb = fallbackProduto(name || url);
+      return new Response(JSON.stringify(fb), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     const system = [
       "Você recebe o texto bruto de uma página de produto de e-commerce.",
-      "Extraia apenas informações úteis do produto e ignore menus/rodapés/anúncios.",
-      "Responda estritamente em JSON com as chaves:",
-      "descricaoComercial: texto persuasivo para vendas (100-180 palavras).",
-      "informacoesTecnicas: lista curta (bullet-like) com especificações confirmadas.",
-      "sobreProduto: um parágrafo curto destacando uso/benefícios.",
-      "Se não houver dados suficientes, seja conservador e não invente.",
+      "Ignore menus, rodapés, recomendações e anúncios.",
+      "Responda em JSON com as chaves: sucesso, produto.nome_refinado, produto.descricao_comercial (HTML simples <p>/<b>), produto.ficha_tecnica (HTML <ul>/<li> com chaves/valores), produto.sobre_produto.",
+      "Mantenha termos técnicos como 8GB GDDR6 sem alterar.",
+      "Se faltar 'sobre_produto', gere um breve resumo coerente.",
     ].join("\n");
     const user = [
-      name ? `Nome: ${name}` : "",
-      "Texto da página:",
+      name ? `Metadados: ${name}` : "",
+      "Conteúdo bruto:",
       text || "(vazio)",
     ].join("\n\n");
 
@@ -93,29 +98,37 @@ serve(async (req) => {
       }),
     });
     if (!ai.ok) {
-      const fb = fallbackCompose(name || url);
-      return new Response(JSON.stringify({ description: fb.combined, sections: fb, simulated: true }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      const fb = fallbackProduto(name || url);
+      return new Response(JSON.stringify(fb), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
     const json = await ai.json();
     const content = json?.choices?.[0]?.message?.content || "";
-    let parsed: { descricaoComercial?: string; informacoesTecnicas?: string | string[]; sobreProduto?: string } = {};
+    let parsed: unknown;
     try {
       parsed = JSON.parse(content);
     } catch {
-      parsed = {};
+      parsed = null;
     }
-    const partes: string[] = [];
-    if (parsed.descricaoComercial) partes.push(`Descrição: ${parsed.descricaoComercial}`);
-    if (parsed.informacoesTecnicas) {
-      const info = Array.isArray(parsed.informacoesTecnicas) ? parsed.informacoesTecnicas.join(" · ") : parsed.informacoesTecnicas;
-      partes.push(`Informações Técnicas: ${info}`);
+    if (!parsed || typeof parsed !== "object") {
+      const fb = fallbackProduto(name || url);
+      return new Response(JSON.stringify(fb), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
-    if (parsed.sobreProduto) partes.push(`Sobre: ${parsed.sobreProduto}`);
-    const combined = partes.join("\n\n");
-    const fbName = name || url;
-    const result = combined || fallbackCompose(fbName).combined;
-    return new Response(JSON.stringify({ description: result, sections: parsed, simulated: false }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-  } catch (e) {
-    return new Response(JSON.stringify({ error: "Erro interno" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    const result = parsed as {
+      sucesso?: boolean;
+      produto?: {
+        nome_refinado?: string;
+        descricao_comercial?: string;
+        ficha_tecnica?: string;
+        sobre_produto?: string;
+      };
+    };
+    if (!result.sucesso || !result.produto) {
+      const fb = fallbackProduto(name || url);
+      return new Response(JSON.stringify(fb), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    if (!result.produto.nome_refinado) result.produto.nome_refinado = name || url;
+    return new Response(JSON.stringify(result), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  } catch {
+    return new Response(JSON.stringify({ sucesso: false, error: "Erro interno" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 });

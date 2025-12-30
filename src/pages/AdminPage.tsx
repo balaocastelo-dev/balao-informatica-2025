@@ -779,7 +779,16 @@ const AdminPage = () => {
           const { data, error } = await supabase.functions.invoke('scrape-extract-product', {
             body: { url: product.sourceUrl, name: product.name }
           });
-          const text = (!error && typeof data?.description === 'string') ? data.description.trim() : '';
+          let text = '';
+          if (!error && data && typeof (data as any) === 'object') {
+            const produto = (data as any).produto;
+            const htmlDesc: string | undefined = produto && typeof produto.descricao_comercial === 'string'
+              ? produto.descricao_comercial
+              : undefined;
+            if (htmlDesc) {
+              text = htmlDesc.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+            }
+          }
           descs[i] = text || generateFallbackDescription(product.name);
         } else {
           descs[i] = generateFallbackDescription(product.name);
