@@ -30,9 +30,12 @@ const payload = {
 
 const run = async () => {
   const { data, error } = await supabase
-    .from('landing_page_configs')
+    .from('landing_pages')
     .upsert({
       page_key: payload.page_key,
+      label: payload.label,
+      route: payload.route,
+      active: true,
       grid_query: payload.grid_query,
       fallback_queries: payload.fallback_queries,
       updated_at: payload.updated_at,

@@ -36,12 +36,27 @@ export function LandingPageConfigProvider({ children }: { children: ReactNode })
   const [pages, setPages] = useState<LandingPageMeta[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const BUILTIN_PAGES: LandingPageMeta[] = [
+    { pageKey: "assistencia-tecnica", label: "Assistência Técnica", route: "/manutencao", active: true, gridQuery: "", fallbackQueries: [] },
+    { pageKey: "conserto-apple", label: "Conserto Apple", route: "/conserto-apple", active: true, gridQuery: "iphone", fallbackQueries: ["ipad", "macbook", "imac", "airpods", "apple"] },
+    { pageKey: "conserto-console", label: "Conserto Console", route: "/conserto-console", active: true, gridQuery: "console", fallbackQueries: ["playstation", "ps5", "ps4", "xbox", "nintendo", "switch", "controle"] },
+    { pageKey: "fonte-de-notebook", label: "Fonte de Notebook", route: "/fonte-de-notebook", active: true, gridQuery: "fonte notebook", fallbackQueries: ["carregador", "usb-c", "magsafe", "notebook"] },
+    { pageKey: "conserto-de-notebook", label: "Conserto de Notebook", route: "/conserto-de-notebook", active: true, gridQuery: "notebook", fallbackQueries: ["ssd", "memória", "memoria", "fonte notebook", "carregador"] },
+    { pageKey: "notebook-seminovo-barato", label: "Notebook Seminovo", route: "/notebook-seminovo-barato", active: true, gridQuery: "seminovo", fallbackQueries: ["notebook", "laptop", "ssd", "memoria"] },
+    { pageKey: "montagem-setup-gamer", label: "Montagem Setup Gamer", route: "/montagem-setup-gamer", active: true, gridQuery: "pc gamer", fallbackQueries: ["setup gamer", "placa de video", "rtx", "geforce", "radeon", "processador", "ryzen", "intel", "memoria", "ssd", "fonte", "gabinete", "monitor"] },
+    { pageKey: "toner-para-impressora", label: "Toner para Impressora", route: "/toner-para-impressora", active: true, gridQuery: "toner", fallbackQueries: ["cartucho", "laserjet", "brother", "hp", "samsung", "canon"] },
+    { pageKey: "licencas-microsoft", label: "Licenças Microsoft", route: "/licencas-microsoft", active: true, gridQuery: "microsoft", fallbackQueries: ["office", "windows", "server", "sql"] },
+    { pageKey: "criacao-de-site-e-servicos-ti", label: "Criação de Site e TI", route: "/criacao-de-site-e-servicos-ti", active: true, gridQuery: "microsoft", fallbackQueries: ["office", "windows", "server"] },
+    { pageKey: "sobre-nos", label: "Sobre Nós", route: "/sobre", active: true, gridQuery: "", fallbackQueries: [] },
+    { pageKey: "consignacao", label: "Consignação", route: "/consignacao", active: true, gridQuery: "", fallbackQueries: [] },
+  ];
+
   const refresh = async () => {
     setLoading(true);
     try {
       const lp = await supabase.from("landing_pages").select("*");
-      if (!lp.error && lp.data) {
-        const nextPages: LandingPageMeta[] = (lp.data || []).map((row: any) => ({
+      if (!lp.error && Array.isArray(lp.data) && lp.data.length > 0) {
+        const nextPages: LandingPageMeta[] = lp.data.map((row: any) => ({
           pageKey: row.page_key,
           label: row.label,
           route: row.route,
@@ -56,17 +71,12 @@ export function LandingPageConfigProvider({ children }: { children: ReactNode })
         }
         setConfigs(nextConfigs);
       } else {
-        const c = await supabase.from("landing_page_configs").select("*");
-        if (c.error) throw c.error;
-        const next: Record<string, LandingPageConfig> = {};
-        for (const row of c.data || []) {
-          next[row.page_key] = {
-            pageKey: row.page_key,
-            gridQuery: row.grid_query || "",
-            fallbackQueries: Array.isArray(row.fallback_queries) ? row.fallback_queries : [],
-          };
+        setPages(BUILTIN_PAGES);
+        const nextConfigs: Record<string, LandingPageConfig> = {};
+        for (const p of BUILTIN_PAGES) {
+          nextConfigs[p.pageKey] = { pageKey: p.pageKey, gridQuery: p.gridQuery, fallbackQueries: p.fallbackQueries };
         }
-        setConfigs(next);
+        setConfigs(nextConfigs);
       }
     } catch (error: any) {
       const message = String(error?.message || error || "");
@@ -89,10 +99,7 @@ export function LandingPageConfigProvider({ children }: { children: ReactNode })
         { ...payload, label: config.pageKey, route: `/lp/${config.pageKey}`, active: true },
         { onConflict: "page_key" }
       );
-      if (res.error) {
-        const alt = await supabase.from("landing_page_configs").upsert(payload, { onConflict: "page_key" });
-        if (alt.error) throw alt.error;
-      }
+      if (res.error) throw res.error;
 
       setConfigs((current) => ({
         ...current,
@@ -101,7 +108,11 @@ export function LandingPageConfigProvider({ children }: { children: ReactNode })
       toast({ title: "Config salva!" });
     } catch (error: any) {
       const message = String(error?.message || error || "");
-      toast({ title: "Erro ao salvar config", description: message, variant: "destructive" });
+      setConfigs((current) => ({
+        ...current,
+        [config.pageKey]: { ...config, gridQuery: config.gridQuery || "", fallbackQueries: config.fallbackQueries || [] },
+      }));
+      toast({ title: "Erro ao salvar no Supabase", description: message, variant: "destructive" });
     }
   };
 
