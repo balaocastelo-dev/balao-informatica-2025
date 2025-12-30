@@ -125,6 +125,8 @@ const AdminPage = () => {
   const [showCategoryChangeModal, setShowCategoryChangeModal] = useState(false);
   const [newBatchCategory, setNewBatchCategory] = useState('');
   const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
+  const [isBulkGenerating, setIsBulkGenerating] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState({ done: 0, total: 0 });
 
   const handleDuplicateProduct = async (product: Product) => {
     await addProduct({
@@ -481,6 +483,51 @@ const AdminPage = () => {
     } catch (err) {
       console.error('Error calling enhance function:', err);
       return imageUrl;
+    }
+  };
+
+  const handleBulkGenerateDescriptions = async () => {
+    if (selectedProducts.length === 0) return;
+    try {
+      setIsBulkGenerating(true);
+      setBulkProgress({ done: 0, total: selectedProducts.length });
+      toast({ title: `Gerando descrições para ${selectedProducts.length} produto(s)...` });
+      const byId = new Map(products.map(p => [p.id, p]));
+      const tasks = selectedProducts
+        .map(id => byId.get(id))
+        .filter((p): p is Product => !!p && !!p.name);
+      const concurrency = 3;
+      let index = 0;
+      const runNext = async () => {
+        if (index >= tasks.length) return;
+        const current = tasks[index++];
+        try {
+          const { data, error } = await supabase.functions.invoke('generate-product-description', {
+            body: { name: current.name, source_url: current.sourceUrl || undefined }
+          });
+          let text = '';
+          if (!error && typeof data?.description === 'string' && data.description.trim()) {
+            text = data.description.trim();
+          } else {
+            text = generateFallbackDescription(current.name);
+          }
+          await updateProduct(current.id, { description: text, aiGenerated: true });
+        } catch {
+          const text = generateFallbackDescription(current.name);
+          await updateProduct(current.id, { description: text, aiGenerated: true });
+        } finally {
+          setBulkProgress(prev => ({ done: prev.done + 1, total: prev.total }));
+          await runNext();
+        }
+      };
+      await Promise.all(Array.from({ length: Math.min(concurrency, tasks.length) }).map(() => runNext()));
+      toast({ title: 'Descrições geradas!' });
+      setSelectedProducts([]);
+      await refreshProducts();
+    } catch {
+      toast({ title: 'Erro ao gerar descrições', variant: 'destructive' });
+    } finally {
+      setIsBulkGenerating(false);
     }
   };
 
@@ -1179,6 +1226,23 @@ const AdminPage = () => {
                   >
                     <Trash2 className="w-4 h-4" />
                     Excluir ({selectedProducts.length})
+                  </button>
+                  <button
+                    onClick={async () => {
+                      const n = selectedProducts.length;
+                      if (n === 0) return;
+                      if (!confirm(`Deseja gerar descrições com IA para os ${n} produtos selecionados? Isso pode levar alguns minutos.`)) {
+                        return;
+                      }
+                      await handleBulkGenerateDescriptions();
+                    }}
+                    disabled={isBulkGenerating}
+                    className={`bg-purple-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${isBulkGenerating ? 'opacity-70 cursor-not-allowed' : 'hover:bg-purple-700'}`}
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    {isBulkGenerating
+                      ? `Gerando (${bulkProgress.done}/${bulkProgress.total})`
+                      : `✨ Gerar Descrição IA (${selectedProducts.length})`}
                   </button>
                   <button
                     onClick={() => setShowPriceIncreaseModal(true)}
