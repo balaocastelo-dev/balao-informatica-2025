@@ -13,11 +13,14 @@ interface GenerateRequest {
 }
 
 function normalizeText(html: string) {
-  let text = html.replace(/<script[\s\S]*?<\/script>/gi, " ");
+  const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+  const onlyBody = bodyMatch ? bodyMatch[1] : html;
+  let text = onlyBody.replace(/<script[\s\S]*?<\/script>/gi, " ");
   text = text.replace(/<style[\s\S]*?<\/style>/gi, " ");
   text = text.replace(/<noscript[\s\S]*?<\/noscript>/gi, " ");
   text = text.replace(/<[^>]+>/g, " ");
   text = text.replace(/\s+/g, " ").trim();
+  text = text.replace(/\b(adicionar ao carrinho|frete grátis|quem viu isso comprou|recomendações|veja também)\b/gi, " ");
   return text.slice(0, 15000);
 }
 
@@ -99,7 +102,9 @@ const handler = async (req: Request): Promise<Response> => {
           const html = await resp.text();
           pageText = normalizeText(html);
         }
-      } catch {}
+      } catch (err) {
+        console.error("fetch source_url failed:", err);
+      }
     }
 
     if (!OPENAI_API_KEY) {
@@ -124,16 +129,18 @@ const handler = async (req: Request): Promise<Response> => {
       "Evite exageros.",
     ].join("\n");
 
+    const specs = pageText ? extractSpecs(pageText) : [];
     const userPrompt = [
       `Produto: ${name}`,
       source_url ? `Link: ${source_url}` : "",
+      specs.length ? `Especificações detectadas: ${specs.join(" | ")}` : "",
       "",
       "Conteúdo extraído do link:",
       pageText || "(vazio)",
       "",
       "Tarefa:",
       "- Redija uma descrição de vendas única e objetiva baseada apenas no conteúdo fornecido.",
-      "- Inclua especificações-chave encontradas (ex.: memória, barramento, saídas, clock, TGP).",
+      "- Inclua explicitamente pelo menos 3 especificações reais do produto (se existirem no conteúdo).",
       "- Evite HTML; responda em texto puro.",
       "- Termine com uma chamada de ação discreta.",
     ].join("\n");

@@ -787,18 +787,32 @@ const AdminPage = () => {
     const descs: string[] = Array(parsedProducts.length).fill('');
     const enrichConcurrency = 2;
     let idx = 0;
-    const htmlToPlain = (html: string): string => {
-      return (html || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    type ScrapeExtractResult = {
+      produto?: {
+        descricao_comercial?: string;
+        ficha_tecnica?: string;
+        sobre_produto?: string;
+      };
     };
-    const fichaToPlain = (html: string): string => {
-      let s = (html || '');
-      s = s.replace(/<\/li>/gi, '\n');
-      s = s.replace(/<li[^>]*>/gi, '- ');
-      s = s.replace(/<br\s*\/?>/gi, '\n');
-      s = s.replace(/<[^>]+>/g, '');
-      s = s.replace(/[ \t]+\n/g, '\n');
-      s = s.replace(/\n{3,}/g, '\n\n');
-      return s.trim();
+    const asScrapeResult = (value: unknown): ScrapeExtractResult | null => {
+      if (!value || typeof value !== 'object') return null;
+      if (!('produto' in value)) return null;
+      const produto = (value as { produto?: unknown }).produto;
+      if (!produto || typeof produto !== 'object') return { produto: undefined };
+      const p = produto as Record<string, unknown>;
+      return {
+        produto: {
+          descricao_comercial: typeof p.descricao_comercial === 'string' ? p.descricao_comercial : undefined,
+          ficha_tecnica: typeof p.ficha_tecnica === 'string' ? p.ficha_tecnica : undefined,
+          sobre_produto: typeof p.sobre_produto === 'string' ? p.sobre_produto : undefined,
+        }
+      };
+    };
+    type GenDescResult = { description?: string };
+    const asGenDescResult = (value: unknown): GenDescResult | null => {
+      if (!value || typeof value !== 'object') return null;
+      const desc = (value as Record<string, unknown>).description;
+      return { description: typeof desc === 'string' ? desc : undefined };
     };
     const runEnrich = async () => {
       if (idx >= parsedProducts.length) return;
@@ -807,27 +821,27 @@ const AdminPage = () => {
       try {
         if (product.sourceUrl && product.sourceUrl.startsWith('http')) {
           let text = '';
-          const { data: genData, error: genError } = await supabase.functions.invoke('generate-product-description', {
-            body: { name: product.name, source_url: product.sourceUrl }
+          const { data, error } = await supabase.functions.invoke('scrape-extract-product', {
+            body: { url: product.sourceUrl, name: product.name }
           });
-          const genText = (!genError && typeof (genData as any)?.description === 'string') ? String((genData as any).description).trim() : '';
-          if (genText) {
-            text = `<p>${genText}</p>`;
-          } else {
-            const { data, error } = await supabase.functions.invoke('scrape-extract-product', {
-              body: { url: product.sourceUrl, name: product.name }
+          const scrape = !error ? asScrapeResult(data) : null;
+          if (scrape?.produto) {
+            const htmlDesc = scrape.produto.descricao_comercial || '';
+            const htmlFicha = scrape.produto.ficha_tecnica || '';
+            const sobre = scrape.produto.sobre_produto || '';
+            const blocks: string[] = [];
+            if (htmlDesc && htmlDesc.trim()) blocks.push(htmlDesc.trim());
+            if (sobre && sobre.trim()) blocks.push(`<p>${sobre.trim()}</p>`);
+            if (htmlFicha && htmlFicha.trim()) blocks.push(`<h3>Ficha técnica</h3>\n${htmlFicha.trim()}`);
+            text = blocks.join('\n').trim();
+          }
+          if (!text) {
+            const { data: genData, error: genError } = await supabase.functions.invoke('generate-product-description', {
+              body: { name: product.name, source_url: product.sourceUrl }
             });
-            if (!error && data && typeof (data as any) === 'object') {
-              const produto = (data as any).produto;
-              const htmlDesc: string = produto && typeof produto.descricao_comercial === 'string' ? produto.descricao_comercial : '';
-              const htmlFicha: string = produto && typeof produto.ficha_tecnica === 'string' ? produto.ficha_tecnica : '';
-              const sobre: string = produto && typeof produto.sobre_produto === 'string' ? produto.sobre_produto : '';
-              const blocks: string[] = [];
-              if (htmlDesc && htmlDesc.trim()) blocks.push(htmlDesc.trim());
-              if (sobre && sobre.trim()) blocks.push(`<p>${sobre.trim()}</p>`);
-              if (htmlFicha && htmlFicha.trim()) blocks.push(`<h3>Ficha técnica</h3>\n${htmlFicha.trim()}`);
-              text = blocks.join('\n').trim();
-            }
+            const genParsed = !genError ? asGenDescResult(genData) : null;
+            const genText = typeof genParsed?.description === 'string' ? genParsed.description.trim() : '';
+            if (genText) text = `<p>${genText}</p>`;
           }
           descs[i] = text || `<p>${generateFallbackDescription(product.name)}</p>`;
         } else {
