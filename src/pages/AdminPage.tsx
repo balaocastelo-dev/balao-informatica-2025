@@ -543,10 +543,17 @@ const AdminPage = () => {
     const lines = importData.trim().split('\n');
     const newProducts: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>[] = [];
 
+    const sanitizeToken = (raw: string): string => {
+      let s = (raw || '').replace(/\u00a0/g, ' ').trim();
+      s = s.replace(/^[`"'“”]+/, '').replace(/[`"'“”]+$/, '').trim();
+      s = s.replace(/^\(+/, '').replace(/\)+$/, '').trim();
+      return s;
+    };
+
     // Função para detectar se é URL de imagem (CDN de imagens específicas)
     const isImageUrl = (str: string): boolean => {
       if (!str) return false;
-      const s = str.trim().toLowerCase();
+      const s = sanitizeToken(str).trim().toLowerCase();
       
       // URLs específicas de CDN de imagens (mais confiáveis)
       if (
@@ -582,7 +589,7 @@ const AdminPage = () => {
     // Função para detectar se é URL de produto (página do produto, não imagem)
     const isProductUrl = (str: string): boolean => {
       if (!str) return false;
-      const s = str.trim().toLowerCase();
+      const s = sanitizeToken(str).trim().toLowerCase();
       return (
         s.startsWith('http') && 
         (s.includes('/produto/') || s.includes('/product/')) &&
@@ -594,7 +601,7 @@ const AdminPage = () => {
     // Função para detectar se é preço
     const isPrice = (str: string): boolean => {
       if (!str) return false;
-      const s = str.trim();
+      const s = sanitizeToken(str).trim();
       // Padrões de preço: R$ 1.234,56 ou 1234.56 ou 1.234,56 ou 1234,56
       return (
         /^R\$\s*[\d.,]+$/i.test(s) ||
@@ -609,7 +616,7 @@ const AdminPage = () => {
     // Função para extrair valor numérico do preço
     const parsePrice = (str: string): number => {
       // Remove R$, espaços
-      let clean = str.replace(/R\$\s*/gi, '').trim();
+      let clean = sanitizeToken(str).replace(/R\$\s*/gi, '').trim();
       
       // Detecta formato brasileiro (1.234,56) vs americano (1,234.56)
       const hasCommaDecimal = /\d,\d{2}$/.test(clean);
@@ -635,7 +642,7 @@ const AdminPage = () => {
     // Função para detectar se é nome de produto (não é URL nem preço)
     const isProductName = (str: string): boolean => {
       if (!str || str.length < 3) return false;
-      const s = str.trim();
+      const s = sanitizeToken(str).trim();
       return !isImageUrl(s) && !isPrice(s) && !s.startsWith('http') && s.length > 5;
     };
 
@@ -650,7 +657,7 @@ const AdminPage = () => {
       const identified: { type: 'name' | 'image' | 'price' | 'productUrl' | 'unknown'; value: string }[] = [];
       
       for (const part of parts) {
-        const trimmed = part.trim();
+        const trimmed = sanitizeToken(part);
         if (!trimmed) continue;
         
         if (isImageUrl(trimmed)) {
@@ -710,12 +717,12 @@ const AdminPage = () => {
       }
 
       // Tenta dividir por tab, ponto-e-vírgula, ou pipe
-      let parts = line.split('\t').map(p => p.trim()).filter(p => p);
+      let parts = line.split('\t').map(p => sanitizeToken(p)).filter(p => p);
       if (parts.length < 2) {
-        parts = line.split(';').map(p => p.trim()).filter(p => p);
+        parts = line.split(';').map(p => sanitizeToken(p)).filter(p => p);
       }
       if (parts.length < 2) {
-        parts = line.split('|').map(p => p.trim()).filter(p => p);
+        parts = line.split('|').map(p => sanitizeToken(p)).filter(p => p);
       }
       
       if (parts.length >= 2) {
@@ -789,22 +796,32 @@ const AdminPage = () => {
       const product = parsedProducts[i];
       try {
         if (product.sourceUrl && product.sourceUrl.startsWith('http')) {
-          const { data, error } = await supabase.functions.invoke('scrape-extract-product', {
-            body: { url: product.sourceUrl, name: product.name }
-          });
           let text = '';
-          if (!error && data && typeof (data as any) === 'object') {
-            const produto = (data as any).produto;
-            const htmlDesc: string = produto && typeof produto.descricao_comercial === 'string' ? produto.descricao_comercial : '';
-            const htmlFicha: string = produto && typeof produto.ficha_tecnica === 'string' ? produto.ficha_tecnica : '';
-            const sobre: string = produto && typeof produto.sobre_produto === 'string' ? produto.sobre_produto : '';
-            const descPlain = htmlToPlain(htmlDesc);
-            const fichaPlain = fichaToPlain(htmlFicha);
-            const blocks: string[] = [];
-            if (descPlain) blocks.push(descPlain);
-            if (sobre && sobre.trim()) blocks.push(sobre.trim());
-            if (fichaPlain) blocks.push(`Ficha técnica:\n${fichaPlain}`);
-            text = blocks.join('\n\n').trim();
+          const { data: genData, error: genError } = await supabase.functions.invoke('generate-product-description', {
+            body: { name: product.name, source_url: product.sourceUrl }
+          });
+          const genText = (!genError && typeof (genData as any)?.description === 'string')
+            ? String((genData as any).description).trim()
+            : '';
+          if (genText) {
+            text = genText;
+          } else {
+            const { data, error } = await supabase.functions.invoke('scrape-extract-product', {
+              body: { url: product.sourceUrl, name: product.name }
+            });
+            if (!error && data && typeof (data as any) === 'object') {
+              const produto = (data as any).produto;
+              const htmlDesc: string = produto && typeof produto.descricao_comercial === 'string' ? produto.descricao_comercial : '';
+              const htmlFicha: string = produto && typeof produto.ficha_tecnica === 'string' ? produto.ficha_tecnica : '';
+              const sobre: string = produto && typeof produto.sobre_produto === 'string' ? produto.sobre_produto : '';
+              const descPlain = htmlToPlain(htmlDesc);
+              const fichaPlain = fichaToPlain(htmlFicha);
+              const blocks: string[] = [];
+              if (descPlain) blocks.push(descPlain);
+              if (sobre && sobre.trim()) blocks.push(sobre.trim());
+              if (fichaPlain) blocks.push(`Ficha técnica:\n${fichaPlain}`);
+              text = blocks.join('\n\n').trim();
+            }
           }
           descs[i] = text || generateFallbackDescription(product.name);
         } else {
