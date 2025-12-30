@@ -2,18 +2,36 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+const DEFAULT_URL = "https://eossaxfosnmtjksefekk.supabase.co";
+const DEFAULT_PUBLISHABLE_KEY = "sb_publishable_2fOzpgED10xOerEYIN7WRg_vrpvCC6M";
 
-if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-  console.error("ERRO CRÍTICO: Variáveis de ambiente do Supabase não encontradas!");
-  console.error("VITE_SUPABASE_URL:", SUPABASE_URL);
-  console.error("VITE_SUPABASE_PUBLISHABLE_KEY:", SUPABASE_PUBLISHABLE_KEY ? "Definida" : "Indefinida");
+// Try multiple env keys (Vite and Next style)
+const envs: Record<string, any> = (import.meta as any).env || {};
+let resolvedUrl: string | undefined =
+  envs.VITE_SUPABASE_URL ||
+  envs.NEXT_PUBLIC_SUPABASE_URL ||
+  undefined;
+let resolvedKey: string | undefined =
+  envs.VITE_SUPABASE_PUBLISHABLE_KEY ||
+  envs.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+  envs.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY ||
+  undefined;
+try {
+  if (typeof window !== 'undefined') {
+    const lsUrl = localStorage.getItem('SUPABASE_URL') || undefined;
+    const lsKey = localStorage.getItem('SUPABASE_PUBLISHABLE_KEY') || undefined;
+    resolvedUrl = lsUrl || resolvedUrl;
+    resolvedKey = lsKey || resolvedKey;
+  }
+} catch {}
+
+if (!resolvedUrl || !resolvedKey) {
+  console.warn("Supabase não configurado. Usando defaults fornecidos.");
 }
 
-export const supabase = createClient<Database>(
-  SUPABASE_URL || "https://placeholder.supabase.co", 
-  SUPABASE_PUBLISHABLE_KEY || "placeholder-key", 
+export let supabase = createClient<Database>(
+  resolvedUrl || DEFAULT_URL,
+  resolvedKey || DEFAULT_PUBLISHABLE_KEY,
   {
     auth: {
       storage: localStorage,
@@ -22,3 +40,48 @@ export const supabase = createClient<Database>(
     }
   }
 );
+
+export function setSupabaseConfig(url: string, key: string) {
+  try {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('SUPABASE_URL', url);
+      localStorage.setItem('SUPABASE_PUBLISHABLE_KEY', key);
+    }
+  } catch {}
+  supabase = createClient<Database>(url, key, {
+    auth: {
+      storage: localStorage,
+      persistSession: true,
+      autoRefreshToken: true,
+    }
+  });
+}
+
+export function getSupabaseStatus() {
+  const envs: Record<string, any> = (import.meta as any).env || {};
+  let envUrl =
+    envs.VITE_SUPABASE_URL ||
+    envs.NEXT_PUBLIC_SUPABASE_URL ||
+    undefined;
+  let envKey =
+    envs.VITE_SUPABASE_PUBLISHABLE_KEY ||
+    envs.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    envs.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY ||
+    undefined;
+  let lsUrl: string | null = null;
+  let lsKey: string | null = null;
+  try {
+    if (typeof window !== 'undefined') {
+      lsUrl = localStorage.getItem('SUPABASE_URL');
+      lsKey = localStorage.getItem('SUPABASE_PUBLISHABLE_KEY');
+    }
+  } catch {}
+  const currentUrl = resolvedUrl || lsUrl || envUrl || DEFAULT_URL;
+  const currentKey = resolvedKey || lsKey || envKey || DEFAULT_PUBLISHABLE_KEY;
+  return {
+    envConfigured: !!(envUrl && envKey),
+    localConfigured: !!(lsUrl && lsKey),
+    usingPlaceholder: false,
+    url: currentUrl,
+  };
+}

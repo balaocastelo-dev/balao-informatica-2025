@@ -5,7 +5,7 @@ import { useCategories, CategoryData } from '@/contexts/CategoryContext';
 import { useBanners } from '@/contexts/BannerContext';
 import { useBatchOperations } from '@/contexts/BatchOperationsContext';
 import { Product } from '@/types/product';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, setSupabaseConfig, getSupabaseStatus } from '@/integrations/supabase/client';
 import { 
   Plus, 
   Trash2, 
@@ -47,7 +47,7 @@ const ADMIN_CREDENTIALS = {
 const AdminPage = () => {
   const navigate = useNavigate();
   const { products, loading: productsLoading, addProduct, updateProduct, deleteProduct, deleteProducts, importProducts, refreshProducts } = useProducts();
-  const { categories, addCategory, updateCategory, deleteCategory } = useCategories();
+  const { categories, addCategory, updateCategory, deleteCategory, refreshCategories } = useCategories();
   const { banners, addBanner, updateBanner, deleteBanner } = useBanners();
   const { runBatchPriceIncrease, runBatchPriceDiscount, runBatchDelete, runBatchCategoryChange, isRunning } = useBatchOperations();
   
@@ -106,6 +106,9 @@ const AdminPage = () => {
   const [productModelFilter, setProductModelFilter] = useState<string>('');
   const [productNameFilter, setProductNameFilter] = useState<string>('');
   const [productIdFilter, setProductIdFilter] = useState<string>('');
+  const [supabaseUrlInput, setSupabaseUrlInput] = useState('');
+  const [supabaseKeyInput, setSupabaseKeyInput] = useState('');
+  const [supabaseNeedsConfig, setSupabaseNeedsConfig] = useState(false);
 
   // Integrações removidas
 
@@ -211,6 +214,22 @@ const AdminPage = () => {
       setIsAuthenticated(true);
     }
   }, []);
+  useEffect(() => {
+    const status = getSupabaseStatus();
+    setSupabaseNeedsConfig(status.usingPlaceholder);
+    setSupabaseUrlInput(status.url || '');
+  }, []);
+  const handleSaveSupabase = async () => {
+    if (!supabaseUrlInput.trim() || !supabaseKeyInput.trim()) {
+      toast({ title: 'Informe URL e chave do Supabase', variant: 'destructive' });
+      return;
+    }
+    setSupabaseConfig(supabaseUrlInput.trim(), supabaseKeyInput.trim());
+    setSupabaseNeedsConfig(false);
+    toast({ title: 'Supabase configurado' });
+    await refreshCategories();
+    await refreshProducts();
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -936,6 +955,30 @@ const AdminPage = () => {
       </header>
 
       <main className="container-admin py-6">
+        {supabaseNeedsConfig && (
+          <div className="mb-4 p-4 border border-border rounded-lg bg-secondary">
+            <p className="text-sm mb-2 text-foreground">Configurar Supabase para carregar categorias e produtos.</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+              <input
+                type="text"
+                value={supabaseUrlInput}
+                onChange={e => setSupabaseUrlInput(e.target.value)}
+                className="input-field"
+                placeholder="SUPABASE_URL"
+              />
+              <input
+                type="text"
+                value={supabaseKeyInput}
+                onChange={e => setSupabaseKeyInput(e.target.value)}
+                className="input-field"
+                placeholder="SUPABASE_PUBLISHABLE_KEY"
+              />
+              <button onClick={handleSaveSupabase} className="btn-primary">
+                Salvar
+              </button>
+            </div>
+          </div>
+        )}
         {/* Tabs */}
         <div className="flex gap-2 mb-4 border-b border-border overflow-x-auto scrollbar-hide">
           <button
