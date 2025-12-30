@@ -767,8 +767,32 @@ const AdminPage = () => {
       setIsEnhancingImages(false);
     }
 
-    // Create final product list
-    parsedProducts.forEach(product => {
+    const descs: string[] = Array(parsedProducts.length).fill('');
+    const enrichConcurrency = 2;
+    let idx = 0;
+    const runEnrich = async () => {
+      if (idx >= parsedProducts.length) return;
+      const i = idx++;
+      const product = parsedProducts[i];
+      try {
+        if (product.sourceUrl && product.sourceUrl.startsWith('http')) {
+          const { data, error } = await supabase.functions.invoke('scrape-extract-product', {
+            body: { url: product.sourceUrl, name: product.name }
+          });
+          const text = (!error && typeof data?.description === 'string') ? data.description.trim() : '';
+          descs[i] = text || generateFallbackDescription(product.name);
+        } else {
+          descs[i] = generateFallbackDescription(product.name);
+        }
+      } catch {
+        descs[i] = generateFallbackDescription(product.name);
+      } finally {
+        await runEnrich();
+      }
+    };
+    await Promise.all(Array.from({ length: Math.min(enrichConcurrency, parsedProducts.length) }).map(() => runEnrich()));
+
+    parsedProducts.forEach((product, i) => {
       newProducts.push({
         name: product.name,
         price: product.price,
@@ -777,6 +801,7 @@ const AdminPage = () => {
         category: product.category,
         sourceUrl: product.sourceUrl,
         stock: 10,
+        description: descs[i] || undefined,
       });
     });
 
