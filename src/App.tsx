@@ -36,6 +36,11 @@ import LandingMontagemSetupGamerPage from "./pages/LandingMontagemSetupGamerPage
 import LandingConsertoNotebookPage from "./pages/LandingConsertoNotebookPage";
 import LandingCriacaoSiteServicosTIPage from "./pages/LandingCriacaoSiteServicosTIPage";
 import GenericLandingPage from "./pages/GenericLandingPage";
+import LandingPlacaDeVideoPromocaoPage from "./pages/LandingPlacaDeVideoPromocaoPage";
+import LandingPromocaoPcGamerPage from "./pages/LandingPromocaoPcGamerPage";
+import LandingConsertoAndroidPage from "./pages/LandingConsertoAndroidPage";
+import LandingAcessoriosGamerPage from "./pages/LandingAcessoriosGamerPage";
+import LandingVisitaTecnicaPage from "./pages/LandingVisitaTecnicaPage";
 import ThankYouPage from "./pages/ThankYouPage";
 import ChatCentralPage from "./pages/ChatCentralPage";
 import BlingCallbackPage from "./pages/BlingCallbackPage";
@@ -86,6 +91,11 @@ const App = () => (
                           <Route path="/carregador-de-notebook" element={<LandingCarregadorNotebookPage />} />
                           <Route path="/toner-para-impressora" element={<LandingTonerImpressoraPage />} />
                           <Route path="/licencas-microsoft" element={<LandingLicencasMicrosoftPage />} />
+                          <Route path="/lp/placa-de-video-promocao" element={<LandingPlacaDeVideoPromocaoPage />} />
+                          <Route path="/lp/promocao-pc-gamer" element={<LandingPromocaoPcGamerPage />} />
+                          <Route path="/lp/conserto-android" element={<LandingConsertoAndroidPage />} />
+                          <Route path="/lp/acessorios-gamer" element={<LandingAcessoriosGamerPage />} />
+                          <Route path="/lp/visita-tecnica" element={<LandingVisitaTecnicaPage />} />
                           <Route path="/lp/:pageKey" element={<GenericLandingPage />} />
                           <Route path="/obrigado" element={<ThankYouPage />} />
                           <Route path="*" element={<NotFound />} />
