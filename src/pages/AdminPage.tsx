@@ -27,7 +27,8 @@ import {
   ShoppingBag,
   Loader2,
   FolderEdit,
-  CopyPlus
+  CopyPlus,
+  Sparkles
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { PageLayoutEditor } from '@/components/admin/PageLayoutEditor';
@@ -123,6 +124,7 @@ const AdminPage = () => {
   // Batch category change state
   const [showCategoryChangeModal, setShowCategoryChangeModal] = useState(false);
   const [newBatchCategory, setNewBatchCategory] = useState('');
+  const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
 
   const handleDuplicateProduct = async (product: Product) => {
     await addProduct({
@@ -420,6 +422,45 @@ const AdminPage = () => {
     if (nameLower.includes('licença') || nameLower.includes('licenca') || nameLower.includes('windows') || nameLower.includes('office')) return 'licencas';
     
     return importCategory || 'hardware'; // Default category
+  };
+
+  const generateFallbackDescription = (productName: string): string => {
+    const name = productName.trim();
+    const lower = name.toLowerCase();
+    const isNotebook = lower.includes('notebook') || lower.includes('laptop');
+    const isMonitor = lower.includes('monitor') || lower.includes('tela');
+    const isGPU = lower.includes('placa de vídeo') || lower.includes('placa de video') || lower.includes('gpu') || lower.includes('rtx') || lower.includes('gtx') || lower.includes('radeon');
+    const isSSD = lower.includes('ssd') || lower.includes('nvme');
+    const isCPU = lower.includes('processador') || lower.includes('cpu') || lower.includes('ryzen') || lower.includes('intel');
+
+    const ramMatch = lower.match(/\b(\d{1,3})\s*(gb|g)\s*(ram)?\b/i);
+    const storageMatch = lower.match(/\b(\d{1,4})\s*(gb|tb)\s*(ssd|hd|nvme)?\b/i);
+    const screenMatch = lower.match(/\b(\d{1,2}(?:[.,]\d)?)\s*(?:["']|pol|inch|polegadas)?\b/i);
+
+    const specs: string[] = [];
+    if (ramMatch) specs.push(`${ramMatch[1]}GB de RAM`);
+    if (storageMatch) {
+      const val = storageMatch[1];
+      const unit = storageMatch[2].toUpperCase();
+      specs.push(`${val}${unit} de armazenamento`);
+    }
+    if (screenMatch && (isNotebook || isMonitor)) specs.push(`${String(screenMatch[1]).replace(',', '.')}” de tela`);
+
+    const hook =
+      isNotebook
+        ? 'Mobilidade e desempenho para estudar, trabalhar e criar.'
+        : isMonitor
+        ? 'Imagem nítida e fluida para produtividade e jogos.'
+        : isGPU
+        ? 'Gráficos impressionantes e altas taxas de FPS.'
+        : isSSD
+        ? 'Velocidade de leitura e escrita para carregar tudo em segundos.'
+        : isCPU
+        ? 'Performance eficiente para multitarefa e responsividade.'
+        : 'Desempenho e confiabilidade com excelente custo-benefício.';
+
+    const specsText = specs.length ? ` Destaques: ${specs.join(' · ')}.` : '';
+    return `Apresente-se com o ${name}. ${hook}${specsText} Ideal para quem busca qualidade, suporte e condições especiais na Balão da Informática.`;
   };
 
   // Function to enhance image URL to higher resolution
@@ -1599,7 +1640,49 @@ const AdminPage = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">Descrição</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-sm font-medium text-foreground">Descrição</label>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (!formData.name.trim()) {
+                          toast({ title: 'Informe o nome do produto', variant: 'destructive' });
+                          return;
+                        }
+                        setIsGeneratingDescription(true);
+                        try {
+                          const { data, error } = await supabase.functions.invoke('generate-product-description', {
+                            body: { name: formData.name, source_url: formData.sourceUrl || undefined }
+                          });
+                          if (error) {
+                            const fallback = generateFallbackDescription(formData.name);
+                            setFormData({ ...formData, description: fallback });
+                            toast({ title: 'Descrição gerada (simulada)' });
+                          } else {
+                            const text = (data?.description || '').trim();
+                            if (text) {
+                              setFormData({ ...formData, description: text });
+                              toast({ title: 'Descrição gerada com IA' });
+                            } else {
+                              const fallback = generateFallbackDescription(formData.name);
+                              setFormData({ ...formData, description: fallback });
+                              toast({ title: 'Descrição gerada (simulada)' });
+                            }
+                          }
+                        } catch {
+                          const fallback = generateFallbackDescription(formData.name);
+                          setFormData({ ...formData, description: fallback });
+                          toast({ title: 'Descrição gerada (simulada)' });
+                        } finally {
+                          setIsGeneratingDescription(false);
+                        }
+                      }}
+                      className="btn-secondary flex items-center gap-2 px-3 py-1"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      {isGeneratingDescription ? 'Gerando...' : '✨ Gerar Descrição com IA'}
+                    </button>
+                  </div>
                   <textarea
                     value={formData.description}
                     onChange={e => setFormData({ ...formData, description: e.target.value })}
