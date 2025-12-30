@@ -46,7 +46,7 @@ export default function LandingCarregadorZapPage() {
     if (primary.length >= 12) return primary.slice(0, 36);
     const extra = mergeUniqueProductsById([
       primary,
-      filterProductsByQuery(products || [], "fonte"),
+      filterProductsByQuery(products || [], "fonte notebook"),
       filterProductsByQuery(products || [], "usb-c"),
       filterProductsByQuery(products || [], "magsafe"),
       filterProductsByQuery(products || [], "notebook"),
