@@ -369,43 +369,6 @@ const Index = () => {
           </div>
         )}
 
-        <section className="container-balao mt-12">
-          <div className="flex items-center gap-3 mb-6 border-b border-zinc-200 pb-4">
-            <div className="w-1.5 h-8 bg-[#E30613] rounded-full"></div>
-            <h2 className="text-2xl md:text-3xl font-black text-zinc-800 uppercase">Landing Pages</h2>
-          </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {pages.filter((p) => p.active).map((p) => (
-              <Link
-                key={p.pageKey}
-                to={p.route}
-                className="group rounded-xl overflow-hidden border border-zinc-200 bg-white hover:shadow-lg transition-shadow"
-              >
-                <div className="relative">
-                  <img
-                    src={getLandingImage(p.label, p.pageKey)}
-                    alt={p.label}
-                    className="w-full h-28 sm:h-36 object-cover"
-                    loading="lazy"
-                    onError={(e) => {
-                      const target = e.currentTarget;
-                      const fallback = getLandingFallbackImage(p.label, p.pageKey);
-                      if (target.src !== fallback) {
-                        target.src = fallback;
-                      }
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-black/10 group-hover:bg-black/5 transition-colors" />
-                </div>
-                <div className="flex items-center justify-between p-5">
-                  <p className="font-semibold text-zinc-800">{p.label}</p>
-                  <ArrowRight className="w-4 h-4 text-[#E30613]" />
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
-
         {/* BANNERS DE DESTAQUE FINAL */}
         {footerTopBanners.length > 0 && (
           <div className="bg-zinc-900 py-16 mt-16">
