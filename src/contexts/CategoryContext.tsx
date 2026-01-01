@@ -16,6 +16,7 @@ interface CategoryContextType {
   addCategory: (name: string, slug: string, parentId?: string) => Promise<void>;
   updateCategory: (id: string, name: string, slug: string, parentId?: string | null) => Promise<void>;
   deleteCategory: (id: string) => Promise<void>;
+  reorderCategories: (reordered: CategoryData[]) => Promise<void>;
   refreshCategories: () => Promise<void>;
 }
 
@@ -139,6 +140,22 @@ export function CategoryProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     await fetchCategories();
   };
+  
+  const reorderCategories = async (reordered: CategoryData[]) => {
+    try {
+      for (let i = 0; i < reordered.length; i++) {
+        const cat = reordered[i];
+        await supabase
+          .from('categories')
+          .update({ order_index: i + 1 })
+          .eq('id', cat.id);
+      }
+      setCategories(reordered.map((c, i) => ({ ...c, order_index: i + 1 })));
+      toast({ title: "Ordem de categorias atualizada!" });
+    } catch {
+      toast({ title: "Erro ao reordenar categorias", variant: "destructive" });
+    }
+  };
 
   return (
     <CategoryContext.Provider
@@ -148,6 +165,7 @@ export function CategoryProvider({ children }: { children: ReactNode }) {
         addCategory,
         updateCategory,
         deleteCategory,
+        reorderCategories,
         refreshCategories,
       }}
     >

@@ -40,6 +40,7 @@ import { CategoryProductManager } from '@/components/admin/CategoryProductManage
 import { BrandManagement } from '@/components/admin/BrandManagement';
 import { MercadoPagoConfig } from '@/components/admin/MercadoPagoConfig';
  
+import { useMenuItems } from '@/contexts/MenuItemsContext';
 
  
 
@@ -51,7 +52,7 @@ const ADMIN_CREDENTIALS = {
 const AdminPage = () => {
   const navigate = useNavigate();
   const { products, loading: productsLoading, addProduct, updateProduct, deleteProduct, deleteProducts, importProducts, refreshProducts } = useProducts();
-  const { categories, addCategory, updateCategory, deleteCategory, refreshCategories } = useCategories();
+  const { categories, addCategory, updateCategory, deleteCategory, refreshCategories, reorderCategories } = useCategories();
   const { banners, addBanner, updateBanner, deleteBanner } = useBanners();
   const { runBatchPriceIncrease, runBatchPriceDiscount, runBatchDelete, runBatchCategoryChange, isRunning } = useBatchOperations();
   
@@ -59,7 +60,7 @@ const AdminPage = () => {
   const [loginForm, setLoginForm] = useState({ username: '', password: '' });
   const [loginError, setLoginError] = useState('');
 
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'banners' | 'categories' | 'brands' | 'layout' | 'email' | 'orders' | 'payments'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'banners' | 'categories' | 'brands' | 'layout' | 'email' | 'orders' | 'payments' | 'config'>('dashboard');
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
@@ -259,6 +260,24 @@ const AdminPage = () => {
     sessionStorage.removeItem('admin_authenticated');
     navigate('/');
   };
+  
+  const { items: menuItems, loading: menuLoading, updateItem, refresh: refreshMenu } = useMenuItems();
+  const [categoryOrder, setCategoryOrder] = useState(categories);
+  const [menuOrder, setMenuOrder] = useState(menuItems);
+  useEffect(() => {
+    setCategoryOrder([...categories].sort((a, b) => a.order_index - b.order_index));
+  }, [categories]);
+  useEffect(() => {
+    setMenuOrder([...menuItems].sort((a, b) => a.order_index - b.order_index));
+  }, [menuItems]);
+  const reorder = <T,>(list: T[], from: number, to: number): T[] => {
+    const next = [...list];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    return next;
+  };
+  const [dragIndexCat, setDragIndexCat] = useState<number | null>(null);
+  const [dragIndexMenu, setDragIndexMenu] = useState<number | null>(null);
 
   const formatPrice = (price: number) => {
     return price.toLocaleString('pt-BR', {
@@ -1247,6 +1266,17 @@ const AdminPage = () => {
             Pedidos
           </button>
           <button
+            onClick={() => setActiveTab('config')}
+            className={`px-3 py-2 font-medium transition-colors border-b-2 -mb-px flex items-center gap-2 whitespace-nowrap ${
+              activeTab === 'config' 
+                ? 'text-primary border-primary' 
+                : 'text-muted-foreground border-transparent hover:text-foreground'
+            }`}
+          >
+            <Settings className="w-4 h-4" />
+            Configuração
+          </button>
+          <button
             onClick={() => {}}
             className="hidden"
           />
@@ -1278,6 +1308,109 @@ const AdminPage = () => {
 
         {/* Integrações removidas */}
 
+        {/* Configuração Tab */}
+        {activeTab === 'config' && (
+          <div className="space-y-8">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-foreground">Organização por Arrastar e Soltar</h2>
+                <p className="text-muted-foreground">Reordene categorias e o menu de navegação</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="admin-card">
+                <h3 className="text-lg font-semibold mb-3 text-foreground">Categorias</h3>
+                <div className="space-y-2">
+                  {categoryOrder.map((cat, idx) => (
+                    <div
+                      key={cat.id}
+                      draggable
+                      onDragStart={() => setDragIndexCat(idx)}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={() => {
+                        if (dragIndexCat === null) return;
+                        setCategoryOrder(reorder(categoryOrder, dragIndexCat, idx));
+                        setDragIndexCat(null);
+                      }}
+                      className="flex items-center justify-between p-2 border border-border rounded-lg bg-card cursor-move"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="w-6 text-muted-foreground">{idx + 1}</span>
+                        <div>
+                          <div className="font-medium text-foreground">{cat.name}</div>
+                          <div className="text-xs text-muted-foreground">{cat.slug}</div>
+                        </div>
+                      </div>
+                      <span className="text-xs text-muted-foreground">ID: {cat.id}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4 flex gap-2">
+                  <button
+                    onClick={async () => {
+                      await reorderCategories(categoryOrder);
+                    }}
+                    className="btn-primary"
+                  >
+                    Salvar ordem das categorias
+                  </button>
+                </div>
+              </div>
+              <div className="admin-card">
+                <h3 className="text-lg font-semibold mb-3 text-foreground">Menu de Navegação</h3>
+                {menuLoading ? (
+                  <div className="py-6 text-sm text-muted-foreground">Carregando...</div>
+                ) : (
+                  <>
+                    <div className="space-y-2">
+                      {menuOrder.map((item, idx) => (
+                        <div
+                          key={item.slug}
+                          draggable
+                          onDragStart={() => setDragIndexMenu(idx)}
+                          onDragOver={(e) => e.preventDefault()}
+                          onDrop={() => {
+                            if (dragIndexMenu === null) return;
+                            setMenuOrder(reorder(menuOrder, dragIndexMenu, idx));
+                            setDragIndexMenu(null);
+                          }}
+                          className="flex items-center justify-between p-2 border border-border rounded-lg bg-card cursor-move"
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="w-6 text-muted-foreground">{idx + 1}</span>
+                            <div>
+                              <div className="font-medium text-foreground">{item.name}</div>
+                              <div className="text-xs text-muted-foreground">{item.route}</div>
+                            </div>
+                          </div>
+                          <span className={`px-2 py-1 rounded text-xs ${item.active ? 'bg-green-100 text-green-800' : 'bg-zinc-200 text-zinc-700'}`}>
+                            {item.active ? 'Ativo' : 'Inativo'}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-4 flex gap-2">
+                      <button
+                        onClick={async () => {
+                          for (let i = 0; i < menuOrder.length; i++) {
+                            const it = menuOrder[i];
+                            await updateItem(it.slug, { order_index: i + 1 });
+                          }
+                          await refreshMenu();
+                          toast({ title: 'Ordem do menu atualizada!' });
+                        }}
+                        className="btn-primary"
+                      >
+                        Salvar ordem do menu
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+ 
  
 
         {/* Products Tab */}
