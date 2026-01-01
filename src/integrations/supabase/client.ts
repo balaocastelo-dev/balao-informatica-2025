@@ -13,6 +13,7 @@ let resolvedUrl: string | undefined =
   undefined;
 let resolvedKey: string | undefined =
   envs.VITE_SUPABASE_PUBLISHABLE_KEY ||
+  envs.VITE_SUPABASE_ANON_KEY ||
   envs.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
   envs.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY ||
   undefined;
@@ -23,7 +24,9 @@ try {
     resolvedUrl = lsUrl || resolvedUrl;
     resolvedKey = lsKey || resolvedKey;
   }
-} catch {}
+} catch {
+  void 0;
+}
 
 if (!resolvedUrl || !resolvedKey) {
   console.warn("Supabase não configurado. Usando defaults fornecidos.");
@@ -47,7 +50,9 @@ export function setSupabaseConfig(url: string, key: string) {
       localStorage.setItem('SUPABASE_URL', url);
       localStorage.setItem('SUPABASE_PUBLISHABLE_KEY', key);
     }
-  } catch {}
+  } catch {
+    void 0;
+  }
   supabase = createClient<Database>(url, key, {
     auth: {
       storage: localStorage,
@@ -65,6 +70,7 @@ export function getSupabaseStatus() {
     undefined;
   let envKey =
     envs.VITE_SUPABASE_PUBLISHABLE_KEY ||
+    envs.VITE_SUPABASE_ANON_KEY ||
     envs.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
     envs.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY ||
     undefined;
@@ -75,13 +81,15 @@ export function getSupabaseStatus() {
       lsUrl = localStorage.getItem('SUPABASE_URL');
       lsKey = localStorage.getItem('SUPABASE_PUBLISHABLE_KEY');
     }
-  } catch {}
+  } catch {
+    void 0;
+  }
   const currentUrl = resolvedUrl || lsUrl || envUrl || DEFAULT_URL;
   const currentKey = resolvedKey || lsKey || envKey || DEFAULT_PUBLISHABLE_KEY;
   return {
     envConfigured: !!(envUrl && envKey),
     localConfigured: !!(lsUrl && lsKey),
-    usingPlaceholder: false,
+    usingPlaceholder: currentUrl === DEFAULT_URL && currentKey === DEFAULT_PUBLISHABLE_KEY,
     url: currentUrl,
   };
 }
