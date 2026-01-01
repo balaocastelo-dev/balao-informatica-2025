@@ -69,6 +69,18 @@ const Index = () => {
   };
 
   const getLandingImage = (label: string, pageKey: string) => {
+    const localImages: Record<string, string> = {
+      "assistencia-tecnica": "/landing/assistencia-tecnica.jpg",
+      "conserto-apple": "/landing/conserto-apple.jpg",
+      "conserto-console": "/landing/conserto-console.jpg",
+    };
+    if (localImages[pageKey]) {
+      return localImages[pageKey];
+    }
+    return getLandingFallbackImage(label, pageKey);
+  };
+
+  const getLandingFallbackImage = (label: string, pageKey: string) => {
     const overrides: Record<string, { prompt: string; seed: number }> = {
       "assistencia-tecnica": {
         prompt:
@@ -370,6 +382,13 @@ const Index = () => {
                     alt={p.label}
                     className="w-full h-28 sm:h-36 object-cover"
                     loading="lazy"
+                    onError={(e) => {
+                      const target = e.currentTarget;
+                      const fallback = getLandingFallbackImage(p.label, p.pageKey);
+                      if (target.src !== fallback) {
+                        target.src = fallback;
+                      }
+                    }}
                   />
                   <div className="absolute inset-0 bg-black/10 group-hover:bg-black/5 transition-colors" />
                 </div>
