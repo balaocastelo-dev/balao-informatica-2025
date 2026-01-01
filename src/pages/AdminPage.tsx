@@ -193,7 +193,7 @@ const AdminPage = () => {
   const [loginForm, setLoginForm] = useState({ username: '', password: '' });
   const [loginError, setLoginError] = useState('');
 
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'banners' | 'categories' | 'brands' | 'layout' | 'email' | 'orders' | 'payments' | 'menu' | 'blog'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'banners' | 'categories' | 'brands' | 'layout' | 'email' | 'orders' | 'payments' | 'menu' | 'blog' | 'supabase'>('dashboard');
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
@@ -401,6 +401,23 @@ const AdminPage = () => {
       sessionStorage.setItem('admin_authenticated', 'true');
     } catch (err) {
       setLoginError('Usuário ou senha incorretos');
+    }
+  };
+  const handleTestSupabase = async () => {
+    const url = supabaseUrlInput.trim();
+    const key = supabaseKeyInput.trim();
+    if (url && key) {
+      setSupabaseConfig(url, key);
+    }
+    try {
+      const { error } = await supabase.from('blog_articles').select('*').limit(1);
+      if (error) {
+        toast({ title: 'Falha na conexão com Supabase', variant: 'destructive' });
+      } else {
+        toast({ title: 'Conexão com Supabase OK' });
+      }
+    } catch {
+      toast({ title: 'Erro ao conectar ao Supabase', variant: 'destructive' });
     }
   };
 
@@ -1453,6 +1470,17 @@ const AdminPage = () => {
             <Settings className="w-4 h-4" />
             Pagamentos
           </button>
+          <button
+            onClick={() => setActiveTab('supabase')}
+            className={`px-3 py-2 font-medium transition-colors border-b-2 -mb-px flex items-center gap-2 whitespace-nowrap ${
+              activeTab === 'supabase' 
+                ? 'text-primary border-primary' 
+                : 'text-muted-foreground border-transparent hover:text-foreground'
+            }`}
+          >
+            <Settings className="w-4 h-4" />
+            Supabase
+          </button>
           {/* Integrações e Chat Central removidos */}
         </div>
 
@@ -1472,6 +1500,40 @@ const AdminPage = () => {
 
         {/* Blog Tab */}
         {activeTab === 'blog' && <BlogManagement />}
+        {activeTab === 'supabase' && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-foreground">Configuração do Supabase</h2>
+                <p className="text-muted-foreground">Informe URL e chave pública (anon) para conectar ao banco.</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+              <input
+                type="text"
+                value={supabaseUrlInput}
+                onChange={e => setSupabaseUrlInput(e.target.value)}
+                className="input-field"
+                placeholder="SUPABASE_URL"
+              />
+              <input
+                type="text"
+                value={supabaseKeyInput}
+                onChange={e => setSupabaseKeyInput(e.target.value)}
+                className="input-field"
+                placeholder="SUPABASE_PUBLISHABLE_KEY"
+              />
+              <div className="flex gap-2">
+                <button onClick={handleSaveSupabase} className="btn-primary">
+                  Salvar
+                </button>
+                <button onClick={handleTestSupabase} className="btn-secondary">
+                  Testar conexão
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Menu Tab */}
         {activeTab === 'menu' && (
