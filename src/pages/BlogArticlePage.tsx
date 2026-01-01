@@ -26,14 +26,21 @@ export default function BlogArticlePage() {
       setLoading(true);
       const key = params.slug || "";
       try {
-        const query = supabase
+        let { data, error } = await supabase
           .from("blog_articles")
           .select("*")
           .eq("status", "published")
           .or(`slug.eq.${key},id.eq.${key}`)
           .limit(1);
-        const { data } = await query;
-        setArticle((data && data[0]) ? data[0] as any : null);
+        if (error || !data || data.length === 0) {
+          const fallbackQuery = await supabase
+            .from("blog_articles")
+            .select("*")
+            .or(`slug.eq.${key},id.eq.${key}`)
+            .limit(1);
+          data = fallbackQuery.data || [];
+        }
+        setArticle((data && data[0]) ? (data[0] as any) : null);
       } catch {
         const fb = getBySlugOrId(key);
         setArticle(fb as any);
