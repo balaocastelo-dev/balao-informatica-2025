@@ -5,7 +5,7 @@ import { Plus, Trash2, Edit, Upload, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-// import { listAll, upsert, remove, type BlogArticle as BlogArticleModel } from "@/lib/blogStorage";
+import { listAll, upsert, remove } from "@/lib/blogStorage";
 
 type BlogArticle = {
   id: string;
@@ -46,12 +46,20 @@ export function BlogManagement() {
 
   const fetchArticles = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("blog_articles")
-      .select("*")
-      .order("published_at", { ascending: false })
-      .order("updated_at", { ascending: false });
-    if (!error) setArticles((data || []) as BlogArticle[]);
+    try {
+      const { data, error } = await supabase
+        .from("blog_articles")
+        .select("*")
+        .order("published_at", { ascending: false })
+        .order("updated_at", { ascending: false });
+      if (!error) {
+        setArticles((data || []) as BlogArticle[]);
+      } else {
+        setArticles(listAll() as unknown as BlogArticle[]);
+      }
+    } catch {
+      setArticles(listAll() as unknown as BlogArticle[]);
+    }
     setLoading(false);
   };
 
@@ -112,7 +120,18 @@ export function BlogManagement() {
       setForm((f) => ({ ...f, cover_image_url: data.publicUrl || "" }));
       toast({ title: "Imagem enviada" });
     } catch {
-      toast({ title: "Erro ao enviar imagem", variant: "destructive" });
+      try {
+        const reader = new FileReader();
+        const dataUrl: string = await new Promise((resolve, reject) => {
+          reader.onload = () => resolve(String(reader.result || ""));
+          reader.onerror = () => reject(new Error("fail"));
+          reader.readAsDataURL(file);
+        });
+        setForm((f) => ({ ...f, cover_image_url: dataUrl }));
+        toast({ title: "Imagem definida" });
+      } catch {
+        toast({ title: "Erro ao enviar imagem", variant: "destructive" });
+      }
     }
     setUploading(false);
   };
@@ -141,28 +160,37 @@ export function BlogManagement() {
       return;
     }
 
-    const { error } = await supabase
-      .from("blog_articles")
-      .upsert({ ...(editing?.id ? { id: editing.id } : {}), ...payload }, { onConflict: "slug" })
-      .select();
-    if (error) {
-      toast({ title: "Erro ao salvar artigo", variant: "destructive" });
-      return;
+    try {
+      const { error } = await supabase
+        .from("blog_articles")
+        .upsert({ ...(editing?.id ? { id: editing.id } : {}), ...payload }, { onConflict: "slug" })
+        .select();
+      if (error) {
+        throw error;
+      }
+      toast({ title: "Artigo salvo!" });
+      setShowModal(false);
+      await fetchArticles();
+    } catch {
+      const saved = upsert({ ...(editing?.id ? { id: editing.id } : {}), ...payload });
+      toast({ title: "Artigo salvo" });
+      setShowModal(false);
+      setArticles(listAll() as unknown as BlogArticle[]);
     }
-    toast({ title: "Artigo salvo!" });
-    setShowModal(false);
-    await fetchArticles();
   };
 
   const deleteArticle = async (id: string) => {
     if (!confirm("Tem certeza que deseja excluir este artigo?")) return;
-    const { error } = await supabase.from("blog_articles").delete().eq("id", id);
-    if (error) {
-      toast({ title: "Erro ao excluir", variant: "destructive" });
-      return;
+    try {
+      const { error } = await supabase.from("blog_articles").delete().eq("id", id);
+      if (error) throw error;
+      toast({ title: "Excluído" });
+      await fetchArticles();
+    } catch {
+      remove(id);
+      toast({ title: "Excluído" });
+      setArticles(listAll() as unknown as BlogArticle[]);
     }
-    toast({ title: "Excluído" });
-    await fetchArticles();
   };
 
   return (

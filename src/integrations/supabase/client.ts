@@ -5,11 +5,17 @@ import type { Database } from './types';
 const DEFAULT_URL = "https://eossaxfosnmtjksefekk.supabase.co";
 const DEFAULT_PUBLISHABLE_KEY = "sb_publishable_2fOzpgED10xOerEYIN7WRg_vrpvCC6M";
 
+function sanitizeSupabaseUrl(input: string): string {
+  const s = String(input || "").trim();
+  const m = s.match(/supabase\.com\/dashboard\/project\/([a-zA-Z0-9-]+)/);
+  if (m) return `https://${m[1]}.supabase.co`;
+  return s;
+}
+
 // Try multiple env keys (Vite and Next style)
 const envs: Record<string, any> = (import.meta as any).env || {};
 let resolvedUrl: string | undefined =
-  envs.VITE_SUPABASE_URL ||
-  envs.NEXT_PUBLIC_SUPABASE_URL ||
+  sanitizeSupabaseUrl(envs.VITE_SUPABASE_URL || envs.NEXT_PUBLIC_SUPABASE_URL || "") ||
   undefined;
 let resolvedKey: string | undefined =
   envs.VITE_SUPABASE_PUBLISHABLE_KEY ||
@@ -19,7 +25,7 @@ let resolvedKey: string | undefined =
   undefined;
 try {
   if (typeof window !== 'undefined') {
-    const lsUrl = localStorage.getItem('SUPABASE_URL') || undefined;
+    const lsUrl = sanitizeSupabaseUrl(localStorage.getItem('SUPABASE_URL') || "");
     const lsKey = localStorage.getItem('SUPABASE_PUBLISHABLE_KEY') || undefined;
     resolvedUrl = lsUrl || resolvedUrl;
     resolvedKey = lsKey || resolvedKey;
@@ -33,7 +39,7 @@ if (!resolvedUrl || !resolvedKey) {
 }
 
 export let supabase = createClient<Database>(
-  resolvedUrl || DEFAULT_URL,
+  sanitizeSupabaseUrl(resolvedUrl || DEFAULT_URL),
   resolvedKey || DEFAULT_PUBLISHABLE_KEY,
   {
     auth: {
@@ -47,13 +53,15 @@ export let supabase = createClient<Database>(
 export function setSupabaseConfig(url: string, key: string) {
   try {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('SUPABASE_URL', url);
+      localStorage.setItem('SUPABASE_URL', sanitizeSupabaseUrl(url));
       localStorage.setItem('SUPABASE_PUBLISHABLE_KEY', key);
     }
   } catch {
     void 0;
   }
-  supabase = createClient<Database>(url, key, {
+  resolvedUrl = sanitizeSupabaseUrl(url);
+  resolvedKey = key;
+  supabase = createClient<Database>(resolvedUrl, resolvedKey, {
     auth: {
       storage: localStorage,
       persistSession: true,
@@ -65,8 +73,7 @@ export function setSupabaseConfig(url: string, key: string) {
 export function getSupabaseStatus() {
   const envs: Record<string, any> = (import.meta as any).env || {};
   let envUrl =
-    envs.VITE_SUPABASE_URL ||
-    envs.NEXT_PUBLIC_SUPABASE_URL ||
+    sanitizeSupabaseUrl(envs.VITE_SUPABASE_URL || envs.NEXT_PUBLIC_SUPABASE_URL || "") ||
     undefined;
   let envKey =
     envs.VITE_SUPABASE_PUBLISHABLE_KEY ||
@@ -78,14 +85,14 @@ export function getSupabaseStatus() {
   let lsKey: string | null = null;
   try {
     if (typeof window !== 'undefined') {
-      lsUrl = localStorage.getItem('SUPABASE_URL');
+      lsUrl = sanitizeSupabaseUrl(localStorage.getItem('SUPABASE_URL') || "");
       lsKey = localStorage.getItem('SUPABASE_PUBLISHABLE_KEY');
     }
   } catch {
     void 0;
   }
-  const currentUrl = resolvedUrl || lsUrl || envUrl || DEFAULT_URL;
-  const currentKey = resolvedKey || lsKey || envKey || DEFAULT_PUBLISHABLE_KEY;
+  const currentUrl = lsUrl || envUrl || resolvedUrl || DEFAULT_URL;
+  const currentKey = lsKey || envKey || resolvedKey || DEFAULT_PUBLISHABLE_KEY;
   return {
     envConfigured: !!(envUrl && envKey),
     localConfigured: !!(lsUrl && lsKey),

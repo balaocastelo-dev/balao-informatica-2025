@@ -382,6 +382,16 @@ const AdminPage = () => {
     toast({ title: 'Supabase configurado' });
     await refreshCategories();
     await refreshProducts();
+    try {
+      const { error } = await supabase.from('categories').select('count', { count: 'exact', head: true });
+      if (error) {
+        toast({ title: 'Falha ao ler categorias', variant: 'destructive' });
+      } else {
+        toast({ title: 'Categorias carregadas' });
+      }
+    } catch {
+      toast({ title: 'Erro ao ler categorias', variant: 'destructive' });
+    }
   };
 
   const handleLogin = async (e: React.FormEvent) => {

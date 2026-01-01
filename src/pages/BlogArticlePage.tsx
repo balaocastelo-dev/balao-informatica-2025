@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { SEOHead, BreadcrumbSchema } from "@/components/SEOHead";
 import { supabase } from "@/integrations/supabase/client";
+import { getBySlugOrId } from "@/lib/blogStorage";
 
 type Article = {
   id: string;
@@ -24,14 +25,19 @@ export default function BlogArticlePage() {
     const run = async () => {
       setLoading(true);
       const key = params.slug || "";
-      let query = supabase.from("blog_articles").select("*").eq("status", "published").limit(1);
-      if (key.match(/^[0-9a-f-]{36}$/i)) {
-        query = query.eq("id", key);
-      } else {
-        query = query.eq("slug", key);
+      try {
+        let query = supabase.from("blog_articles").select("*").eq("status", "published").limit(1);
+        if (key.match(/^[0-9a-f-]{36}$/i)) {
+          query = query.eq("id", key);
+        } else {
+          query = query.eq("slug", key);
+        }
+        const { data } = await query;
+        setArticle((data && data[0]) ? data[0] as any : null);
+      } catch {
+        const fb = getBySlugOrId(key);
+        setArticle(fb as any);
       }
-      const { data } = await query;
-      setArticle((data && data[0]) ? data[0] as any : null);
       setLoading(false);
     };
     run();
