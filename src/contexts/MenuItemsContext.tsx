@@ -86,16 +86,18 @@ export function MenuItemsProvider({ children }: { children: ReactNode }) {
   };
 
   const updateItem = async (slug: string, changes: Partial<MenuItem>) => {
+    const base = items.find((i) => i.slug === slug) || DEFAULT_ITEMS.find((i) => i.slug === slug);
+    if (!base) return;
     await supabase
       .from("menu_items")
-      .update({
-        ...(changes.name !== undefined ? { name: changes.name } : {}),
-        ...(changes.route !== undefined ? { route: changes.route } : {}),
-        ...(changes.order_index !== undefined ? { order_index: changes.order_index } : {}),
-        ...(changes.active !== undefined ? { active: changes.active } : {}),
-        ...(changes.image_url !== undefined ? { image_url: changes.image_url } : {}),
-      })
-      .eq("slug", slug);
+      .upsert({
+        slug,
+        name: changes.name ?? base.name,
+        route: changes.route ?? base.route,
+        order_index: changes.order_index ?? base.order_index,
+        active: changes.active ?? base.active,
+        image_url: changes.image_url ?? base.image_url ?? null,
+      }, { onConflict: "slug" });
     await refresh();
   };
 
