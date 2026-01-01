@@ -68,6 +68,15 @@ const Index = () => {
     return bannerImageMap[imageUrl] || imageUrl;
   };
 
+  const getLandingImage = (label: string, pageKey: string) => {
+    const prompt = encodeURIComponent(
+      `${label} realistic photo, technology store in Brazil, professional lighting, high detail`
+    );
+    return `https://image.pollinations.ai/prompt/${prompt}?width=800&height=400&nologo=true&seed=${encodeURIComponent(
+      pageKey
+    )}`;
+  };
+
   const betweenCategoryBanners = getBannersByPosition("between_categories");
   const footerTopBanners = getBannersByPosition("footer_top");
 
@@ -332,12 +341,22 @@ const Index = () => {
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {pages.filter((p) => p.active).map((p) => (
-              <Link key={p.pageKey} to={p.route} className="border border-zinc-200 rounded-xl bg-white p-5 hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-semibold text-zinc-800">{p.label}</p>
-                    <p className="text-xs text-zinc-500">{p.route}</p>
-                  </div>
+              <Link
+                key={p.pageKey}
+                to={p.route}
+                className="group rounded-xl overflow-hidden border border-zinc-200 bg-white hover:shadow-lg transition-shadow"
+              >
+                <div className="relative">
+                  <img
+                    src={getLandingImage(p.label, p.pageKey)}
+                    alt={p.label}
+                    className="w-full h-28 sm:h-36 object-cover"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-black/10 group-hover:bg-black/5 transition-colors" />
+                </div>
+                <div className="flex items-center justify-between p-5">
+                  <p className="font-semibold text-zinc-800">{p.label}</p>
                   <ArrowRight className="w-4 h-4 text-[#E30613]" />
                 </div>
               </Link>
