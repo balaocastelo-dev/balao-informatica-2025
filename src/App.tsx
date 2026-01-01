@@ -46,6 +46,8 @@ import ChatCentralPage from "./pages/ChatCentralPage";
 import BlingCallbackPage from "./pages/BlingCallbackPage";
 import NotFound from "./pages/NotFound";
 import { MenuItemsProvider } from "./contexts/MenuItemsContext";
+import BlogPage from "./pages/BlogPage";
+import BlogArticlePage from "./pages/BlogArticlePage";
 
 const queryClient = new QueryClient();
 
@@ -99,6 +101,8 @@ const App = () => (
                             <Route path="/lp/acessorios-gamer" element={<LandingAcessoriosGamerPage />} />
                             <Route path="/lp/visita-tecnica" element={<LandingVisitaTecnicaPage />} />
                             <Route path="/lp/:pageKey" element={<GenericLandingPage />} />
+                            <Route path="/blog" element={<BlogPage />} />
+                            <Route path="/blog/:slug" element={<BlogArticlePage />} />
                             <Route path="/obrigado" element={<ThankYouPage />} />
                             <Route path="*" element={<NotFound />} />
                           </Routes>

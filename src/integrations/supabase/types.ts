@@ -430,6 +430,81 @@ export type Database = {
         }
         Relationships: []
       }
+      blog_articles: {
+        Row: {
+          id: string
+          title: string
+          slug: string | null
+          content: string
+          cover_image_url: string | null
+          author: string | null
+          status: string
+          categories: string[] | null
+          tags: string[] | null
+          published_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          slug?: string | null
+          content: string
+          cover_image_url?: string | null
+          author?: string | null
+          status?: string
+          categories?: string[] | null
+          tags?: string[] | null
+          published_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          slug?: string | null
+          content?: string
+          cover_image_url?: string | null
+          author?: string | null
+          status?: string
+          categories?: string[] | null
+          tags?: string[] | null
+          published_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      blog_comments: {
+        Row: {
+          id: string
+          article_id: string
+          author_name: string | null
+          author_email: string | null
+          content: string
+          status: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          article_id: string
+          author_name?: string | null
+          author_email?: string | null
+          content: string
+          status?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          article_id?: string
+          author_name?: string | null
+          author_email?: string | null
+          content?: string
+          status?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
