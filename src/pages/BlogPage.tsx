@@ -1,28 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { Layout } from "@/components/Layout";
 import { SEOHead, BreadcrumbSchema } from "@/components/SEOHead";
-import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink } from "@/components/ui/pagination";
 import { Grid, List } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { listPublished, type BlogArticle } from "@/lib/blogStorage";
 
-type Article = {
-  id: string;
-  title: string;
-  slug: string;
-  content: string;
-  cover_image_url: string | null;
-  author: string | null;
-  status: string;
-  categories: string[] | null;
-  tags: string[] | null;
-  published_at: string | null;
-  created_at: string;
-  updated_at: string;
-};
+type Article = BlogArticle;
 
 export default function BlogPage() {
   const navigate = useNavigate();
@@ -45,38 +32,23 @@ export default function BlogPage() {
     setPage(isNaN(p) ? 1 : Math.max(1, p));
   }, [location.search]);
 
+  const fetchArticles = useCallback(() => {
+    setLoading(true);
+    const { items, total } = listPublished({
+      query,
+      tag: selectedTag,
+      category: selectedCategory,
+      page,
+      pageSize,
+    });
+    setArticles(items as Article[]);
+    setTotalCount(total);
+    setLoading(false);
+  }, [query, selectedTag, selectedCategory, page, pageSize]);
+
   useEffect(() => {
     fetchArticles();
-  }, [query, page, selectedTag, selectedCategory]);
-
-  const fetchArticles = async () => {
-    setLoading(true);
-    let base = supabase.from("blog_articles").select("*", { count: "exact" }).eq("status", "published").order("published_at", { ascending: false });
-
-    const q = query.trim();
-    if (q) {
-      const orQuery = [`title.ilike.%${q}%`, `content.ilike.%${q}%`].join(",");
-      base = base.or(orQuery);
-    }
-    if (selectedTag) {
-      base = base.contains("tags", [selectedTag]);
-    }
-    if (selectedCategory) {
-      base = base.contains("categories", [selectedCategory]);
-    }
-
-    const from = (page - 1) * pageSize;
-    const to = from + pageSize - 1;
-    const { data, error, count } = await base.range(from, to);
-    if (!error) {
-      setArticles((data || []) as Article[]);
-      setTotalCount(count || 0);
-    } else {
-      setArticles([]);
-      setTotalCount(0);
-    }
-    setLoading(false);
-  };
+  }, [fetchArticles]);
 
   const totalPages = useMemo(() => Math.max(1, Math.ceil(totalCount / pageSize)), [totalCount, pageSize]);
   const url = "https://www.balao.info/blog";
@@ -210,4 +182,3 @@ export default function BlogPage() {
     </Layout>
   );
 }
-

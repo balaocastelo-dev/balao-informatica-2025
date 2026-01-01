@@ -1,25 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Plus, Trash2, Edit, Upload, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { listAll, upsert, remove, type BlogArticle as BlogArticleModel } from "@/lib/blogStorage";
 
-type BlogArticle = {
-  id: string;
-  title: string;
-  slug: string;
-  content: string;
-  cover_image_url: string | null;
-  author: string | null;
-  status: "draft" | "published";
-  categories: string[] | null;
-  tags: string[] | null;
-  published_at: string | null;
-  created_at: string;
-  updated_at: string;
-};
+type BlogArticle = BlogArticleModel;
 
 export function BlogManagement() {
   const [articles, setArticles] = useState<BlogArticle[]>([]);
@@ -43,14 +30,10 @@ export function BlogManagement() {
     fetchArticles();
   }, []);
 
-  const fetchArticles = async () => {
+  const fetchArticles = () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("blog_articles")
-      .select("*")
-      .order("published_at", { ascending: false })
-      .order("updated_at", { ascending: false });
-    if (!error) setArticles((data || []) as BlogArticle[]);
+    const data = listAll();
+    setArticles(data as BlogArticle[]);
     setLoading(false);
   };
 
@@ -98,22 +81,22 @@ export function BlogManagement() {
     if (!file) return;
     setUploading(true);
     try {
-      const ext = file.name.split(".").pop() || "jpg";
-      const fileName = `${Date.now()}.${ext}`;
-      const path = `blog/${form.slug || "sem-slug"}/${fileName}`;
-      const { error } = await supabase.storage.from("banners").upload(path, file, {
-        cacheControl: "3600",
-        upsert: true,
-        contentType: file.type || "image/*",
-      });
-      if (error) throw error;
-      const { data } = supabase.storage.from("banners").getPublicUrl(path);
-      setForm((f) => ({ ...f, cover_image_url: data.publicUrl || "" }));
-      toast({ title: "Imagem enviada" });
+      const reader = new FileReader();
+      reader.onload = () => {
+        const url = typeof reader.result === "string" ? reader.result : "";
+        setForm((f) => ({ ...f, cover_image_url: url }));
+        toast({ title: "Imagem carregada" });
+        setUploading(false);
+      };
+      reader.onerror = () => {
+        toast({ title: "Erro ao carregar imagem", variant: "destructive" });
+        setUploading(false);
+      };
+      reader.readAsDataURL(file);
     } catch {
-      toast({ title: "Erro ao enviar imagem", variant: "destructive" });
+      toast({ title: "Erro ao carregar imagem", variant: "destructive" });
+      setUploading(false);
     }
-    setUploading(false);
   };
 
   const saveArticle = async () => {
@@ -133,8 +116,6 @@ export function BlogManagement() {
         .map((s) => s.trim())
         .filter(Boolean),
       published_at: form.status === "published" ? new Date().toISOString() : null,
-      updated_at: new Date().toISOString(),
-      created_at: new Date().toISOString(),
     } as any;
 
     if (!payload.title || !payload.content) {
@@ -142,28 +123,17 @@ export function BlogManagement() {
       return;
     }
 
-    const { error } = await supabase
-      .from("blog_articles")
-      .upsert(payload, { onConflict: "slug" })
-      .select();
-    if (error) {
-      toast({ title: "Erro ao salvar artigo", variant: "destructive" });
-      return;
-    }
+    upsert({ id: editing?.id, ...payload });
     toast({ title: "Artigo salvo!" });
     setShowModal(false);
-    await fetchArticles();
+    fetchArticles();
   };
 
   const deleteArticle = async (id: string) => {
     if (!confirm("Tem certeza que deseja excluir este artigo?")) return;
-    const { error } = await supabase.from("blog_articles").delete().eq("id", id);
-    if (error) {
-      toast({ title: "Erro ao excluir", variant: "destructive" });
-      return;
-    }
+    remove(id);
     toast({ title: "Excluído" });
-    await fetchArticles();
+    fetchArticles();
   };
 
   return (
@@ -298,4 +268,3 @@ export function BlogManagement() {
     </div>
   );
 }
-

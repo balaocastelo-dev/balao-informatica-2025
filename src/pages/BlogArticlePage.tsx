@@ -2,18 +2,9 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { SEOHead, BreadcrumbSchema } from "@/components/SEOHead";
-import { supabase } from "@/integrations/supabase/client";
+import { getBySlugOrId, type BlogArticle } from "@/lib/blogStorage";
 
-type Article = {
-  id: string;
-  title: string;
-  slug: string | null;
-  content: string;
-  cover_image_url: string | null;
-  author: string | null;
-  status: string;
-  published_at: string | null;
-};
+type Article = BlogArticle;
 
 export default function BlogArticlePage() {
   const params = useParams();
@@ -21,20 +12,11 @@ export default function BlogArticlePage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const run = async () => {
-      setLoading(true);
-      const key = params.slug || "";
-      let query = supabase.from("blog_articles").select("*").eq("status", "published").limit(1);
-      if (key.match(/^[0-9a-f-]{36}$/i)) {
-        query = query.eq("id", key);
-      } else {
-        query = query.eq("slug", key);
-      }
-      const { data } = await query;
-      setArticle((data && data[0]) ? data[0] as any : null);
-      setLoading(false);
-    };
-    run();
+    setLoading(true);
+    const key = params.slug || "";
+    const found = key ? getBySlugOrId(key) : null;
+    setArticle(found);
+    setLoading(false);
   }, [params.slug]);
 
   const title = article ? `${article.title} | Balão da Informática` : "Artigo | Balão da Informática";
@@ -79,4 +61,3 @@ export default function BlogArticlePage() {
     </Layout>
   );
 }
-
