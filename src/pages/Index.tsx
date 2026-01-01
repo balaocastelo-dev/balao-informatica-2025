@@ -69,12 +69,30 @@ const Index = () => {
   };
 
   const getLandingImage = (label: string, pageKey: string) => {
-    const prompt = encodeURIComponent(
-      `${label} realistic photo, technology store in Brazil, professional lighting, high detail`
-    );
-    return `https://image.pollinations.ai/prompt/${prompt}?width=800&height=400&nologo=true&seed=${encodeURIComponent(
-      pageKey
-    )}`;
+    const overrides: Record<string, { prompt: string; seed: number }> = {
+      "assistencia-tecnica": {
+        prompt:
+          "Assistência técnica de informática em Campinas, bancada com notebook aberto, ferramentas profissionais, ambiente limpo, luz suave, foto realista",
+        seed: 20260101,
+      },
+      "conserto-apple": {
+        prompt:
+          "Conserto Apple premium, iPhone e MacBook em bancada técnica, peças organizadas, técnico com luvas, estética minimalista, luz branca, foto realista",
+        seed: 20260102,
+      },
+      "conserto-console": {
+        prompt:
+          "Conserto de console, PlayStation e Xbox em mesa de manutenção, controle, placa exposta, espaço gamer técnico, luz fria, foto realista",
+        seed: 20260103,
+      },
+    };
+    const cfg = overrides[pageKey];
+    const usedPrompt =
+      cfg?.prompt ||
+      `${label} realistic photo, technology store in Brazil, professional lighting, high detail`;
+    const seed = cfg?.seed ?? 20250101;
+    const prompt = encodeURIComponent(usedPrompt);
+    return `https://image.pollinations.ai/prompt/${prompt}?width=800&height=400&nologo=true&seed=${seed}`;
   };
 
   const betweenCategoryBanners = getBannersByPosition("between_categories");
