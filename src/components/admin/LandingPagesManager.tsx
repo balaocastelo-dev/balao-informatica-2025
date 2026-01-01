@@ -1,10 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ExternalLink, Save, Plus, Copy, Trash2, Check, X, Image as ImageIcon, Upload } from "lucide-react";
+import { ExternalLink, Save, Plus, Copy, Trash2, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLandingPageConfigs } from "@/contexts/LandingPageConfigContext";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
 
 const parseFallback = (raw: string) =>
   raw
@@ -24,10 +22,7 @@ export function LandingPagesManager() {
     fallback: "",
   });
   const [savingKey, setSavingKey] = useState<string | null>(null);
-  const [assets, setAssets] = useState<Record<string, string>>({});
-  const [uploadingKey, setUploadingKey] = useState<string | null>(null);
   const rows = useMemo(() => pages, [pages]);
-  const fileInputsRef = useRef<Record<string, HTMLInputElement | null>>({});
 
   useEffect(() => {
     const next: Record<string, { label: string; route: string; gridQuery: string; fallback: string; active: boolean }> = {};
@@ -42,23 +37,6 @@ export function LandingPagesManager() {
     }
     setDraft(next);
   }, [pages]);
-
-  useEffect(() => {
-    const fetchAssets = async () => {
-      try {
-        const { data, error } = await supabase.from("landing_page_assets").select("*");
-        if (error) throw error;
-        const map: Record<string, string> = {};
-        for (const row of data || []) {
-          map[(row as any).page_key] = (row as any).image_url;
-        }
-        setAssets(map);
-      } catch {
-        setAssets({});
-      }
-    };
-    fetchAssets();
-  }, []);
 
   const handleSave = async (key: string) => {
     const d = draft[key];
@@ -88,45 +66,6 @@ export function LandingPagesManager() {
     });
     setNewPage({ pageKey: "", label: "", route: "", gridQuery: "", fallback: "" });
     await refresh();
-  };
-
-  const handleImageUpload = async (pageKey: string, file: File) => {
-    const allowed = ["image/jpeg", "image/png", "image/webp"];
-    if (!allowed.includes(file.type)) {
-      toast({ title: "Formato inválido. Use JPG, PNG ou WEBP", variant: "destructive" });
-      return;
-    }
-    setUploadingKey(pageKey);
-    try {
-      const ext = file.name.split(".").pop() || "webp";
-      const fileName = `${pageKey}-${Date.now()}.${ext}`;
-      const filePath = `landing_pages/${fileName}`;
-      const { error: uploadError } = await supabase.storage
-        .from("banners")
-        .upload(filePath, file, {
-          cacheControl: "3600",
-          upsert: true,
-          contentType: file.type,
-        });
-      if (uploadError) throw uploadError;
-      const { data } = supabase.storage.from("banners").getPublicUrl(filePath);
-      const publicUrl = data.publicUrl;
-      const payload = {
-        page_key: pageKey,
-        image_url: publicUrl,
-        updated_at: new Date().toISOString(),
-        created_at: new Date().toISOString(),
-      };
-      const { error } = await supabase.from("landing_page_assets").upsert(payload, { onConflict: "page_key" });
-      if (error) throw error;
-      setAssets((cur) => ({ ...cur, [pageKey]: publicUrl }));
-      toast({ title: "Imagem atualizada!" });
-    } catch (error: any) {
-      toast({ title: "Erro ao enviar imagem", description: String(error?.message || error || ""), variant: "destructive" });
-    }
-    setUploadingKey(null);
-    const input = fileInputsRef.current[pageKey];
-    if (input) input.value = "";
   };
 
   return (
@@ -218,7 +157,7 @@ export function LandingPagesManager() {
                 </div>
               </div>
 
-              <div className="grid md:grid-cols-3 gap-4">
+              <div className="grid md:grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <input
                     type="text"
@@ -262,47 +201,6 @@ export function LandingPagesManager() {
                     className="input-field"
                     placeholder="fallbacks, separadas por vírgula"
                   />
-                </div>
-                <div className="grid gap-2">
-                  <div className="flex items-center gap-2">
-                    <ImageIcon className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">Imagem da Landing</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-28 h-28 rounded-lg border bg-background flex items-center justify-center overflow-hidden">
-                      {assets[p.pageKey] ? (
-                        <img src={assets[p.pageKey]} alt={d.label} className="w-full h-full object-contain" />
-                      ) : (
-                        <div className="text-xs text-muted-foreground">sem imagem</div>
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <input
-                        type="file"
-                        accept=".jpg,.jpeg,.png,.webp"
-                        ref={(el) => (fileInputsRef.current[p.pageKey] = el)}
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) handleImageUpload(p.pageKey, file);
-                        }}
-                        className="block w-full text-sm file:mr-3 file:py-2 file:px-3 file:rounded-md file:border file:bg-background file:text-foreground file:hover:bg-muted"
-                      />
-                      <div className="mt-2">
-                        <Button
-                          variant="outline"
-                          className="gap-2"
-                          disabled={uploadingKey === p.pageKey}
-                          onClick={() => {
-                            const input = fileInputsRef.current[p.pageKey];
-                            if (input) input.click();
-                          }}
-                        >
-                          <Upload className="w-4 h-4" />
-                          {uploadingKey === p.pageKey ? "Enviando..." : "Trocar imagem"}
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </div>
             </div>

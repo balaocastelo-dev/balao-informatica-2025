@@ -28,7 +28,8 @@ import {
   Loader2,
   FolderEdit,
   CopyPlus,
-  Sparkles
+  Sparkles,
+  Menu as MenuIcon
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { PageLayoutEditor } from '@/components/admin/PageLayoutEditor';
@@ -39,6 +40,141 @@ import { BannerManagement } from '@/components/admin/BannerManagement';
 import { CategoryProductManager } from '@/components/admin/CategoryProductManager';
 import { BrandManagement } from '@/components/admin/BrandManagement';
 import { MercadoPagoConfig } from '@/components/admin/MercadoPagoConfig';
+import { useMenuItems } from '@/contexts/MenuItemsContext';
+
+function MenuManager() {
+  const { items, loading, updateItem } = useMenuItems();
+  const [uploadingSlug, setUploadingSlug] = useState<string | null>(null);
+  const sorted = [...items].sort((a, b) => a.order_index - b.order_index);
+
+  const toggleActive = async (slug: string, current: boolean) => {
+    await updateItem(slug, { active: !current });
+    toast({ title: !current ? 'Item ativado' : 'Item desativado' });
+  };
+
+  const moveItem = async (slug: string, direction: "up" | "down") => {
+    const index = sorted.findIndex(i => i.slug === slug);
+    if (index < 0) return;
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= sorted.length) return;
+    const current = sorted[index];
+    const neighbor = sorted[targetIndex];
+    await updateItem(current.slug, { order_index: neighbor.order_index });
+    await updateItem(neighbor.slug, { order_index: current.order_index });
+    toast({ title: 'Ordem atualizada' });
+  };
+
+  const handleImageUpload = async (slug: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingSlug(slug);
+    try {
+      const ext = file.name.split('.').pop() || 'jpg';
+      const fileName = `${Date.now()}.${ext}`;
+      const path = `menu/${slug}/${fileName}`;
+      const { error: uploadError } = await supabase.storage
+        .from('banners')
+        .upload(path, file, { cacheControl: '3600', upsert: true, contentType: file.type || 'image/*' });
+      if (uploadError) throw uploadError;
+      const { data } = supabase.storage.from('banners').getPublicUrl(path);
+      await updateItem(slug, { image_url: data.publicUrl });
+      toast({ title: 'Imagem atualizada' });
+    } catch {
+      toast({ title: 'Erro ao enviar imagem', variant: 'destructive' });
+    }
+    setUploadingSlug(null);
+    e.target.value = '';
+  };
+
+  const handleImageUrlSave = async (slug: string, url: string) => {
+    await updateItem(slug, { image_url: url || null });
+    toast({ title: 'Imagem definida' });
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-white border border-zinc-200 rounded-xl">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+          {sorted.map((item) => (
+            <div key={item.slug} className="border border-zinc-200 rounded-lg p-4 bg-white">
+              <div className="flex items-center justify-between">
+                <div className="font-bold">{item.name}</div>
+                <span className="text-xs text-muted-foreground">{item.route}</span>
+              </div>
+              <div className="mt-3 flex items-center gap-2">
+                <button
+                  onClick={() => moveItem(item.slug, 'up')}
+                  className="px-2 py-1 rounded-lg border border-zinc-300 hover:border-primary hover:text-primary transition-colors"
+                >
+                  ↑
+                </button>
+                <button
+                  onClick={() => moveItem(item.slug, 'down')}
+                  className="px-2 py-1 rounded-lg border border-zinc-300 hover:border-primary hover:text-primary transition-colors"
+                >
+                  ↓
+                </button>
+                <button
+                  onClick={() => toggleActive(item.slug, item.active)}
+                  className={`px-3 py-1 rounded-lg transition-colors ${item.active ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-zinc-200 text-zinc-700 hover:bg-zinc-300'}`}
+                >
+                  {item.active ? 'Ativo' : 'Inativo'}
+                </button>
+              </div>
+              <div className="mt-4 space-y-2">
+                <div className="aspect-[3/1] bg-zinc-100 rounded-lg overflow-hidden border border-zinc-200 flex items-center justify-center">
+                  {item.image_url ? (
+                    <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-xs text-muted-foreground">Sem imagem</span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    disabled={uploadingSlug === item.slug}
+                    onChange={(e) => handleImageUpload(item.slug, e)}
+                    className="block w-full text-sm file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border file:border-zinc-300 file:text-sm file:bg-white file:hover:border-primary file:hover:text-primary"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="url"
+                    defaultValue={item.image_url || ''}
+                    placeholder="URL da imagem"
+                    className="input-field flex-1"
+                    onBlur={(e) => handleImageUrlSave(item.slug, e.target.value)}
+                  />
+                  <button
+                    onClick={(e) => {
+                      const input = (e.currentTarget.previousElementSibling as HTMLInputElement | null);
+                      if (input) handleImageUrlSave(item.slug, input.value);
+                    }}
+                    className="btn-secondary"
+                  >
+                    Salvar
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Dica: use as setas para ajustar a posição. Nenhum item é removido; tudo é configurável.
+      </p>
+    </div>
+  );
+}
 
 const ADMIN_CREDENTIALS = {
   username: 'balao2025',
@@ -56,7 +192,7 @@ const AdminPage = () => {
   const [loginForm, setLoginForm] = useState({ username: '', password: '' });
   const [loginError, setLoginError] = useState('');
 
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'banners' | 'categories' | 'brands' | 'layout' | 'email' | 'orders' | 'payments'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'banners' | 'categories' | 'brands' | 'layout' | 'email' | 'orders' | 'payments' | 'menu'>('dashboard');
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
@@ -1284,6 +1420,17 @@ const AdminPage = () => {
             Pedidos
           </button>
           <button
+            onClick={() => setActiveTab('menu')}
+            className={`px-3 py-2 font-medium transition-colors border-b-2 -mb-px flex items-center gap-2 whitespace-nowrap ${
+              activeTab === 'menu' 
+                ? 'text-primary border-primary' 
+                : 'text-muted-foreground border-transparent hover:text-foreground'
+            }`}
+          >
+            <MenuIcon className="w-4 h-4" />
+            Menu
+          </button>
+          <button
             onClick={() => setActiveTab('payments')}
             className={`px-3 py-2 font-medium transition-colors border-b-2 -mb-px flex items-center gap-2 whitespace-nowrap ${
               activeTab === 'payments' 
@@ -1310,6 +1457,19 @@ const AdminPage = () => {
         {activeTab === 'payments' && <MercadoPagoConfig />}
 
         {/* Integrações removidas */}
+
+        {/* Menu Tab */}
+        {activeTab === 'menu' && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-foreground">Gerenciador do Menu de Navegação</h2>
+                <p className="text-muted-foreground">Reordene, ative/desative e defina imagens de cards</p>
+              </div>
+            </div>
+            <MenuManager />
+          </div>
+        )}
 
         {/* Products Tab */}
         {activeTab === 'products' && (

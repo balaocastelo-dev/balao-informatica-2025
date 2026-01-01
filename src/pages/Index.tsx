@@ -22,6 +22,7 @@ import {
 import { bannerImageMap } from "@/config/banners";
 import { DEPARTMENTS } from "@/config/departments";
 import { useLandingPageConfigs } from "@/contexts/LandingPageConfigContext";
+import { useMenuItems } from "@/contexts/MenuItemsContext";
 
 interface Banner {
   id: string;
@@ -38,6 +39,7 @@ const Index = () => {
   const { products, getProductsByCategory } = useProducts();
   const { blocks, loading } = usePageBlocks();
   const { pages } = useLandingPageConfigs();
+  const { items } = useMenuItems();
   const [banners, setBanners] = useState<Banner[]>([]);
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get("q");
@@ -69,6 +71,9 @@ const Index = () => {
   };
 
   const getLandingImage = (label: string, pageKey: string) => {
+    const slug = `lp-${pageKey}`;
+    const override = items.find(i => i.slug === slug)?.image_url;
+    if (override) return override;
     const localImages: Record<string, string> = {
       "assistencia-tecnica": "/landing/assistencia-tecnica.jpg",
       "conserto-apple": "/landing/conserto-apple.jpg",

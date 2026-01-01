@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useCategories, CategoryData } from '@/contexts/CategoryContext';
 import { ChevronRight, Home, Cpu, X, Info, Handshake, Wrench, BatteryCharging, Printer, BadgeCheck, Gamepad2, Globe, Laptop, Smartphone } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useMenuItems } from '@/contexts/MenuItemsContext';
 
 // Auto-generate emoji based on category name
 const getCategoryEmoji = (name: string, slug: string): string => {
@@ -83,6 +84,28 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   const isActive = (path: string) => location.pathname === path;
   const isCategoryActive = (slug: string) => location.pathname === `/categoria/${slug}`;
+  const { items, loading } = useMenuItems();
+  const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+    "inicio": Home,
+    "assistencia-tecnica": Wrench,
+    "conserto-apple": Smartphone,
+    "conserto-console": Gamepad2,
+    "fonte-de-notebook": BatteryCharging,
+    "conserto-notebook": Laptop,
+    "notebook-seminovo": Laptop,
+    "montagem-setup-gamer": Cpu,
+    "monte-seu-pc": Cpu,
+    "toner-para-impressora": Printer,
+    "licencas-microsoft": BadgeCheck,
+    "criacao-site-ti": Globe,
+    "sobre": Info,
+    "consignacao": Handshake,
+    "lp-placa-de-video-promocao": Cpu,
+    "lp-promocao-pc-gamer": Gamepad2,
+    "lp-conserto-android": Smartphone,
+    "lp-acessorios-gamer": Globe,
+    "lp-visita-tecnica": Wrench,
+  };
 
   return (
     <>
@@ -181,215 +204,23 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               Navegação
             </h3>
             <nav className="space-y-1">
-              <Link
-                to="/"
-                onClick={onClose}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
-                  isActive('/') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
-                )}
-              >
-                <Home className="w-4 h-4" />
-                Início
-              </Link>
-              <Link
-                to="/manutencao"
-                onClick={onClose}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
-                  isActive('/manutencao') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
-                )}
-              >
-                <Wrench className="w-4 h-4" />
-                Assistência Técnica
-              </Link>
-              <Link
-                to="/conserto-apple"
-                onClick={onClose}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
-                  isActive('/conserto-apple') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
-                )}
-              >
-                <Smartphone className="w-4 h-4" />
-                Conserto Apple
-              </Link>
-              <Link
-                to="/conserto-console"
-                onClick={onClose}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
-                  isActive('/conserto-console') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
-                )}
-              >
-                <Gamepad2 className="w-4 h-4" />
-                Conserto Console
-              </Link>
-              <Link
-                to="/fonte-de-notebook"
-                onClick={onClose}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
-                  isActive('/fonte-de-notebook') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
-                )}
-              >
-                <BatteryCharging className="w-4 h-4" />
-                Fonte de Notebook
-              </Link>
-              <Link
-                to="/conserto-de-notebook"
-                onClick={onClose}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
-                  isActive('/conserto-de-notebook') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
-                )}
-              >
-                <Laptop className="w-4 h-4" />
-                Conserto de Notebook
-              </Link>
-              <Link
-                to="/notebook-seminovo-barato"
-                onClick={onClose}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
-                  isActive('/notebook-seminovo-barato') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
-                )}
-              >
-                <Laptop className="w-4 h-4" />
-                Notebook Seminovo
-              </Link>
-              <Link
-                to="/montagem-setup-gamer"
-                onClick={onClose}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
-                  isActive('/montagem-setup-gamer') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
-                )}
-              >
-                <Cpu className="w-4 h-4" />
-                Montagem Setup Gamer
-              </Link>
-              <Link
-                to="/montar-pc"
-                onClick={onClose}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
-                  isActive('/montar-pc') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
-                )}
-              >
-                <Cpu className="w-4 h-4" />
-                Monte seu PC
-              </Link>
-              <Link
-                to="/toner-para-impressora"
-                onClick={onClose}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
-                  isActive('/toner-para-impressora') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
-                )}
-              >
-                <Printer className="w-4 h-4" />
-                Toner para Impressora
-              </Link>
-              <Link
-                to="/licencas-microsoft"
-                onClick={onClose}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
-                  isActive('/licencas-microsoft') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
-                )}
-              >
-                <BadgeCheck className="w-4 h-4" />
-                Licenças Microsoft
-              </Link>
-              <Link
-                to="/criacao-de-site-e-servicos-ti"
-                onClick={onClose}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
-                  isActive('/criacao-de-site-e-servicos-ti') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
-                )}
-              >
-                <Globe className="w-4 h-4" />
-                Criação de Site e TI
-              </Link>
-              <Link
-                to="/sobre"
-                onClick={onClose}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
-                  isActive('/sobre') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
-                )}
-              >
-                <Info className="w-4 h-4" />
-                Sobre Nós
-              </Link>
-              <Link
-                to="/consignacao"
-                onClick={onClose}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
-                  isActive('/consignacao') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
-                )}
-              >
-                <Handshake className="w-4 h-4" />
-                Consignação
-              </Link>
-              <Link
-                to="/lp/placa-de-video-promocao"
-                onClick={onClose}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
-                  isActive('/lp/placa-de-video-promocao') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
-                )}
-              >
-                <Cpu className="w-4 h-4" />
-                Placa de Vídeo Promoção
-              </Link>
-              <Link
-                to="/lp/promocao-pc-gamer"
-                onClick={onClose}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
-                  isActive('/lp/promocao-pc-gamer') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
-                )}
-              >
-                <Gamepad2 className="w-4 h-4" />
-                Promoção PC Gamer
-              </Link>
-              <Link
-                to="/lp/conserto-android"
-                onClick={onClose}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
-                  isActive('/lp/conserto-android') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
-                )}
-              >
-                <Smartphone className="w-4 h-4" />
-                Conserto Android
-              </Link>
-              <Link
-                to="/lp/acessorios-gamer"
-                onClick={onClose}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
-                  isActive('/lp/acessorios-gamer') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
-                )}
-              >
-                <Globe className="w-4 h-4" />
-                Acessórios Gamer
-              </Link>
-              <Link
-                to="/lp/visita-tecnica"
-                onClick={onClose}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
-                  isActive('/lp/visita-tecnica') ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
-                )}
-              >
-                <Wrench className="w-4 h-4" />
-                Visita Técnica
-              </Link>
+              {(loading ? [] : items.filter(i => i.active).sort((a, b) => a.order_index - b.order_index)).map((item) => {
+                const Icon = iconMap[item.slug] || Home;
+                return (
+                  <Link
+                    key={item.slug}
+                    to={item.route}
+                    onClick={onClose}
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+                      isActive(item.route) ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
+                    )}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {item.name}
+                  </Link>
+                );
+              })}
             </nav>
           </div>
 
