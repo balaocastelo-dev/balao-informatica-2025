@@ -55,7 +55,7 @@ export function ProductFilters({
   const [isCategoryOpen, setIsCategoryOpen] = useState(true);
   const [isStockOpen, setIsStockOpen] = useState(true);
 
-  const parentCategories = categories.filter(c => !c.parent_id);
+  const parentCategories = [...categories.filter(c => !c.parent_id)].sort((a, b) => a.order_index - b.order_index);
   const hasActiveFilters = minPrice !== null || maxPrice !== null || selectedCategories.length > 0 || searchQuery || stockFilter !== 'all';
   const activeFiltersCount = (minPrice !== null || maxPrice !== null ? 1 : 0) + selectedCategories.length + (stockFilter !== 'all' ? 1 : 0) + (searchQuery ? 1 : 0);
 

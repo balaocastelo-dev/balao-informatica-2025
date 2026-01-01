@@ -78,9 +78,9 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
 
   // Separate parent categories and subcategories
-  const parentCategories = categories.filter(c => !c.parent_id);
+  const parentCategories = [...categories.filter(c => !c.parent_id)].sort((a, b) => a.order_index - b.order_index);
   const getSubcategories = (parentId: string): CategoryData[] => 
-    categories.filter(c => c.parent_id === parentId);
+    [...categories.filter(c => c.parent_id === parentId)].sort((a, b) => a.order_index - b.order_index);
 
   const isActive = (path: string) => location.pathname === path;
   const isCategoryActive = (slug: string) => location.pathname === `/categoria/${slug}`;
