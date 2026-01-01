@@ -361,11 +361,23 @@ const AdminPage = () => {
     setSupabaseUrlInput(status.url || '');
   }, []);
   const handleSaveSupabase = async () => {
-    if (!supabaseUrlInput.trim() || !supabaseKeyInput.trim()) {
+    let url = supabaseUrlInput.trim();
+    let key = supabaseKeyInput.trim();
+
+    if (!url || !key) {
       toast({ title: 'Informe URL e chave do Supabase', variant: 'destructive' });
       return;
     }
-    setSupabaseConfig(supabaseUrlInput.trim(), supabaseKeyInput.trim());
+
+    // Auto-fix URL if it's the dashboard URL
+    const dashboardMatch = url.match(/supabase\.com\/dashboard\/project\/([a-zA-Z0-9]+)/);
+    if (dashboardMatch) {
+      url = `https://${dashboardMatch[1]}.supabase.co`;
+      setSupabaseUrlInput(url);
+      toast({ title: 'URL corrigida para formato de API' });
+    }
+
+    setSupabaseConfig(url, key);
     setSupabaseNeedsConfig(false);
     toast({ title: 'Supabase configurado' });
     await refreshCategories();
@@ -403,21 +415,33 @@ const AdminPage = () => {
       setLoginError('Usuário ou senha incorretos');
     }
   };
+
   const handleTestSupabase = async () => {
-    const url = supabaseUrlInput.trim();
-    const key = supabaseKeyInput.trim();
+    let url = supabaseUrlInput.trim();
+    let key = supabaseKeyInput.trim();
+
+    // Auto-fix URL for testing too
+    const dashboardMatch = url.match(/supabase\.com\/dashboard\/project\/([a-zA-Z0-9]+)/);
+    if (dashboardMatch) {
+      url = `https://${dashboardMatch[1]}.supabase.co`;
+      setSupabaseUrlInput(url);
+    }
+
     if (url && key) {
       setSupabaseConfig(url, key);
     }
+    
     try {
-      const { error } = await supabase.from('blog_articles').select('*').limit(1);
+      const { data, error } = await supabase.from('blog_articles').select('count', { count: 'exact', head: true });
       if (error) {
-        toast({ title: 'Falha na conexão com Supabase', variant: 'destructive' });
+        console.error('Supabase connection error:', error);
+        toast({ title: `Falha na conexão: ${error.message}`, variant: 'destructive' });
       } else {
         toast({ title: 'Conexão com Supabase OK' });
       }
-    } catch {
-      toast({ title: 'Erro ao conectar ao Supabase', variant: 'destructive' });
+    } catch (err: any) {
+      console.error('Supabase connection exception:', err);
+      toast({ title: `Erro ao conectar: ${err.message || 'Desconhecido'}`, variant: 'destructive' });
     }
   };
 
