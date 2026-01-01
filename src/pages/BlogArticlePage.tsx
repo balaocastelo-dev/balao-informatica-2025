@@ -26,12 +26,12 @@ export default function BlogArticlePage() {
       setLoading(true);
       const key = params.slug || "";
       try {
-        let query = supabase.from("blog_articles").select("*").eq("status", "published").limit(1);
-        if (key.match(/^[0-9a-f-]{36}$/i)) {
-          query = query.eq("id", key);
-        } else {
-          query = query.eq("slug", key);
-        }
+        const query = supabase
+          .from("blog_articles")
+          .select("*")
+          .eq("status", "published")
+          .or(`slug.eq.${key},id.eq.${key}`)
+          .limit(1);
         const { data } = await query;
         setArticle((data && data[0]) ? data[0] as any : null);
       } catch {

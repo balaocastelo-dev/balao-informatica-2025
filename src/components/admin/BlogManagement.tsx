@@ -137,9 +137,17 @@ export function BlogManagement() {
   };
 
   const saveArticle = async () => {
+    const makeSlug = (s: string) =>
+      s
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+    const computedSlug = form.slug.trim() || makeSlug(form.title.trim());
     const payload = {
       title: form.title.trim(),
-      slug: form.slug.trim() || undefined,
+      slug: computedSlug || undefined,
       content: form.content.trim(),
       cover_image_url: form.cover_image_url.trim() || null,
       author: form.author.trim() || null,
