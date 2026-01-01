@@ -5,7 +5,7 @@ import { useCategories, CategoryData } from '@/contexts/CategoryContext';
 import { useBanners } from '@/contexts/BannerContext';
 import { useBatchOperations } from '@/contexts/BatchOperationsContext';
 import { Product } from '@/types/product';
-import { supabase, setSupabaseConfig, getSupabaseStatus } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   Plus, 
   Trash2, 
@@ -28,8 +28,7 @@ import {
   Loader2,
   FolderEdit,
   CopyPlus,
-  Sparkles,
-  Menu as MenuIcon
+  Sparkles
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { PageLayoutEditor } from '@/components/admin/PageLayoutEditor';
@@ -40,142 +39,9 @@ import { BannerManagement } from '@/components/admin/BannerManagement';
 import { CategoryProductManager } from '@/components/admin/CategoryProductManager';
 import { BrandManagement } from '@/components/admin/BrandManagement';
 import { MercadoPagoConfig } from '@/components/admin/MercadoPagoConfig';
-import { BlogManagement } from '@/components/admin/BlogManagement';
-import { useMenuItems } from '@/contexts/MenuItemsContext';
+ 
 
-function MenuManager() {
-  const { items, loading, updateItem } = useMenuItems();
-  const [uploadingSlug, setUploadingSlug] = useState<string | null>(null);
-  const sorted = [...items].sort((a, b) => a.order_index - b.order_index);
-
-  const toggleActive = async (slug: string, current: boolean) => {
-    await updateItem(slug, { active: !current });
-    toast({ title: !current ? 'Item ativado' : 'Item desativado' });
-  };
-
-  const moveItem = async (slug: string, direction: "up" | "down") => {
-    const index = sorted.findIndex(i => i.slug === slug);
-    if (index < 0) return;
-    const targetIndex = direction === "up" ? index - 1 : index + 1;
-    if (targetIndex < 0 || targetIndex >= sorted.length) return;
-    const current = sorted[index];
-    const neighbor = sorted[targetIndex];
-    await updateItem(current.slug, { order_index: neighbor.order_index });
-    await updateItem(neighbor.slug, { order_index: current.order_index });
-    toast({ title: 'Ordem atualizada' });
-  };
-
-  const handleImageUpload = async (slug: string, e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploadingSlug(slug);
-    try {
-      const ext = file.name.split('.').pop() || 'jpg';
-      const fileName = `${Date.now()}.${ext}`;
-      const path = `menu/${slug}/${fileName}`;
-      const { error: uploadError } = await supabase.storage
-        .from('banners')
-        .upload(path, file, { cacheControl: '3600', upsert: true, contentType: file.type || 'image/*' });
-      if (uploadError) throw uploadError;
-      const { data } = supabase.storage.from('banners').getPublicUrl(path);
-      await updateItem(slug, { image_url: data.publicUrl });
-      toast({ title: 'Imagem atualizada' });
-    } catch {
-      toast({ title: 'Erro ao enviar imagem', variant: 'destructive' });
-    }
-    setUploadingSlug(null);
-    e.target.value = '';
-  };
-
-  const handleImageUrlSave = async (slug: string, url: string) => {
-    await updateItem(slug, { image_url: url || null });
-    toast({ title: 'Imagem definida' });
-  };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      <div className="bg-white border border-zinc-200 rounded-xl">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
-          {sorted.map((item) => (
-            <div key={item.slug} className="border border-zinc-200 rounded-lg p-4 bg-white">
-              <div className="flex items-center justify-between">
-                <div className="font-bold">{item.name}</div>
-                <span className="text-xs text-muted-foreground">{item.route}</span>
-              </div>
-              <div className="mt-3 flex items-center gap-2">
-                <button
-                  onClick={() => moveItem(item.slug, 'up')}
-                  className="px-2 py-1 rounded-lg border border-zinc-300 hover:border-primary hover:text-primary transition-colors"
-                >
-                  ↑
-                </button>
-                <button
-                  onClick={() => moveItem(item.slug, 'down')}
-                  className="px-2 py-1 rounded-lg border border-zinc-300 hover:border-primary hover:text-primary transition-colors"
-                >
-                  ↓
-                </button>
-                <button
-                  onClick={() => toggleActive(item.slug, item.active)}
-                  className={`px-3 py-1 rounded-lg transition-colors ${item.active ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-zinc-200 text-zinc-700 hover:bg-zinc-300'}`}
-                >
-                  {item.active ? 'Ativo' : 'Inativo'}
-                </button>
-              </div>
-              <div className="mt-4 space-y-2">
-                <div className="aspect-[3/1] bg-zinc-100 rounded-lg overflow-hidden border border-zinc-200 flex items-center justify-center">
-                  {item.image_url ? (
-                    <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-xs text-muted-foreground">Sem imagem</span>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    disabled={uploadingSlug === item.slug}
-                    onChange={(e) => handleImageUpload(item.slug, e)}
-                    className="block w-full text-sm file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border file:border-zinc-300 file:text-sm file:bg-white file:hover:border-primary file:hover:text-primary"
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="url"
-                    defaultValue={item.image_url || ''}
-                    placeholder="URL da imagem"
-                    className="input-field flex-1"
-                    onBlur={(e) => handleImageUrlSave(item.slug, e.target.value)}
-                  />
-                  <button
-                    onClick={(e) => {
-                      const input = (e.currentTarget.previousElementSibling as HTMLInputElement | null);
-                      if (input) handleImageUrlSave(item.slug, input.value);
-                    }}
-                    className="btn-secondary"
-                  >
-                    Salvar
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-      <p className="text-xs text-muted-foreground">
-        Dica: use as setas para ajustar a posição. Nenhum item é removido; tudo é configurável.
-      </p>
-    </div>
-  );
-}
+ 
 
 const ADMIN_CREDENTIALS = {
   username: 'balao2025',
@@ -193,7 +59,7 @@ const AdminPage = () => {
   const [loginForm, setLoginForm] = useState({ username: '', password: '' });
   const [loginError, setLoginError] = useState('');
 
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'banners' | 'categories' | 'brands' | 'layout' | 'email' | 'orders' | 'payments' | 'menu' | 'blog' | 'supabase'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'banners' | 'categories' | 'brands' | 'layout' | 'email' | 'orders' | 'payments'>('dashboard');
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
@@ -244,9 +110,6 @@ const AdminPage = () => {
   const [productModelFilter, setProductModelFilter] = useState<string>('');
   const [productNameFilter, setProductNameFilter] = useState<string>('');
   const [productIdFilter, setProductIdFilter] = useState<string>('');
-  const [supabaseUrlInput, setSupabaseUrlInput] = useState('');
-  const [supabaseKeyInput, setSupabaseKeyInput] = useState('');
-  const [supabaseNeedsConfig, setSupabaseNeedsConfig] = useState(false);
 
   // Integrações removidas
 
@@ -355,44 +218,7 @@ const AdminPage = () => {
       setIsAuthenticated(true);
     }
   }, []);
-  useEffect(() => {
-    const status = getSupabaseStatus();
-    setSupabaseNeedsConfig(status.usingPlaceholder);
-    setSupabaseUrlInput(status.url || '');
-  }, []);
-  const handleSaveSupabase = async () => {
-    let url = supabaseUrlInput.trim();
-    let key = supabaseKeyInput.trim();
-
-    if (!url || !key) {
-      toast({ title: 'Informe URL e chave do Supabase', variant: 'destructive' });
-      return;
-    }
-
-    // Auto-fix URL if it's the dashboard URL
-    const dashboardMatch = url.match(/supabase\.com\/dashboard\/project\/([a-zA-Z0-9]+)/);
-    if (dashboardMatch) {
-      url = `https://${dashboardMatch[1]}.supabase.co`;
-      setSupabaseUrlInput(url);
-      toast({ title: 'URL corrigida para formato de API' });
-    }
-
-    setSupabaseConfig(url, key);
-    setSupabaseNeedsConfig(false);
-    toast({ title: 'Supabase configurado' });
-    await refreshCategories();
-    await refreshProducts();
-    try {
-      const { error } = await supabase.from('categories').select('count', { count: 'exact', head: true });
-      if (error) {
-        toast({ title: 'Falha ao ler categorias', variant: 'destructive' });
-      } else {
-        toast({ title: 'Categorias carregadas' });
-      }
-    } catch {
-      toast({ title: 'Erro ao ler categorias', variant: 'destructive' });
-    }
-  };
+  useEffect(() => {}, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -426,34 +252,7 @@ const AdminPage = () => {
     }
   };
 
-  const handleTestSupabase = async () => {
-    let url = supabaseUrlInput.trim();
-    let key = supabaseKeyInput.trim();
-
-    // Auto-fix URL for testing too
-    const dashboardMatch = url.match(/supabase\.com\/dashboard\/project\/([a-zA-Z0-9]+)/);
-    if (dashboardMatch) {
-      url = `https://${dashboardMatch[1]}.supabase.co`;
-      setSupabaseUrlInput(url);
-    }
-
-    if (url && key) {
-      setSupabaseConfig(url, key);
-    }
-    
-    try {
-      const { data, error } = await supabase.from('blog_articles').select('count', { count: 'exact', head: true });
-      if (error) {
-        console.error('Supabase connection error:', error);
-        toast({ title: `Falha na conexão: ${error.message}`, variant: 'destructive' });
-      } else {
-        toast({ title: 'Conexão com Supabase OK' });
-      }
-    } catch (err: any) {
-      console.error('Supabase connection exception:', err);
-      toast({ title: `Erro ao conectar: ${err.message || 'Desconhecido'}`, variant: 'destructive' });
-    }
-  };
+  const handleTestSupabase = async () => {};
 
   const handleLogout = () => {
     setIsAuthenticated(false);
@@ -1357,30 +1156,6 @@ const AdminPage = () => {
       </header>
 
       <main className="container-admin py-6">
-        {supabaseNeedsConfig && (
-          <div className="mb-4 p-4 border border-border rounded-lg bg-secondary">
-            <p className="text-sm mb-2 text-foreground">Configurar Supabase para carregar categorias e produtos.</p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-              <input
-                type="text"
-                value={supabaseUrlInput}
-                onChange={e => setSupabaseUrlInput(e.target.value)}
-                className="input-field"
-                placeholder="SUPABASE_URL"
-              />
-              <input
-                type="text"
-                value={supabaseKeyInput}
-                onChange={e => setSupabaseKeyInput(e.target.value)}
-                className="input-field"
-                placeholder="SUPABASE_PUBLISHABLE_KEY"
-              />
-              <button onClick={handleSaveSupabase} className="btn-primary">
-                Salvar
-              </button>
-            </div>
-          </div>
-        )}
         {/* Tabs */}
         <div className="flex gap-2 mb-4 border-b border-border overflow-x-auto scrollbar-hide">
           <button
@@ -1472,27 +1247,9 @@ const AdminPage = () => {
             Pedidos
           </button>
           <button
-            onClick={() => setActiveTab('menu')}
-            className={`px-3 py-2 font-medium transition-colors border-b-2 -mb-px flex items-center gap-2 whitespace-nowrap ${
-              activeTab === 'menu' 
-                ? 'text-primary border-primary' 
-                : 'text-muted-foreground border-transparent hover:text-foreground'
-            }`}
-          >
-            <MenuIcon className="w-4 h-4" />
-            Menu
-          </button>
-          <button
-            onClick={() => setActiveTab('blog')}
-            className={`px-3 py-2 font-medium transition-colors border-b-2 -mb-px flex items-center gap-2 whitespace-nowrap ${
-              activeTab === 'blog' 
-                ? 'text-primary border-primary' 
-                : 'text-muted-foreground border-transparent hover:text-foreground'
-            }`}
-          >
-            <Sparkles className="w-4 h-4" />
-            Blog
-          </button>
+            onClick={() => {}}
+            className="hidden"
+          />
           <button
             onClick={() => setActiveTab('payments')}
             className={`px-3 py-2 font-medium transition-colors border-b-2 -mb-px flex items-center gap-2 whitespace-nowrap ${
@@ -1503,17 +1260,6 @@ const AdminPage = () => {
           >
             <Settings className="w-4 h-4" />
             Pagamentos
-          </button>
-          <button
-            onClick={() => setActiveTab('supabase')}
-            className={`px-3 py-2 font-medium transition-colors border-b-2 -mb-px flex items-center gap-2 whitespace-nowrap ${
-              activeTab === 'supabase' 
-                ? 'text-primary border-primary' 
-                : 'text-muted-foreground border-transparent hover:text-foreground'
-            }`}
-          >
-            <Settings className="w-4 h-4" />
-            Supabase
           </button>
           {/* Integrações e Chat Central removidos */}
         </div>
@@ -1532,55 +1278,7 @@ const AdminPage = () => {
 
         {/* Integrações removidas */}
 
-        {/* Blog Tab */}
-        {activeTab === 'blog' && <BlogManagement />}
-        {activeTab === 'supabase' && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-bold text-foreground">Configuração do Supabase</h2>
-                <p className="text-muted-foreground">Informe URL e chave pública (anon) para conectar ao banco.</p>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-              <input
-                type="text"
-                value={supabaseUrlInput}
-                onChange={e => setSupabaseUrlInput(e.target.value)}
-                className="input-field"
-                placeholder="SUPABASE_URL"
-              />
-              <input
-                type="text"
-                value={supabaseKeyInput}
-                onChange={e => setSupabaseKeyInput(e.target.value)}
-                className="input-field"
-                placeholder="SUPABASE_PUBLISHABLE_KEY"
-              />
-              <div className="flex gap-2">
-                <button onClick={handleSaveSupabase} className="btn-primary">
-                  Salvar
-                </button>
-                <button onClick={handleTestSupabase} className="btn-secondary">
-                  Testar conexão
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Menu Tab */}
-        {activeTab === 'menu' && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-bold text-foreground">Gerenciador do Menu de Navegação</h2>
-                <p className="text-muted-foreground">Reordene, ative/desative e defina imagens de cards</p>
-              </div>
-            </div>
-            <MenuManager />
-          </div>
-        )}
+ 
 
         {/* Products Tab */}
         {activeTab === 'products' && (
