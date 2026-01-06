@@ -1,0 +1,28 @@
+project_id = "eossaxfosnmtjksefekk"
+
+[functions.send-campaign]
+verify_jwt = false
+
+[functions.notify-order]
+verify_jwt = false
+
+[functions.chat-assistant]
+verify_jwt = false
+
+[functions.mercadopago-payment]
+verify_jwt = false
+
+[functions.mercadopago-webhook]
+verify_jwt = false
+
+[functions.cora-payment]
+verify_jwt = false
+
+[functions.stripe-status]
+verify_jwt = false
+
+[functions.stripe-payment]
+verify_jwt = false
+
+[functions.asaas-wallet]
+verify_jwt = false
