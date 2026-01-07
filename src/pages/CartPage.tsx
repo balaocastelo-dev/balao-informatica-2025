@@ -13,6 +13,7 @@ import { Trash2, Plus, Minus, ShoppingBag, CreditCard, Loader2, User, ArrowLeft,
 import { toast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button as UiButton } from '@/components/ui/button';
+import { CouponInput } from '@/components/CouponInput';
 
  
 
@@ -56,6 +57,7 @@ const CartPage = () => {
   const [pixEnabled, setPixEnabled] = useState<boolean>(true);
   const [showPixDialog, setShowPixDialog] = useState<boolean>(false);
   const [pixData, setPixData] = useState<{ qr_code_base64?: string; qr_code?: string; ticket_url?: string; status?: string; date_of_expiration?: string | null }>({});
+  const [couponDiscount, setCouponDiscount] = useState<number>(0);
   const [customerData, setCustomerData] = useState<CustomerData>({
     name: profile?.full_name || '',
     email: profile?.email || user?.email || '',
@@ -326,12 +328,13 @@ const CartPage = () => {
 
       const fullAddress = getFullAddress();
 
+      const finalTotal = Math.max(0, total - couponDiscount);
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
           user_id: user?.id || null,
           items: orderItems,
-          total: total,
+          total: finalTotal,
           payment_method: 'credit_card',
           payment_status: 'pending',
           status: 'pending',
@@ -384,7 +387,7 @@ const CartPage = () => {
             customer_address: fullAddress,
             order_id: order.id,
             items: orderItems,
-            total: total,
+            total: finalTotal,
             payment_method: 'credit_card',
             payment_status: 'pending',
           },
@@ -443,12 +446,13 @@ const CartPage = () => {
       }));
       const fullAddress = getFullAddress();
 
+      const finalTotal = Math.max(0, total - couponDiscount);
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
           user_id: user?.id || null,
           items: orderItems,
-          total: total,
+          total: finalTotal,
           payment_method: 'pix',
           payment_status: 'pending',
           status: 'pending',
@@ -496,7 +500,7 @@ const CartPage = () => {
             customer_address: fullAddress,
             order_id: order.id,
             items: orderItems,
-            total: total,
+            total: finalTotal,
             payment_method: 'pix',
             payment_status: 'pending',
           },
@@ -681,6 +685,11 @@ const CartPage = () => {
                   <CardTitle>Resumo do Pedido</CardTitle>
                 </CardHeader>
                 <CardContent>
+                  <CouponInput
+                    orderValue={total}
+                    onDiscountChange={(d) => setCouponDiscount(d)}
+                    className="mb-3"
+                  />
                   {showConfetti && (
                     <div className="relative mb-3">
                       <div className="inline-block px-3 py-1 rounded bg-green-100 text-green-800 font-medium">
@@ -755,13 +764,19 @@ const CartPage = () => {
                       <span>Subtotal</span>
                       <span>{formatPrice(total)}</span>
                     </div>
+                    {couponDiscount > 0 && (
+                      <div className="flex justify-between text-muted-foreground">
+                        <span>Desconto</span>
+                        <span>-{formatPrice(couponDiscount)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-muted-foreground">
                       <span>Frete</span>
                       <span>A calcular</span>
                     </div>
                     <div className="flex justify-between text-lg font-bold pt-2 border-t">
                       <span>Total</span>
-                      <span className="text-primary">{formatPrice(total)}</span>
+                      <span className="text-primary">{formatPrice(Math.max(0, total - couponDiscount))}</span>
                     </div>
                   </div>
                 </CardContent>
@@ -948,6 +963,12 @@ const CartPage = () => {
                   <span>Subtotal ({items.length} itens)</span>
                   <span>{formatPrice(total)}</span>
                 </div>
+                {couponDiscount > 0 && (
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Desconto</span>
+                    <span>-{formatPrice(couponDiscount)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-muted-foreground">
                   <span>Frete</span>
                   <span>A calcular</span>
@@ -955,10 +976,10 @@ const CartPage = () => {
                 <div className="border-t border-border pt-3">
                   <div className="flex justify-between text-lg font-bold text-foreground">
                     <span>Total</span>
-                    <span className="text-primary">{formatPrice(total)}</span>
+                    <span className="text-primary">{formatPrice(Math.max(0, total - couponDiscount))}</span>
                   </div>
                   <p className="text-sm text-muted-foreground mt-1">
-                    ou 12x de {formatPrice(total / 12)} sem juros
+                    ou 12x de {formatPrice(Math.max(0, total - couponDiscount) / 12)} sem juros
                   </p>
                 </div>
               </div>
