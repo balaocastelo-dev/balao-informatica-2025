@@ -12,8 +12,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 
-const ADMIN_CODE = '56676009';
-
 interface HeaderProps {
   onMenuClick?: () => void;
 }
@@ -41,13 +39,6 @@ export function Header({ onMenuClick }: HeaderProps) {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Secret admin access
-    if (searchQuery === ADMIN_CODE) {
-      setSearchQuery('');
-      navigate('/admin');
-      return;
-    }
-
     if (searchQuery.trim()) {
       navigate(`/busca?q=${encodeURIComponent(searchQuery)}`);
       setSearchQuery('');

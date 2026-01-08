@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import { useProducts } from '@/contexts/ProductContext';
 import { useCategories, CategoryData } from '@/contexts/CategoryContext';
 import { useBanners } from '@/contexts/BannerContext';
@@ -46,21 +47,15 @@ import { useMenuItems } from '@/contexts/MenuItemsContext';
 
  
 
-const ADMIN_CREDENTIALS = {
-  username: 'balao2025',
-  password: 'balao2025'
-};
-
 const AdminPage = () => {
   const navigate = useNavigate();
+  const { user, isLoading } = useAuth();
   const { products, loading: productsLoading, addProduct, updateProduct, deleteProduct, deleteProducts, importProducts, refreshProducts } = useProducts();
   const { categories, addCategory, updateCategory, deleteCategory, refreshCategories, reorderCategories } = useCategories();
   const { banners, addBanner, updateBanner, deleteBanner } = useBanners();
   const { runBatchPriceIncrease, runBatchPriceDiscount, runBatchDelete, runBatchCategoryChange, isRunning } = useBatchOperations();
   
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loginForm, setLoginForm] = useState({ username: '', password: '' });
-  const [loginError, setLoginError] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'banners' | 'categories' | 'brands' | 'layout' | 'email' | 'orders' | 'payments' | 'config' | 'coupons'>('dashboard');
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
@@ -213,53 +208,24 @@ const AdminPage = () => {
     return list;
   }, [products, productCategoryFilter, productNameFilter, productIdFilter, productModelFilter, productStockFilter, productMinPrice, productMaxPrice, productSort]);
 
-  // Check session
   useEffect(() => {
-    const adminSession = sessionStorage.getItem('admin_authenticated');
-    
-    if (adminSession === 'true') {
-      setIsAuthenticated(true);
-    }
-  }, []);
-  useEffect(() => {}, []);
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoginError('');
-
-    // 1. Check Master Credentials (Hardcoded)
-    if (loginForm.username === ADMIN_CREDENTIALS.username && 
-        loginForm.password === ADMIN_CREDENTIALS.password) {
-      setIsAuthenticated(true);
-      sessionStorage.setItem('admin_authenticated', 'true');
-      return;
-    } 
-    
-    // 2. Check Database Credentials
-    try {
-      const { data, error } = await supabase
-        .from('admin_users')
-        .select('*')
-        .eq('username', loginForm.username)
-        .eq('password', loginForm.password) // Note: In production, use hashing!
-        .single();
-
-      if (error || !data) {
-        throw new Error('Usuário ou senha incorretos');
+    const checkAdmin = async () => {
+      if (!user?.id) {
+        setIsAdmin(false);
+        return;
       }
-
-      setIsAuthenticated(true);
-      sessionStorage.setItem('admin_authenticated', 'true');
-    } catch (err) {
-      setLoginError('Usuário ou senha incorretos');
-    }
-  };
-
-  const handleTestSupabase = async () => {};
+      const { data } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'admin')
+        .limit(1);
+      setIsAdmin(!!data && data.length > 0);
+    };
+    checkAdmin();
+  }, [user]);
 
   const handleLogout = () => {
-    setIsAuthenticated(false);
-    sessionStorage.removeItem('admin_authenticated');
     navigate('/');
   };
   
@@ -1089,8 +1055,14 @@ const AdminPage = () => {
     }
   };
 
-  // Login Screen
-  if (!isAuthenticated) {
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+  if (!user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="bg-card rounded-2xl shadow-xl p-8 w-full max-w-md border border-border">
@@ -1101,46 +1073,24 @@ const AdminPage = () => {
               className="h-16 mx-auto mb-4"
             />
             <h1 className="text-2xl font-bold text-foreground">Painel Administrativo</h1>
-            <p className="text-muted-foreground mt-2">Faça login para continuar</p>
+            <p className="text-muted-foreground mt-2">Você precisa entrar na sua conta para continuar</p>
           </div>
-
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Usuário</label>
-              <input
-                type="text"
-                value={loginForm.username}
-                onChange={e => setLoginForm({ ...loginForm, username: e.target.value })}
-                className="input-field"
-                placeholder="Digite seu usuário"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Senha</label>
-              <input
-                type="password"
-                value={loginForm.password}
-                onChange={e => setLoginForm({ ...loginForm, password: e.target.value })}
-                className="input-field"
-                placeholder="Digite sua senha"
-                required
-              />
-            </div>
-            
-            {loginError && (
-              <p className="text-destructive text-sm text-center">{loginError}</p>
-            )}
-
-            <button type="submit" className="btn-primary w-full">
-              Entrar
-            </button>
-          </form>
-
-          <div className="mt-6 text-center">
-            <Link to="/" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-              ← Voltar para a loja
-            </Link>
+          <div className="space-y-4">
+            <Link to="/auth?redirect=/admin" className="btn-primary w-full text-center">Entrar</Link>
+            <Link to="/" className="btn-secondary w-full text-center">Voltar para a loja</Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="bg-card rounded-2xl shadow-xl p-8 w-full max-w-md border border-border text-center">
+          <h1 className="text-2xl font-bold text-foreground mb-2">Acesso restrito</h1>
+          <p className="text-muted-foreground">Sua conta não possui acesso administrativo.</p>
+          <div className="mt-6 flex gap-2">
+            <Link to="/" className="btn-secondary flex-1 text-center">Voltar</Link>
           </div>
         </div>
       </div>
