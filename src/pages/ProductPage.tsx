@@ -128,8 +128,7 @@ export default function ProductPage() {
         formattedText += `🔥 ${product.name}\n`;
     }
 
-    formattedText += `💰 ${formatPrice(product.price)}\n`;
-    formattedText += `.\n.\n.\n${url}`;
+    formattedText += `\n💰 ${formatPrice(product.price)}\n\n\n\n${url}`;
 
     if (navigator.share) {
       try {
