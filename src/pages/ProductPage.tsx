@@ -91,23 +91,59 @@ export default function ProductPage() {
   }, [product?.sourceUrl, product?.name]);
 
   const handleShare = async () => {
-    // Link direto do produto
-    const url = window.location.href;
-    const text = `Veja o item ${product?.name} por ${product ? formatPrice(product.price) : ''}`;
+    if (!product) return;
     
+    const url = window.location.href;
+    
+    // Parse Product Name for better formatting
+    // Expected format: "Title, CPU, GPU, RAM, SSD, Monitor..."
+    const parts = product.name.split(',').map(p => p.trim()).filter(Boolean);
+    
+    let formattedText = "";
+    
+    if (parts.length > 1) {
+        // Structured Product Name
+        const title = parts[0];
+        const otherParts = parts.slice(1);
+        
+        const cpu = otherParts.find(p => /ryzen|core\s*i\d|intel|amd|xeon|processador/i.test(p));
+        const gpu = otherParts.find(p => /rtx|gtx|radeon|geforce|rx\s*\d|nvidia|placa de video|video/i.test(p));
+        const monitor = otherParts.find(p => /monitor|tela|display|hz/i.test(p));
+        
+        const memStorage = otherParts.filter(p => 
+            (/gb|tb|ram|ssd|hd|memória|nvme/i.test(p)) && 
+            p !== cpu && 
+            p !== gpu && 
+            p !== monitor
+        );
+
+        formattedText += `🔥 ${title}\n`;
+        if (cpu) formattedText += `🧠 ${cpu}\n`;
+        if (gpu) formattedText += `🎮 ${gpu}\n`;
+        if (memStorage.length > 0) formattedText += `⚡ ${memStorage.join(' | ')}\n`;
+        if (monitor) formattedText += `🖥️ ${monitor}\n`;
+        
+    } else {
+        // Simple Product Name
+        formattedText += `🔥 ${product.name}\n`;
+    }
+
+    formattedText += `💰 ${formatPrice(product.price)}\n`;
+    formattedText += `.\n.\n.\n${url}`;
+
     if (navigator.share) {
       try {
         await navigator.share({
-          title: product?.name,
-          text: text,
+          title: product.name,
+          text: formattedText,
           url: url,
         });
       } catch (err) {
         // User cancelled
       }
     } else {
-      await navigator.clipboard.writeText(`${text} ${url}`);
-      toast.success("Link copiado!");
+      await navigator.clipboard.writeText(formattedText);
+      toast.success("Link copiado com a nova formatação!");
     }
   };
 
