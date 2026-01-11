@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
@@ -464,348 +464,433 @@ export default function PCBuilderPage() {
     }
   };
 
+  // --- LAYOUT HELPERS ---
+
   return (
     <Layout>
-      <div className="bg-zinc-50 min-h-screen pb-10">
-        {/* === HEADER FIXO (TOPO) === */}
-        <div className="bg-white border-b sticky top-16 sm:top-20 z-40 shadow-sm">
-          <div className="container-balao pt-2 pb-2">
-            {/* LINHA 1: Título e Preço */}
-            <div className="flex justify-between items-center mb-2">
-              <div className="flex items-center gap-2">
-                <div className="bg-[#E30613] text-white p-1.5 md:p-2 rounded-lg shrink-0">
-                  <Wrench className="w-4 h-4 md:w-5 md:h-5" />
-                </div>
-                <h1 className="font-bold text-base md:text-lg leading-tight">
-                  <span className="md:hidden block">Monte seu PC</span>
-                  <span className="hidden md:block">
-                    Monte seu PC <span className="text-[#E30613]">Inteligente</span>
-                  </span>
-                </h1>
-              </div>
-              <div className="text-right shrink-0">
-                <p className="text-[10px] text-zinc-400 font-bold uppercase">Total</p>
-                <p className="text-lg md:text-xl font-black text-green-600 leading-none">{formatPrice(grandTotal)}</p>
-              </div>
-            </div>
-
-            {/* LINHA 2: Botões de Ação */}
-            <div className="flex justify-between items-center gap-2 mb-2 bg-zinc-50 p-1.5 rounded-lg border border-zinc-100">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleGlobalReset}
-                className="text-red-500 hover:bg-red-50 h-8 px-2 text-xs"
-              >
-                <Trash2 className="w-3.5 h-3.5 mr-1" /> <span className="hidden sm:inline">Limpar</span>
-              </Button>
-
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
+      <div className="bg-zinc-50/50 min-h-screen pb-32 md:pb-24">
+        {/* === HEADER MOBILE (Steps Scroll) === */}
+        <div className="md:hidden bg-white border-b sticky top-16 z-30 overflow-x-auto scrollbar-hide">
+          <div className="flex p-2 gap-2 min-w-max">
+            {BUILD_STEPS.map((step, idx) => {
+              const count = (selectedParts[step.id] || []).length;
+              const isCurrent = idx === currentStep;
+              const isCompleted = count > 0;
+              
+              return (
+                <button
+                  key={step.id}
                   onClick={() => {
-                    setCurrentStep(Math.max(0, currentStep - 1));
+                    setCurrentStep(idx);
                     setShowSummary(false);
                   }}
-                  disabled={currentStep === 0 && !showSummary}
-                  className="h-8 px-2 text-xs"
+                  className={cn(
+                    "flex flex-col items-center justify-center w-20 py-2 rounded-lg transition-all relative",
+                    isCurrent ? "bg-zinc-900 text-white shadow-md scale-105" : "bg-white text-zinc-500 border border-zinc-100",
+                    !isCurrent && isCompleted && "bg-green-50 text-green-700 border-green-200"
+                  )}
                 >
-                  <ArrowLeft className="w-3.5 h-3.5 mr-1" /> Voltar
-                </Button>
-
-                {showSummary ? (
-                  <Button
-                    size="sm"
-                    onClick={handleFinalizeBuild}
-                    disabled={!requiredMet}
-                    className="bg-green-600 hover:bg-green-700 text-white font-bold animate-pulse h-8 px-3 text-xs"
-                  >
-                    <ShoppingCart className="w-3.5 h-3.5 mr-2" /> COMPRAR
-                  </Button>
-                ) : (
-                  <Button
-                    size="sm"
-                    onClick={advanceStep}
-                    className="bg-zinc-900 text-white hover:bg-black h-8 px-3 text-xs"
-                  >
-                    {currentStep < BUILD_STEPS.length - 1 ? "Próximo" : "Resumo"}{" "}
-                    <ChevronRight className="w-3.5 h-3.5 ml-1" />
-                  </Button>
-                )}
-              </div>
-            </div>
-
-            {/* === LINHA 3: CATEGORIAS (MULTILINHA - VISÍVEL SEM SCROLL) === */}
-            {!showSummary && (
-              <div className="flex flex-wrap justify-center gap-1.5 pb-1">
-                {BUILD_STEPS.map((step, idx) => {
-                  const count = (selectedParts[step.id] || []).length;
-                  const isCurrent = idx === currentStep;
-                  return (
-                    <button
-                      key={step.id}
-                      onClick={() => setCurrentStep(idx)}
-                      className={cn(
-                        "flex items-center gap-1 px-2 py-1 rounded-md border transition-all text-center",
-                        // Classes responsivas: Menor no mobile, normal no desktop
-                        "text-[10px] sm:text-xs font-bold",
-                        isCurrent
-                          ? "bg-zinc-900 text-white border-zinc-900 shadow-sm"
-                          : count > 0
-                            ? "bg-green-100 text-green-700 border-green-200"
-                            : "bg-white text-zinc-400 border-zinc-200 hover:border-zinc-300",
-                      )}
-                    >
-                      {/* Oculta ícone no mobile super pequeno se necessário, mas mantendo por enquanto */}
-                      <span className="hidden sm:inline">{count > 0 ? <Check className="w-3 h-3" /> : step.icon}</span>
-                      <span>{step.name}</span>
-                      {count > 1 && <span className="ml-0.5 text-[9px] bg-white/20 px-1 rounded-full">{count}</span>}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+                  <div className={cn("mb-1", isCurrent ? "text-white" : isCompleted ? "text-green-600" : "text-zinc-400")}>
+                     {isCompleted && !isCurrent ? <Check className="w-5 h-5" /> : step.icon}
+                  </div>
+                  <span className="text-[10px] font-bold leading-tight truncate w-full px-1 text-center">
+                    {step.name}
+                  </span>
+                  {count > 1 && (
+                    <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-white/20 text-[9px] font-bold">
+                      {count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        {/* === CONTEÚDO === */}
-        {/* Ajuste de scroll-margin para compensar o header maior */}
-        <div ref={contentRef} className="container-balao py-6 px-4 scroll-mt-16 sm:scroll-mt-20">
-          {showSummary ? (
-            <div className="grid md:grid-cols-3 gap-8 animate-in fade-in">
-              <div className="md:col-span-2 space-y-4">
-                <h2 className="text-xl font-bold flex items-center gap-2 mt-4">
-                  <Check className="w-6 h-6 text-green-500" /> Resumo do Setup
-                </h2>
-
-                {BUILD_STEPS.map((step) => {
-                  const parts = selectedParts[step.id] || [];
-                  if (parts.length === 0 && !step.required) return null;
-
-                  return (
-                    <Card
-                      key={step.id}
-                      className={cn(
-                        "transition-all",
-                        parts.length ? "border-green-200 bg-white" : "border-red-200 bg-red-50",
-                      )}
-                    >
-                      <div className="p-3 flex gap-3 items-start">
-                        <div className="p-2 bg-zinc-100 rounded-lg text-zinc-500">{step.icon}</div>
-                        <div className="flex-1">
-                          <div className="flex justify-between">
-                            <p className="text-xs font-bold uppercase text-zinc-400">{step.name}</p>
-                            {parts.length === 0 && (
-                              <span className="text-xs font-bold text-red-500">Obrigatório - Faltando</span>
-                            )}
-                          </div>
-                          {parts.length > 0 && (
-                            <div className="mt-2 space-y-2">
-                              {parts.map((p, i) => (
-                                <div key={i} className="flex justify-between items-center bg-zinc-50 p-2 rounded">
-                                  <span className="text-sm font-medium line-clamp-1">{p.name}</span>
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-sm font-bold text-green-700">{formatPrice(p.price)}</span>
-                                    <Button
-                                      size="icon"
-                                      variant="ghost"
-                                      className="h-6 w-6 text-red-400"
-                                      onClick={() => removeOne(step.id, p.id)}
-                                    >
-                                      <Trash2 className="w-3 h-3" />
-                                    </Button>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </Card>
-                  );
-                })}
+        <div className="container-balao mx-auto px-4 py-6 md:py-8">
+          <div className="flex flex-col md:flex-row gap-8">
+            
+            {/* === SIDEBAR (Desktop Steps) === */}
+            <aside className="hidden md:block w-64 shrink-0 space-y-2 sticky top-24 h-fit max-h-[calc(100vh-120px)] overflow-y-auto pr-2 custom-scrollbar">
+               <div className="mb-6 px-2">
+                <h1 className="text-2xl font-black tracking-tight text-zinc-900">
+                  Monte seu PC
+                  <span className="text-[#E30613] block text-sm font-bold uppercase tracking-wider mt-1">Inteligente</span>
+                </h1>
+                <p className="text-xs text-zinc-500 mt-2">
+                  Escolha as peças e verifique a compatibilidade em tempo real.
+                </p>
               </div>
 
-              <Card className="h-fit sticky top-16 sm:top-20 shadow-xl border-green-100">
-                <CardHeader className="bg-zinc-900 text-white py-4 rounded-t-xl">
-                  <CardTitle>Investimento</CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 space-y-4">
-                  <div className="flex justify-between text-zinc-600">
-                    <span>Peças</span> <span>{formatPrice(partsTotal)}</span>
-                  </div>
-                  <div className="flex justify-between text-zinc-600">
-                    <span className="flex items-center gap-1">
-                      Montagem Pro <Info className="w-3 h-3" />
-                    </span>
-                    <span>{formatPrice(labor)}</span>
-                  </div>
-                  <div className="border-t pt-4 flex justify-between text-2xl font-black text-green-600">
-                    <span>Total</span> <span>{formatPrice(grandTotal)}</span>
-                  </div>
-                  <Button
-                    onClick={handleFinalizeBuild}
-                    disabled={!requiredMet}
-                    className="w-full bg-green-600 hover:bg-green-700 h-14 text-lg mt-4 shadow-lg shadow-green-200"
+              {BUILD_STEPS.map((step, idx) => {
+                const count = (selectedParts[step.id] || []).length;
+                const isCurrent = idx === currentStep && !showSummary;
+                const isCompleted = count > 0;
+
+                return (
+                  <button
+                    key={step.id}
+                    onClick={() => {
+                      setCurrentStep(idx);
+                      setShowSummary(false);
+                    }}
+                    className={cn(
+                      "w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left group",
+                      isCurrent 
+                        ? "bg-zinc-900 text-white shadow-lg shadow-zinc-200" 
+                        : "hover:bg-white hover:shadow-sm text-zinc-600",
+                      !isCurrent && isCompleted && "bg-green-50 text-green-700 border border-green-100"
+                    )}
                   >
-                    <ShoppingCart className="w-5 h-5 mr-2" /> Confirmar Compra
-                  </Button>
-                  {!requiredMet && (
-                    <div className="bg-red-50 text-red-600 p-3 rounded text-xs text-center border border-red-200 flex items-center justify-center gap-2">
-                      <AlertTriangle className="w-4 h-4" /> Faltam peças obrigatórias!
+                    <div className={cn(
+                      "p-2 rounded-lg transition-colors",
+                      isCurrent ? "bg-white/10 text-white" : isCompleted ? "bg-green-100 text-green-600" : "bg-zinc-100 text-zinc-400 group-hover:bg-zinc-200"
+                    )}>
+                      {isCompleted && !isCurrent ? <Check className="w-4 h-4" /> : step.icon}
                     </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={cn("text-sm font-bold truncate", isCurrent ? "text-white" : "text-zinc-700")}>
+                        {step.name}
+                      </p>
+                      <p className={cn("text-[10px] truncate", isCurrent ? "text-zinc-400" : "text-zinc-400")}>
+                        {count > 0 ? `${count} selecionado(s)` : step.description}
+                      </p>
+                    </div>
+                    {step.required && !isCompleted && (
+                       <div className="w-1.5 h-1.5 rounded-full bg-red-400" title="Obrigatório" />
+                    )}
+                  </button>
+                );
+              })}
+
+              <div className="pt-4 mt-4 border-t border-zinc-200">
+                <button
+                  onClick={() => setShowSummary(true)}
+                  className={cn(
+                    "w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left",
+                    showSummary 
+                      ? "bg-zinc-900 text-white shadow-lg" 
+                      : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
                   )}
-                </CardContent>
-              </Card>
-            </div>
-          ) : (
-            <div className="animate-in fade-in">
-              <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6 pt-2">
-                <div className="flex items-center gap-3 self-start">
-                  <div className="p-3 bg-white rounded-xl shadow-sm border border-zinc-100 hidden md:block">
-                    {BUILD_STEPS[currentStep].icon}
+                >
+                  <div className="p-2 rounded-lg bg-white/10">
+                    <FileText className="w-4 h-4" />
                   </div>
                   <div>
-                    <h2 className="text-2xl font-black text-zinc-800 flex items-center gap-2">
-                      <span className="md:hidden">{BUILD_STEPS[currentStep].icon}</span>
-                      {BUILD_STEPS[currentStep].name}
-                    </h2>
-                    <p className="text-sm text-zinc-500">{BUILD_STEPS[currentStep].description}</p>
+                    <p className="text-sm font-bold">Resumo do Pedido</p>
+                    <p className="text-[10px] opacity-70">Finalizar montagem</p>
                   </div>
-                </div>
-                <div className="flex gap-2 w-full md:w-auto">
-                  <div className="relative flex-1 md:w-64">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
-                    <Input
-                      placeholder="Buscar..."
-                      className="pl-9 bg-white"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                  </div>
-                  <PriceFilter
-                    minPrice={minPrice}
-                    maxPrice={maxPrice}
-                    onFilterChange={(min, max) => {
-                      setMinPrice(min);
-                      setMaxPrice(max);
-                    }}
-                    sortOrder={sortOrder}
-                    onSortChange={(order) => setSortOrder(order)}
-                  />
-                </div>
+                </button>
               </div>
+            </aside>
 
-              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 md:gap-3">
-                {loading
-                  ? Array.from({ length: 8 }).map((_, i) => (
-                      <div
-                        key={i}
-                        className="bg-white rounded-xl border border-zinc-200 overflow-hidden animate-pulse"
-                      >
-                        <div className="aspect-[4/3] md:aspect-square p-2 md:p-4 bg-zinc-100" />
-                        <div className="p-2 md:p-3 space-y-2">
-                          <div className="h-3 bg-zinc-100 rounded" />
-                          <div className="h-4 bg-zinc-100 rounded w-1/2" />
-                        </div>
+            {/* === MAIN CONTENT === */}
+            <main className="flex-1 min-w-0">
+              {showSummary ? (
+                /* === SUMMARY VIEW === */
+                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-2xl font-bold flex items-center gap-2">
+                      <div className="bg-green-100 p-2 rounded-lg text-green-600">
+                        <Check className="w-6 h-6" />
                       </div>
-                    ))
-                  : filteredProducts.map((product) => {
-                   const stepId = BUILD_STEPS[currentStep].id;
-                   const currentList = selectedParts[stepId] || [];
-                   const qty = currentList.filter((p) => p.id === product.id).length;
-                   const isPromptOpen = promptProduct === product.id;
+                      Revisão do Setup
+                    </h2>
+                    <Button variant="outline" size="sm" onClick={() => setShowSummary(false)}>
+                      <ArrowLeft className="w-4 h-4 mr-2" /> Voltar
+                    </Button>
+                  </div>
 
-                   return (
-                    <div
-                      key={product.id}
-                      onClick={() => handleCardClick(product)}
-                      className={cn(
-                        "relative group bg-white rounded-xl border transition-all overflow-hidden cursor-pointer",
-                        qty > 0 ? "border-green-500 ring-2 ring-green-500/20" : "border-zinc-200 hover:border-zinc-400",
-                      )}
-                    >
-                      {isPromptOpen && (
-                        <div
-                          className="absolute inset-0 bg-white/95 z-30 flex flex-col items-center justify-center p-4 text-center animate-in zoom-in-95 duration-200"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <div className="bg-green-100 text-green-700 p-2 rounded-full mb-2">
-                            <Check className="w-6 h-6" />
-                          </div>
-                          <p className="font-bold text-zinc-800 text-sm mb-1">Adicionado!</p>
-                          <p className="text-xs text-zinc-500 mb-4">Continuar?</p>
-                          <div className="flex flex-col gap-2 w-full">
-                            <Button
-                              size="sm"
-                              className="bg-zinc-800 hover:bg-zinc-900 h-8 text-xs font-bold"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setPromptProduct(null);
-                              }}
-                            >
-                              <Plus className="w-3 h-3 mr-1" /> ESCOLHER OUTRO
-                            </Button>
-                            <Button size="sm" variant="outline" className="h-8 text-xs" onClick={advanceStep}>
-                              PRÓXIMA ETAPA <ChevronRight className="w-3 h-3 ml-1" />
-                            </Button>
-                          </div>
-                        </div>
-                      )}
+                  <div className="grid lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-2 space-y-4">
+                      {BUILD_STEPS.map((step) => {
+                        const parts = selectedParts[step.id] || [];
+                        if (parts.length === 0 && !step.required) return null;
 
-                      {qty > 0 && (
-                        <div className="absolute top-2 right-2 z-10 bg-green-500 text-white font-bold text-[10px] px-2 py-0.5 rounded-full shadow-sm">
-                          {qty}x
-                        </div>
-                      )}
-
-                      <div className="absolute top-2 left-2 z-10">
-                        <Badge className="bg-green-50 text-green-700 border-green-100 text-[9px] px-1.5 py-0">
-                          Compatível
-                        </Badge>
-                      </div>
-
-                      <div className="aspect-[4/3] md:aspect-square p-2 md:p-4 flex items-center justify-center bg-white">
-                        {product.image ? (
-                          <img src={product.image} className="w-full h-full object-contain" />
-                        ) : (
-                          <div className="text-zinc-200">{BUILD_STEPS[currentStep].icon}</div>
-                        )}
-                      </div>
-
-                      <div className="p-2 md:p-3 border-t border-zinc-50">
-                        <h3 className="text-[11px] md:text-xs font-bold text-zinc-800 line-clamp-2 h-8 mb-1">
-                          {product.name}
-                        </h3>
-                        <p className="text-sm md:text-base font-black text-green-600">{formatPrice(product.price)}</p>
-                        {qty > 0 && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="mt-2 w-full h-6 text-[10px] md:text-[11px] bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-700"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              removeOne(stepId, product.id);
-                            }}
+                        return (
+                          <div 
+                            key={step.id} 
+                            className={cn(
+                              "bg-white rounded-xl border p-4 transition-all hover:shadow-md",
+                              parts.length === 0 ? "border-red-200 bg-red-50/30" : "border-zinc-100"
+                            )}
                           >
-                            <Minus className="w-3 h-3 mr-1" /> Remover
-                          </Button>
+                            <div className="flex items-start gap-4">
+                              <div className={cn(
+                                "p-3 rounded-xl shrink-0",
+                                parts.length === 0 ? "bg-red-100 text-red-500" : "bg-zinc-50 text-zinc-500"
+                              )}>
+                                {step.icon}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex justify-between items-center mb-2">
+                                  <h3 className="font-bold text-zinc-800">{step.name}</h3>
+                                  {parts.length === 0 && (
+                                    <span className="text-[10px] font-bold bg-red-100 text-red-600 px-2 py-0.5 rounded-full">
+                                      OBRIGATÓRIO
+                                    </span>
+                                  )}
+                                </div>
+                                
+                                {parts.length > 0 ? (
+                                  <div className="space-y-3">
+                                    {parts.map((p, i) => (
+                                      <div key={i} className="flex gap-3 items-center bg-zinc-50 p-3 rounded-lg border border-zinc-100">
+                                        <div className="h-10 w-10 bg-white rounded-md border border-zinc-100 p-1 shrink-0">
+                                          {p.image ? (
+                                            <img src={p.image} className="w-full h-full object-contain" />
+                                          ) : (
+                                            <Box className="w-full h-full text-zinc-300" />
+                                          )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                          <p className="text-sm font-medium text-zinc-700 truncate">{p.name}</p>
+                                          <p className="text-xs font-bold text-green-600">{formatPrice(p.price)}</p>
+                                        </div>
+                                        <Button
+                                          size="icon"
+                                          variant="ghost"
+                                          className="h-8 w-8 text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded-full"
+                                          onClick={() => removeOne(step.id, p.id)}
+                                        >
+                                          <Trash2 className="w-4 h-4" />
+                                        </Button>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <p className="text-sm text-zinc-400 italic">Nenhum item selecionado.</p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <div className="lg:col-span-1">
+                      <div className="bg-white rounded-2xl border border-zinc-100 shadow-xl p-6 sticky top-24">
+                        <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
+                          <ShoppingCart className="w-5 h-5" /> Investimento
+                        </h3>
+                        
+                        <div className="space-y-3 text-sm mb-6">
+                          <div className="flex justify-between text-zinc-500">
+                            <span>Subtotal (Peças)</span>
+                            <span>{formatPrice(partsTotal)}</span>
+                          </div>
+                          <div className="flex justify-between text-zinc-500">
+                            <span className="flex items-center gap-1">Montagem <Info className="w-3 h-3"/></span>
+                            <span>{formatPrice(labor)}</span>
+                          </div>
+                          <div className="h-px bg-zinc-100 my-2" />
+                          <div className="flex justify-between items-end">
+                            <span className="font-bold text-zinc-800">Total à vista</span>
+                            <span className="text-2xl font-black text-green-600 leading-none">{formatPrice(grandTotal)}</span>
+                          </div>
+                          <p className="text-[10px] text-zinc-400 text-right">ou em até 12x no cartão</p>
+                        </div>
+
+                        <Button 
+                          className="w-full h-12 text-base font-bold bg-[#E30613] hover:bg-[#c90511] shadow-lg shadow-red-100"
+                          onClick={handleFinalizeBuild}
+                          disabled={!requiredMet}
+                        >
+                          FINALIZAR PEDIDO
+                        </Button>
+                        
+                        {!requiredMet && (
+                           <p className="text-xs text-red-500 text-center mt-3 bg-red-50 p-2 rounded-lg border border-red-100">
+                             Você precisa selecionar todas as peças obrigatórias.
+                           </p>
                         )}
                       </div>
                     </div>
-                  );
-                })}
-              </div>
+                  </div>
+                </div>
+              ) : (
+                /* === PRODUCT SELECTION VIEW === */
+                <div className="animate-in fade-in duration-300">
+                  {/* Step Header */}
+                  <div className="bg-white rounded-2xl border border-zinc-100 p-6 mb-6 shadow-sm relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-4 opacity-5">
+                      {React.cloneElement(BUILD_STEPS[currentStep].icon as React.ReactElement, { className: "w-32 h-32" })}
+                    </div>
+                    
+                    <div className="relative z-10">
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                          <div className="flex items-center gap-2 text-zinc-500 text-sm font-medium mb-1 uppercase tracking-wider">
+                            <span className="bg-zinc-100 px-2 py-0.5 rounded text-[10px]">Etapa {currentStep + 1} de {BUILD_STEPS.length}</span>
+                            {BUILD_STEPS[currentStep].required ? (
+                              <span className="text-red-500 flex items-center gap-1"><AlertTriangle className="w-3 h-3"/> Obrigatório</span>
+                            ) : (
+                              <span className="text-green-600 flex items-center gap-1"><Check className="w-3 h-3"/> Opcional</span>
+                            )}
+                          </div>
+                          <h2 className="text-3xl font-black text-zinc-800 mb-1">{BUILD_STEPS[currentStep].name}</h2>
+                          <p className="text-zinc-500 max-w-lg">{BUILD_STEPS[currentStep].description}</p>
+                        </div>
+                        
+                        <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+                           <div className="relative flex-1 sm:w-64">
+                              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                              <Input
+                                placeholder={`Buscar ${BUILD_STEPS[currentStep].name.toLowerCase()}...`}
+                                className="pl-9 bg-zinc-50 border-zinc-200 focus:bg-white transition-all"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                              />
+                           </div>
+                           <PriceFilter
+                              minPrice={minPrice}
+                              maxPrice={maxPrice}
+                              onFilterChange={(min, max) => {
+                                setMinPrice(min);
+                                setMaxPrice(max);
+                              }}
+                              sortOrder={sortOrder}
+                              onSortChange={(order) => setSortOrder(order)}
+                           />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
 
-              {filteredProducts.length === 0 && (
-                <div className="text-center py-20 bg-white rounded-xl border border-dashed border-zinc-200">
-                  <Lock className="w-8 h-8 mx-auto text-zinc-300 mb-2" />
-                  <p className="text-sm text-zinc-500">Nenhum produto compatível encontrado.</p>
+                  {/* Products Grid */}
+                  <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
+                    {loading ? (
+                      Array.from({ length: 8 }).map((_, i) => (
+                        <div key={i} className="bg-white rounded-xl border border-zinc-100 p-4 animate-pulse space-y-3">
+                          <div className="aspect-square bg-zinc-100 rounded-lg" />
+                          <div className="h-4 bg-zinc-100 rounded w-3/4" />
+                          <div className="h-4 bg-zinc-100 rounded w-1/2" />
+                        </div>
+                      ))
+                    ) : filteredProducts.length > 0 ? (
+                      filteredProducts.map((product) => {
+                        const stepId = BUILD_STEPS[currentStep].id;
+                        const currentList = selectedParts[stepId] || [];
+                        const qty = currentList.filter((p) => p.id === product.id).length;
+                        const isSelected = qty > 0;
+
+                        return (
+                          <div
+                            key={product.id}
+                            onClick={() => handleCardClick(product)}
+                            className={cn(
+                              "group relative bg-white rounded-xl border transition-all duration-200 overflow-hidden cursor-pointer hover:shadow-lg hover:-translate-y-1",
+                              isSelected ? "border-green-500 ring-1 ring-green-500" : "border-zinc-200 hover:border-zinc-300"
+                            )}
+                          >
+                             {isSelected && (
+                               <div className="absolute top-3 right-3 z-10 bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm animate-in zoom-in">
+                                 SELECIONADO {qty > 1 && `(${qty})`}
+                               </div>
+                             )}
+
+                             <div className="aspect-square p-6 flex items-center justify-center bg-white relative">
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                <img 
+                                  src={product.image || "/placeholder.png"} 
+                                  alt={product.name}
+                                  className="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-300" 
+                                />
+                             </div>
+
+                             <div className="p-4 border-t border-zinc-50">
+                               <div className="mb-2 h-10 overflow-hidden">
+                                 <h3 className="text-xs md:text-sm font-medium text-zinc-700 line-clamp-2 leading-relaxed">
+                                   {product.name}
+                                 </h3>
+                               </div>
+                               
+                               <div className="flex items-end justify-between gap-2">
+                                 <div>
+                                   <p className="text-[10px] text-zinc-400 font-medium uppercase">À vista</p>
+                                   <p className="text-sm md:text-base font-black text-green-600">{formatPrice(product.price)}</p>
+                                 </div>
+                                 <Button 
+                                   size="sm" 
+                                   variant={isSelected ? "destructive" : "secondary"}
+                                   className={cn(
+                                     "h-8 w-8 p-0 rounded-full shadow-sm", 
+                                     isSelected ? "bg-red-50 text-red-500 hover:bg-red-100" : "bg-zinc-900 text-white hover:bg-black"
+                                   )}
+                                   onClick={(e) => {
+                                     if (isSelected) {
+                                       e.stopPropagation();
+                                       removeOne(stepId, product.id);
+                                     }
+                                   }}
+                                 >
+                                   {isSelected ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                                 </Button>
+                               </div>
+                             </div>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="col-span-full py-20 text-center">
+                        <div className="w-16 h-16 bg-zinc-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                          <Search className="w-8 h-8 text-zinc-300" />
+                        </div>
+                        <h3 className="text-lg font-bold text-zinc-800 mb-1">Nenhum produto encontrado</h3>
+                        <p className="text-zinc-500">Tente ajustar os filtros ou buscar por outro termo.</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
+            </main>
+          </div>
+        </div>
+
+        {/* === BOTTOM BAR (Floating Actions) === */}
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-t border-zinc-200 shadow-lg supports-[backdrop-filter]:bg-white/60">
+          <div className="container-balao mx-auto px-4 py-3 md:py-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex flex-col">
+                 <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Total Estimado</span>
+                 <div className="flex items-baseline gap-1">
+                   <span className="text-lg md:text-2xl font-black text-green-600">{formatPrice(grandTotal)}</span>
+                   <span className="text-[10px] md:text-xs text-zinc-500 font-medium hidden sm:inline">com montagem</span>
+                 </div>
+              </div>
+
+              <div className="flex gap-2 md:gap-3">
+                 <Button
+                   variant="outline"
+                   onClick={handleGlobalReset}
+                   className="hidden sm:flex border-red-100 text-red-500 hover:bg-red-50 hover:border-red-200"
+                 >
+                   <Trash2 className="w-4 h-4 mr-2" /> Limpar
+                 </Button>
+
+                 {!showSummary ? (
+                   <Button 
+                     onClick={advanceStep}
+                     className="bg-zinc-900 hover:bg-black text-white shadow-lg shadow-zinc-200 px-6 md:px-8 h-10 md:h-12 rounded-xl text-xs md:text-sm font-bold uppercase tracking-wide"
+                   >
+                     {currentStep < BUILD_STEPS.length - 1 ? (
+                       <>Próxima Etapa <ChevronRight className="w-4 h-4 ml-2" /></>
+                     ) : (
+                       <>Ver Resumo <FileText className="w-4 h-4 ml-2" /></>
+                     )}
+                   </Button>
+                 ) : (
+                   <Button 
+                     onClick={handleFinalizeBuild}
+                     disabled={!requiredMet}
+                     className="bg-[#E30613] hover:bg-[#c90511] text-white shadow-lg shadow-red-200 px-6 md:px-8 h-10 md:h-12 rounded-xl text-xs md:text-sm font-bold uppercase tracking-wide"
+                   >
+                     Comprar Agora <ShoppingCart className="w-4 h-4 ml-2" />
+                   </Button>
+                 )}
+              </div>
             </div>
-          )}
+          </div>
         </div>
       </div>
     </Layout>

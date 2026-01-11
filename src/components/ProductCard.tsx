@@ -161,13 +161,23 @@ export function ProductCard({ product, onClick, viewMode = 'grid' }: ProductCard
           className="w-full h-full object-contain p-3 transition-transform duration-300 group-hover:scale-105"
         />
         {product.stock !== undefined && product.stock <= 3 && product.stock > 0 && (
-          <span className="absolute top-3 left-3 bg-primary text-primary-foreground text-xs font-semibold px-2 py-1 rounded z-10">
+          <span className="absolute top-3 left-3 bg-primary text-primary-foreground text-xs font-semibold px-2 py-1 rounded z-10 shadow-md">
             Últimas unidades!
           </span>
         )}
-        {Array.isArray(product.tags) && product.tags.length > 0 && (
+        {/* Custom Badges */}
+        {Array.isArray(product.tags) && product.tags.filter(t => t.startsWith('badge:')).map((tag, i) => (
+          <span 
+            key={`badge-${i}`} 
+            className="absolute left-3 bg-[#E30613] text-white text-xs font-bold px-2 py-1 rounded z-10 shadow-md uppercase tracking-wide"
+            style={{ top: product.stock !== undefined && product.stock <= 3 && product.stock > 0 ? `${12 + (i + 1) * 32}px` : `${12 + i * 32}px` }}
+          >
+            {tag.replace('badge:', '')}
+          </span>
+        ))}
+        {Array.isArray(product.tags) && product.tags.filter(t => !t.startsWith('badge:')).length > 0 && (
           <div className="absolute bottom-3 left-3 right-3 flex flex-wrap gap-1 z-10">
-            {product.tags.slice(0, 3).map((tag, i) => (
+            {product.tags.filter(t => !t.startsWith('badge:')).slice(0, 3).map((tag, i) => (
               <span key={i} className="bg-secondary/80 text-foreground text-[11px] px-2 py-0.5 rounded">
                 {tag}
               </span>

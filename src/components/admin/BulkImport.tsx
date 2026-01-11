@@ -25,6 +25,8 @@ export const BulkImport = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('auto');
   const [newCategoryName, setNewCategoryName] = useState('');
   const [defaultTags, setDefaultTags] = useState('');
+  const [highlightTag, setHighlightTag] = useState('');
+  const [stockQuantity, setStockQuantity] = useState('10');
   const [parsedProducts, setParsedProducts] = useState<ParsedProduct[]>([]);
   const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set());
   const [activeTab, setActiveTab] = useState('input');
