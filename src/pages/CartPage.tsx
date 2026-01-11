@@ -3,28 +3,21 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { 
   Trash2, 
   ShoppingBag, 
-  CreditCard, 
   Loader2, 
   User, 
   MapPin, 
-  QrCode, 
-  ArrowLeft,
-  CheckCircle2,
-  AlertCircle
+  MessageCircle,
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { CouponInput } from '@/components/CouponInput';
 import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
 
 interface CustomerData {
   name: string;
@@ -39,20 +32,11 @@ interface CustomerData {
   state: string;
 }
 
-interface PaymentConfig {
-  publicKey: string;
-  pixEnabled: boolean;
-  cardEnabled: boolean;
-}
-
 export default function CartPage() {
-  const { items, removeFromCart, updateQuantity, clearCart, total } = useCart();
+  const { items, removeFromCart, clearCart, total } = useCart();
   const { user, profile } = useAuth();
-  const navigate = useNavigate();
   
-  const [isProcessing, setIsProcessing] = useState(false);
   const [isLoadingCep, setIsLoadingCep] = useState(false);
-  const [config, setConfig] = useState<PaymentConfig | null>(null);
   const [couponDiscount, setCouponDiscount] = useState<number>(0);
   
   const [customerData, setCustomerData] = useState<CustomerData>({
@@ -67,31 +51,6 @@ export default function CartPage() {
     city: '',
     state: ''
   });
-
-  const [paymentMethod, setPaymentMethod] = useState<'credit_card' | 'pix'>('credit_card');
-  const [showPixDialog, setShowPixDialog] = useState(false);
-  const [pixData, setPixData] = useState<{ qr_code_base64?: string; qr_code?: string; ticket_url?: string } | null>(null);
-
-  // Load Settings
-  useEffect(() => {
-    const loadConfig = async () => {
-      try {
-        const { data } = await supabase
-          .from('store_settings')
-          .select('value')
-          .eq('key', 'mercadopago_public_key')
-          .maybeSingle();
-        
-        if (data?.value) {
-          const parsed = typeof data.value === 'string' ? JSON.parse(data.value) : data.value;
-          setConfig(parsed);
-        }
-      } catch (error) {
-        console.error('Error loading payment config:', error);
-      }
-    };
-    loadConfig();
-  }, []);
 
   // Load User Profile
   useEffect(() => {
@@ -143,8 +102,9 @@ export default function CartPage() {
 
   const validateForm = () => {
     if (!customerData.name.trim()) return 'Nome é obrigatório';
-    if (!customerData.email.trim() || !/^\S+@\S+\.\S+$/.test(customerData.email)) return 'Email inválido';
-    if (!customerData.phone.trim() || customerData.phone.length < 10) return 'Telefone inválido';
+    // Basic validation, phone is important for WhatsApp contact but here we are sending TO WhatsApp.
+    // Still good to have their contact in the message.
+    if (!customerData.phone.trim()) return 'Telefone é obrigatório';
     if (!customerData.cep.trim() || customerData.cep.replace(/\D/g, '').length !== 8) return 'CEP inválido';
     if (!customerData.street.trim()) return 'Endereço incompleto';
     if (!customerData.number.trim()) return 'Número é obrigatório';
@@ -164,106 +124,45 @@ export default function CartPage() {
     return parts.join(', ');
   };
 
-  const handleCheckout = async () => {
+  const handleCheckout = () => {
     const error = validateForm();
     if (error) {
       toast({ title: 'Atenção', description: error, variant: 'destructive' });
       return;
     }
 
-    if (!config) {
-      toast({ title: 'Erro', description: 'Sistema de pagamento indisponível no momento.', variant: 'destructive' });
-      return;
-    }
+    const itemsList = items.map(item => 
+      `• ${item.quantity}x ${item.product.name} - ${(item.product.price * item.quantity).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`
+    ).join('\n');
 
-    setIsProcessing(true);
+    const subtotal = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    const discount = couponDiscount > 0 ? `\nDesconto: - ${couponDiscount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}` : '';
+    const finalTotal = Math.max(0, total - couponDiscount).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-    try {
-      const orderItems = items.map(item => ({
-        id: item.product.id,
-        name: item.product.name,
-        price: item.product.price,
-        quantity: item.quantity,
-        image: item.product.image,
-      }));
+    const message = `*Novo Pedido - Balão da Informática*\n\n` +
+      `*Cliente:* ${customerData.name}\n` +
+      `*Email:* ${customerData.email}\n` +
+      `*Telefone:* ${customerData.phone}\n\n` +
+      `*Endereço de Entrega:*\n${getFullAddress()}\n\n` +
+      `*Itens do Pedido:*\n${itemsList}\n\n` +
+      `*Resumo:*\nSubtotal: ${subtotal}${discount}\n` +
+      `*Total: ${finalTotal}*\n\n` +
+      `Gostaria de finalizar este pedido.`;
 
-      const fullAddress = getFullAddress();
-      const finalTotal = Math.max(0, total - couponDiscount);
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/5519987510267?text=${encodedMessage}`;
 
-      // Create Order
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          user_id: user?.id || null,
-          items: orderItems,
-          total: finalTotal,
-          payment_method: paymentMethod,
-          payment_status: 'pending',
-          status: 'pending',
-          customer_name: customerData.name.trim(),
-          customer_email: customerData.email.trim(),
-          customer_phone: customerData.phone.trim(),
-          customer_address: fullAddress,
-          shipping_address: fullAddress,
-        })
-        .select()
-        .single();
-
-      if (orderError) throw new Error('Erro ao criar pedido');
-
-      // Process Payment
-      const { data: paymentRes, error: paymentError } = await supabase.functions.invoke('mercadopago-payment', {
-        body: {
-          items: orderItems,
-          customer_name: customerData.name.trim(),
-          customer_email: customerData.email.trim(),
-          customer_phone: customerData.phone.trim(),
-          customer_address: fullAddress,
-          order_id: order.id,
-          payment_method: paymentMethod,
-        },
-      });
-
-      if (paymentError) throw paymentError;
-      if (paymentRes.error) throw new Error(paymentRes.error);
-
-      // Handle Success
-      if (paymentMethod === 'pix' && paymentRes.pix) {
-        setPixData(paymentRes.pix);
-        setShowPixDialog(true);
-        clearCart();
-        toast({ title: 'Pedido criado!', description: 'Use o QR Code para pagar via PIX.' });
-      } else if (paymentMethod === 'credit_card' && (paymentRes.init_point || paymentRes.checkout_url)) {
-        clearCart();
-        toast({ title: 'Redirecionando...', description: 'Você será levado ao Mercado Pago.' });
-        window.location.href = paymentRes.init_point || paymentRes.checkout_url;
-      } else {
-        throw new Error('Resposta de pagamento inválida');
-      }
-
-      // Notify & Sync
-      try {
-        await supabase.functions.invoke('notify-order', {
-          body: {
-            customer_email: customerData.email,
-            customer_name: customerData.name,
-            order_id: order.id,
-            items: orderItems,
-            total: finalTotal,
-            payment_method: paymentMethod
-          }
-        });
-        await supabase.functions.invoke('bling-sync-order', { body: { order_id: order.id } });
-      } catch (e) {
-        console.error('Background tasks error:', e);
-      }
-
-    } catch (error: any) {
-      console.error('Checkout error:', error);
-      toast({ title: 'Erro no processamento', description: error.message || 'Tente novamente.', variant: 'destructive' });
-    } finally {
-      setIsProcessing(false);
-    }
+    window.open(whatsappUrl, '_blank');
+    
+    // Optional: Clear cart logic. 
+    // We might want to keep it in case they come back, but standard flow is to clear.
+    // Let's clear it to avoid confusion.
+    clearCart();
+    
+    toast({
+      title: 'Redirecionando...',
+      description: 'Finalize seu pedido no WhatsApp.',
+    });
   };
 
   if (items.length === 0) {
@@ -398,56 +297,6 @@ export default function CartPage() {
                 </div>
               </CardContent>
             </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CreditCard className="w-5 h-5 text-primary" />
-                  Pagamento
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {!config ? (
-                  <div className="text-center py-4 text-muted-foreground">
-                    Carregando opções de pagamento...
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {config.cardEnabled && (
-                      <div 
-                        onClick={() => setPaymentMethod('credit_card')}
-                        className={`cursor-pointer rounded-xl border-2 p-4 transition-all hover:border-primary/50 ${
-                          paymentMethod === 'credit_card' ? 'border-primary bg-primary/5' : 'border-border'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <CreditCard className={`w-6 h-6 ${paymentMethod === 'credit_card' ? 'text-primary' : 'text-muted-foreground'}`} />
-                          {paymentMethod === 'credit_card' && <CheckCircle2 className="w-5 h-5 text-primary" />}
-                        </div>
-                        <h3 className="font-semibold">Cartão de Crédito</h3>
-                        <p className="text-sm text-muted-foreground">Até 12x no cartão</p>
-                      </div>
-                    )}
-
-                    {config.pixEnabled && (
-                      <div 
-                        onClick={() => setPaymentMethod('pix')}
-                        className={`cursor-pointer rounded-xl border-2 p-4 transition-all hover:border-primary/50 ${
-                          paymentMethod === 'pix' ? 'border-[#32BCAD] bg-[#32BCAD]/5' : 'border-border'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <QrCode className={`w-6 h-6 ${paymentMethod === 'pix' ? 'text-[#32BCAD]' : 'text-muted-foreground'}`} />
-                          {paymentMethod === 'pix' && <CheckCircle2 className="w-5 h-5 text-[#32BCAD]" />}
-                        </div>
-                        <h3 className="font-semibold">PIX</h3>
-                        <p className="text-sm text-muted-foreground">Aprovação imediata</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
           </div>
 
           {/* Right Column: Order Summary */}
@@ -510,74 +359,18 @@ export default function CartPage() {
                 </CardContent>
                 <CardFooter>
                   <Button 
-                    className="w-full h-12 text-lg" 
+                    className="w-full h-12 text-lg bg-[#25D366] hover:bg-[#128C7E] text-white" 
                     onClick={handleCheckout}
-                    disabled={isProcessing || !config}
                   >
-                    {isProcessing ? (
-                      <>
-                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                        Processando...
-                      </>
-                    ) : (
-                      `Finalizar Compra`
-                    )}
+                    <MessageCircle className="w-5 h-5 mr-2" />
+                    Finalizar no WhatsApp
                   </Button>
                 </CardFooter>
               </Card>
-
-              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                <CheckCircle2 className="w-4 h-4 text-green-500" />
-                Compra 100% Segura e Garantida
-              </div>
             </div>
           </div>
         </div>
       </div>
-
-      <Dialog open={showPixDialog} onOpenChange={setShowPixDialog}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-center">Pagamento via PIX</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-6 py-4">
-            <div className="text-center">
-              <p className="text-sm text-muted-foreground mb-4">
-                Escaneie o QR Code abaixo com o app do seu banco
-              </p>
-              {pixData?.qr_code_base64 && (
-                <div className="mx-auto w-48 h-48 bg-white p-2 rounded-lg border">
-                  <img 
-                    src={`data:image/jpeg;base64,${pixData.qr_code_base64}`} 
-                    alt="QR Code PIX" 
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-              )}
-            </div>
-            
-            <div className="space-y-2">
-              <Label className="text-center block">Ou copie e cole o código:</Label>
-              <div className="flex gap-2">
-                <Input readOnly value={pixData?.qr_code || ''} />
-                <Button 
-                  size="icon" 
-                  onClick={() => {
-                    navigator.clipboard.writeText(pixData?.qr_code || '');
-                    toast({ title: 'Copiado!', description: 'Código PIX copiado.' });
-                  }}
-                >
-                  <CheckCircle2 className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-
-            <div className="text-center text-sm text-muted-foreground">
-              <p>Após o pagamento, seu pedido será aprovado automaticamente.</p>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </Layout>
   );
 }

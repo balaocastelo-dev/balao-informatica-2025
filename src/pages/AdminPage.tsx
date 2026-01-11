@@ -40,10 +40,9 @@ import { OrdersManagement } from '@/components/admin/OrdersManagement';
 import { BannerManagement } from '@/components/admin/BannerManagement';
 import { CategoryProductManager } from '@/components/admin/CategoryProductManager';
 import { BrandManagement } from '@/components/admin/BrandManagement';
-import { MercadoPagoConfig } from '@/components/admin/MercadoPagoConfig';
 import { CouponsManagement } from '@/components/admin/CouponsManagement';
-import { BlingIntegration } from '@/components/admin/BlingIntegration';
 import { BulkImport } from '@/components/admin/BulkImport';
+import { BlingIntegration } from '@/components/admin/BlingIntegration';
 
 import { useMenuItems } from '@/contexts/MenuItemsContext';
 
@@ -59,7 +58,7 @@ const AdminPage = () => {
   
   const [isAdmin, setIsAdmin] = useState(false);
 
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'bulk-import' | 'banners' | 'categories' | 'brands' | 'layout' | 'email' | 'orders' | 'payments' | 'config' | 'coupons'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'bulk-import' | 'banners' | 'categories' | 'brands' | 'layout' | 'email' | 'orders' | 'bling' | 'config' | 'coupons'>('dashboard');
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showBannerModal, setShowBannerModal] = useState(false);
@@ -815,15 +814,15 @@ const AdminPage = () => {
             className="hidden"
           />
           <button
-            onClick={() => setActiveTab('payments')}
+            onClick={() => setActiveTab('bling')}
             className={`px-3 py-2 font-medium transition-colors border-b-2 -mb-px flex items-center gap-2 whitespace-nowrap ${
-              activeTab === 'payments' 
+              activeTab === 'bling' 
                 ? 'text-primary border-primary' 
                 : 'text-muted-foreground border-transparent hover:text-foreground'
             }`}
           >
             <Settings className="w-4 h-4" />
-            Pagamentos
+            Bling ERP
           </button>
           {/* Integrações e Chat Central removidos */}
         </div>
@@ -837,10 +836,9 @@ const AdminPage = () => {
         {/* Orders Tab */}
         {activeTab === 'orders' && <OrdersManagement />}
 
-        {/* Payments Tab */}
-        {activeTab === 'payments' && (
+        {/* Bling Tab */}
+        {activeTab === 'bling' && (
           <div className="space-y-8">
-            <MercadoPagoConfig />
             <BlingIntegration />
           </div>
         )}
