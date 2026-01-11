@@ -21,10 +21,32 @@ export class ErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
+
+    // Auto-reload on chunk load errors (deployment updates)
+    if (
+      error.message.includes("Failed to fetch dynamically imported module") ||
+      error.message.includes("Importing a module script failed")
+    ) {
+      window.location.reload();
+    }
   }
 
   public render() {
     if (this.state.hasError) {
+      const isChunkError = this.state.error?.message.includes("Failed to fetch dynamically imported module") ||
+                           this.state.error?.message.includes("Importing a module script failed");
+
+      if (isChunkError) {
+        return (
+          <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+            <div className="text-center">
+              <h1 className="text-xl font-bold text-blue-600 mb-2">Atualizando aplicação...</h1>
+              <p className="text-gray-500">Uma nova versão está disponível. Recarregando...</p>
+            </div>
+          </div>
+        );
+      }
+
       return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
           <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-6 text-center">
