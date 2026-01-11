@@ -128,14 +128,14 @@ export default function ProductPage() {
         formattedText += `🔥 ${product.name}\n`;
     }
 
-    formattedText += `\n💰 ${formatPrice(product.price)}\n\n\n\n${url}`;
+    formattedText += `\n\n💰 *${formatPrice(product.price)}*\n\n\n\n\`${url}\``;
 
     if (navigator.share) {
       try {
         await navigator.share({
-          title: product.name,
+          // title: product.name, // Optional, sometimes clearer without if text is rich
           text: formattedText,
-          url: url,
+          // url: url, // Removed to avoid forcing preview card
         });
       } catch (err) {
         // User cancelled
