@@ -22,6 +22,8 @@ import { bannerImageMap } from "@/config/banners";
 import { DEPARTMENTS } from "@/config/departments";
 import { useLandingPageConfigs } from "@/contexts/LandingPageConfigContext";
 import { useMenuItems } from "@/contexts/MenuItemsContext";
+import { VoiceCallModal } from "@/components/VoiceCallModal";
+import { Phone } from "lucide-react";
 
 interface Banner {
   id: string;
@@ -36,6 +38,7 @@ interface Banner {
 
 const Index = () => {
   const { products, getProductsByCategory } = useProducts();
+  const [showVoiceCall, setShowVoiceCall] = useState(false);
   const { blocks, loading } = usePageBlocks();
   const { pages } = useLandingPageConfigs();
   const { items } = useMenuItems();
