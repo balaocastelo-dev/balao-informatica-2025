@@ -355,48 +355,7 @@ const Index = () => {
           </div>
         )}
 
-        {/* BANNERS DE DESTAQUE FINAL */}
-        {footerTopBanners.length > 0 && (
-          <div className="bg-zinc-900 py-16 mt-16">
-            <div className="container-balao">
-              <h3 className="text-white text-2xl font-bold mb-8 text-center">Imperdíveis da Semana</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {footerTopBanners.slice(0, 2).map((banner) => (
-                  <div key={banner.id} className="group relative overflow-hidden rounded-2xl border border-zinc-800">
-                    {banner.link ? (
-                      <Link to={banner.link}>
-                        <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-all z-10" />
-                        <img
-                          src={getResolvedImageUrl(banner.image_mobile_url || banner.image_url)}
-                          alt={banner.title || "Promoção"}
-                          className="block md:hidden w-full h-32 sm:h-40 object-cover group-hover:scale-105 transition-transform duration-700"
-                        />
-                        <img
-                          src={getResolvedImageUrl(banner.image_url)}
-                          alt={banner.title || "Promoção"}
-                          className="hidden md:block w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                        />
-                      </Link>
-                    ) : (
-                      <>
-                        <img
-                          src={getResolvedImageUrl(banner.image_mobile_url || banner.image_url)}
-                          alt={banner.title || "Promoção"}
-                          className="block md:hidden w-full h-full object-cover"
-                        />
-                        <img
-                          src={getResolvedImageUrl(banner.image_url)}
-                          alt={banner.title || "Promoção"}
-                          className="hidden md:block w-full h-full object-cover"
-                        />
-                      </>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
+
 
         {/* --- SEÇÃO DE CONTEÚDO SEO ESTRATÉGICO --- */}
         {/* Esta seção é vital para rankear em buscas locais e de concorrentes sem spam */}
