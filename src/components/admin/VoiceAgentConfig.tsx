@@ -78,9 +78,13 @@ export const VoiceAgentConfig: React.FC = () => {
 
       if (error) throw error;
       toast({ title: 'Configurações salvas com sucesso!' });
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      toast({ title: 'Erro ao salvar', variant: 'destructive' });
+      toast({ 
+        title: 'Erro ao salvar', 
+        description: error.message || 'Verifique o console.',
+        variant: 'destructive' 
+      });
     } finally {
       setLoading(false);
     }
