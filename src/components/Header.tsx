@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, Menu, Search, User, LogOut, Package, UserCircle } from 'lucide-react';
+import { ShoppingCart, Menu, Search, User, LogOut, Package, UserCircle, MessageCircle, Monitor } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -73,6 +73,15 @@ export function Header({ onMenuClick }: HeaderProps) {
             />
           </Link>
 
+          {/* WhatsApp Button */}
+          <Button
+            className="hidden lg:flex bg-[#25D366] hover:bg-[#128C7E] text-white gap-2 font-bold shadow-md hover:scale-105 transition-all duration-300 rounded-full"
+            onClick={() => window.open('https://wa.me/5519987510267', '_blank')}
+          >
+            <MessageCircle className="w-5 h-5" />
+            <span className="hidden xl:inline">WhatsApp</span>
+          </Button>
+
           {/* Search Bar */}
           <form 
             onSubmit={handleSearch}
@@ -94,6 +103,16 @@ export function Header({ onMenuClick }: HeaderProps) {
               </button>
             </div>
           </form>
+
+          {/* Monte seu PC Button */}
+          <Link to="/montar-pc" className="hidden lg:flex">
+            <Button
+              className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white gap-2 font-bold shadow-md hover:scale-105 transition-all duration-300 rounded-full"
+            >
+              <Monitor className="w-5 h-5" />
+              <span className="hidden xl:inline">Monte seu PC</span>
+            </Button>
+          </Link>
 
           {/* Actions */}
           <div className="flex items-center gap-2 sm:gap-4">
