@@ -1,73 +1,55 @@
-# Welcome to your Lovable project
+# Balão da Informática 2025
 
-## Project info
+Este projeto é a plataforma de e-commerce do Balão da Informática, desenvolvida com React, Vite, TypeScript e Supabase.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Configuração do Projeto
 
-## How can I edit this code?
+### Pré-requisitos
 
-There are several ways of editing your application.
+- Node.js & npm
+- Conta no Supabase
 
-**Use Lovable**
+### Instalação
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
+1. Clone o repositório:
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+git clone https://github.com/balaocastelo-dev/balao-informatica-2025.git
+cd balao-informatica-2025
+```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+2. Instale as dependências:
+```sh
+npm install
+```
 
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+3. Inicie o servidor de desenvolvimento:
+```sh
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## Configuração do Supabase (Autenticação)
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Para que o login com Google funcione corretamente e redirecione para o seu domínio (localhost ou Vercel), você precisa configurar as URLs de redirecionamento no painel do Supabase:
 
-**Use GitHub Codespaces**
+1. Acesse seu projeto no Supabase Dashboard.
+2. Vá em **Authentication** > **URL Configuration**.
+3. Em **Site URL**, coloque a URL principal do seu site (ex: `https://seu-projeto.vercel.app`).
+4. Em **Redirect URLs**, adicione todas as URLs permitidas, incluindo:
+   - `http://localhost:5173` (para desenvolvimento local)
+   - `https://seu-projeto.vercel.app` (para produção)
+   - `https://www.balao.info` (se houver domínio personalizado)
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+**Importante:** Remova qualquer URL antiga que aponte para `lovable.app` se não quiser mais usar aquele ambiente.
 
-## What technologies are used for this project?
+## Deploy
 
-This project is built with:
+O projeto está configurado para deploy na Vercel. Basta conectar este repositório à sua conta Vercel.
+
+## Tecnologias
 
 - Vite
 - TypeScript
 - React
 - shadcn-ui
 - Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+- Supabase (Auth, Database, Edge Functions)
