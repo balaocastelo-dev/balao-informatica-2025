@@ -33,7 +33,24 @@ serve(async (req) => {
   }
 
   try {
-    const accessToken = Deno.env.get('MERCADO_PAGO_ACCESS_TOKEN');
+    let accessToken = Deno.env.get('MERCADO_PAGO_ACCESS_TOKEN');
+    
+    if (!accessToken) {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+      const supabase = createClient(supabaseUrl, supabaseKey);
+      
+      const { data } = await supabase
+        .from('store_settings')
+        .select('value')
+        .eq('key', 'mercadopago_config')
+        .maybeSingle();
+        
+      if (data?.value) {
+        const config = typeof data.value === 'string' ? JSON.parse(data.value) : data.value;
+        accessToken = config.accessToken;
+      }
+    }
     
     if (!accessToken) {
       console.error('MERCADO_PAGO_ACCESS_TOKEN not configured');
