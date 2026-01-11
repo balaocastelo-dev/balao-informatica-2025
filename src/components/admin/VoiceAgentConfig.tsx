@@ -29,21 +29,45 @@ export const VoiceAgentConfig: React.FC = () => {
   }, []);
 
   const fetchSettings = async () => {
-    const { data, error } = await supabase
-      .from('voice_agent_settings')
-      .select('*')
-      .limit(1)
-      .maybeSingle();
+    try {
+      // Try fetching via RPC first (bypasses table cache issues)
+      const { data: rpcData, error: rpcError } = await supabase.rpc('get_voice_agent_settings');
+      
+      if (!rpcError && rpcData) {
+        // Cast rpcData to any to safely access properties
+        const d = rpcData as any;
+        setSettings({
+          openai_api_key: d.openai_api_key || '',
+          bling_api_key: d.bling_api_key || '',
+          voice_id: d.voice_id || 'alloy',
+          model: d.model || 'gpt-4o-mini',
+          initial_message: d.initial_message || '',
+          system_prompt: d.system_prompt || '',
+          is_active: d.is_active ?? true
+        });
+        return;
+      }
 
-    if (data) {
-      setSettings({
-        openai_api_key: data.openai_api_key || '',
-        voice_id: data.voice_id || 'alloy',
-        model: (data as any).model || 'gpt-4o-mini',
-        initial_message: data.initial_message || '',
-        system_prompt: data.system_prompt || '',
-        is_active: data.is_active ?? true
-      });
+      // Fallback to table select if RPC fails or returns null
+      const { data, error } = await supabase
+        .from('voice_agent_settings')
+        .select('*')
+        .limit(1)
+        .maybeSingle();
+
+      if (data) {
+        setSettings({
+          openai_api_key: data.openai_api_key || '',
+          bling_api_key: (data as any).bling_api_key || '',
+          voice_id: data.voice_id || 'alloy',
+          model: (data as any).model || 'gpt-4o-mini',
+          initial_message: data.initial_message || '',
+          system_prompt: data.system_prompt || '',
+          is_active: data.is_active ?? true
+        });
+      }
+    } catch (err) {
+      console.error('Error fetching settings:', err);
     }
   };
 
@@ -58,28 +82,49 @@ export const VoiceAgentConfig: React.FC = () => {
   const handleSave = async () => {
     setLoading(true);
     try {
-      // Upsert settings (assuming single row concept or managing ID)
-      // First check if exists
-      const { data: existing } = await supabase.from('voice_agent_settings').select('id').limit(1).maybeSingle();
-      
-      let error;
-      if (existing) {
-        const { error: err } = await supabase
-          .from('voice_agent_settings')
-          .update(settings)
-          .eq('id', existing.id);
-        error = err;
-      } else {
-        const { error: err } = await supabase
-          .from('voice_agent_settings')
-          .insert([settings]);
-        error = err;
-      }
+      // Use RPC for saving to bypass "Could not find table in schema cache" errors
+      const { error: rpcError } = await supabase.rpc('upsert_voice_agent_settings', {
+        _openai_api_key: settings.openai_api_key,
+        _bling_api_key: settings.bling_api_key,
+        _voice_id: settings.voice_id,
+        _model: settings.model,
+        _initial_message: settings.initial_message,
+        _system_prompt: settings.system_prompt,
+        _is_active: settings.is_active
+      });
 
-      if (error) throw error;
+      if (rpcError) throw rpcError;
+
       toast({ title: 'Configurações salvas com sucesso!' });
     } catch (error: any) {
       console.error(error);
+      
+      // Fallback: Try direct table update if RPC fails (unlikely, but good for redundancy)
+      try {
+        const { data: existing } = await supabase.from('voice_agent_settings').select('id').limit(1).maybeSingle();
+        let fallbackError;
+        
+        if (existing) {
+          const { error } = await supabase
+            .from('voice_agent_settings')
+            .update(settings)
+            .eq('id', existing.id);
+          fallbackError = error;
+        } else {
+          const { error } = await supabase
+            .from('voice_agent_settings')
+            .insert([settings]);
+          fallbackError = error;
+        }
+        
+        if (!fallbackError) {
+          toast({ title: 'Configurações salvas (via tabela)!' });
+          return;
+        }
+      } catch (e) {
+        console.error("Fallback failed:", e);
+      }
+
       toast({ 
         title: 'Erro ao salvar', 
         description: error.message || 'Verifique o console.',
