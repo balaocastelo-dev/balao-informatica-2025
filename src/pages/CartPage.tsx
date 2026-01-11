@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Trash2, Plus, Minus, ShoppingBag, CreditCard, Loader2, User, ArrowLeft, ArrowRight, MapPin, QrCode, Wrench } from 'lucide-react';
+import { Trash2, Plus, Minus, ShoppingBag, CreditCard, Loader2, User, ArrowLeft, ArrowRight, MapPin, QrCode, Wrench, Zap } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button as UiButton } from '@/components/ui/button';
@@ -226,7 +226,18 @@ const CartPage = () => {
     setCustomerData(prev => ({ ...prev, phone: formatted }));
   };
 
- 
+  const handleFastCheckout = () => {
+    let step = 1;
+    if (customerData.name.trim()) step = 2;
+    if (step === 2 && customerData.phone.trim().replace(/\D/g, '').length >= 10) step = 3;
+    if (step === 3 && customerData.cep.replace(/\D/g, '').length === 8 && customerData.street) step = 4;
+    if (step === 4 && customerData.number.trim()) step = 5;
+    if (step === 5 && customerData.email.trim() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerData.email)) step = 6;
+    
+    setCurrentStep(step);
+    setShowCheckoutForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const createOrderAndNotify = async (paymentMethod: string) => {
     if (!validateForm()) {
@@ -983,6 +994,15 @@ const CartPage = () => {
                   </p>
                 </div>
               </div>
+
+              <Button
+                onClick={handleFastCheckout}
+                className="w-full gap-2 mb-3 bg-emerald-600 hover:bg-emerald-700 text-white"
+                size="lg"
+              >
+                <Zap className="w-5 h-5 fill-current" />
+                Checkout Rápido PIX
+              </Button>
 
               <Button
                 onClick={() => {

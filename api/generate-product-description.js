@@ -130,6 +130,7 @@ export default async function handler(req, res) {
       "Use apenas informações presentes no conteúdo fornecido.",
       "Destaque benefícios reais para jogos, trabalho e estudos quando aplicável.",
       "Evite exageros.",
+      "Não use markdown como negrito (**), itálico ou cabeçalhos.",
     ].join("\n");
 
     const userPrompt = [
@@ -144,6 +145,7 @@ export default async function handler(req, res) {
       "- Redija uma descrição de vendas única e objetiva baseada apenas no conteúdo fornecido.",
       "- Inclua explicitamente pelo menos 3 especificações reais do produto (se existirem no conteúdo).",
       "- Evite HTML; responda em texto puro.",
+      "- NÃO use ** para negrito. Escreva em texto corrido.",
       "- Termine com uma chamada de ação discreta.",
     ].join("\n");
 
@@ -170,9 +172,12 @@ export default async function handler(req, res) {
     }
 
     const json = await response.json();
-    const text = (json && json.choices && json.choices[0] && json.choices[0].message && json.choices[0].message.content)
+    let text = (json && json.choices && json.choices[0] && json.choices[0].message && json.choices[0].message.content)
       ? String(json.choices[0].message.content)
       : fallbackGenerate(name);
+
+    // Remove markdown bold if AI ignored instructions
+    text = text.replace(/\*\*/g, "");
 
     return res.status(200).json({ description: text, simulated: false });
   } catch (error) {

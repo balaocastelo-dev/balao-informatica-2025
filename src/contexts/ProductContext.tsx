@@ -14,7 +14,7 @@ interface ProductContextType {
   getProductsByCategory: (category: Category) => Product[];
   searchProducts: (query: string) => Product[];
   importProducts: (products: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>[], profitMargin: number) => Promise<void>;
-  bulkImportProducts: (products: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>[]) => Promise<void>;
+  bulkImportProducts: (products: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>[]) => Promise<Product[]>;
   refreshProducts: () => Promise<void>;
 }
 
@@ -480,28 +480,14 @@ export function ProductProvider({ children }: { children: ReactNode }) {
         ai_confidence: p.aiConfidence || null,
       }));
 
+      // Tenta inserir em lote primeiro
       const { data, error } = await supabase
         .from('products')
         .insert(payload)
         .select();
 
-      if (error) {
-        const fallback = newProducts.map(p => ({
-          name: p.name,
-          description: p.description || null,
-          price: p.price,
-          cost_price: p.costPrice || null,
-          image: p.image || null,
-          category: p.category,
-          stock: p.stock,
-          source_url: p.sourceUrl || null,
-        }));
-        const { data: fbData, error: fbErr } = await supabase
-          .from('products')
-          .insert(fallback)
-          .select();
-        if (fbErr) throw fbErr;
-        const mappedProducts: Product[] = (fbData || []).map(p => ({
+      if (!error && data) {
+        const mappedProducts: Product[] = data.map(p => ({
           id: p.id,
           name: p.name,
           description: p.description || undefined,
@@ -513,38 +499,119 @@ export function ProductProvider({ children }: { children: ReactNode }) {
           sourceUrl: p.source_url || undefined,
           createdAt: new Date(p.created_at),
           updatedAt: new Date(p.updated_at),
+          ramGb: typeof p.ram_gb === 'number' ? p.ram_gb : undefined,
+          storageGb: typeof p.storage_gb === 'number' ? p.storage_gb : undefined,
+          screenInches: typeof p.screen_inches === 'number' ? p.screen_inches : undefined,
+          status: p.status || undefined,
+          tags: Array.isArray(p.tags) ? p.tags : undefined,
+          aiGenerated: typeof p.ai_generated === 'boolean' ? p.ai_generated : undefined,
+          aiConfidence: p.ai_confidence || undefined,
         }));
+
         setProducts(current => [...mappedProducts, ...current]);
         toast({ title: "Importação concluída!", description: `${mappedProducts.length} produtos inseridos.` });
         return;
       }
 
-      const mappedProducts: Product[] = (data || []).map(p => ({
-        id: p.id,
-        name: p.name,
-        description: p.description || undefined,
-        price: Number(p.price),
-        costPrice: p.cost_price ? Number(p.cost_price) : undefined,
-        image: p.image || '/placeholder.svg',
-        category: p.category as Category,
-        stock: p.stock,
-        sourceUrl: p.source_url || undefined,
-        createdAt: new Date(p.created_at),
-        updatedAt: new Date(p.updated_at),
-        ramGb: typeof p.ram_gb === 'number' ? p.ram_gb : undefined,
-        storageGb: typeof p.storage_gb === 'number' ? p.storage_gb : undefined,
-        screenInches: typeof p.screen_inches === 'number' ? p.screen_inches : undefined,
-        status: p.status || undefined,
-        tags: Array.isArray(p.tags) ? p.tags : undefined,
-        aiGenerated: typeof p.ai_generated === 'boolean' ? p.ai_generated : undefined,
-        aiConfidence: p.ai_confidence || undefined,
-      }));
+      // Se falhar o lote, tenta um por um (fallback robusto)
+      console.warn('Batch import failed, trying individual inserts:', error);
+      let successCount = 0;
+      let errorCount = 0;
+      const newMappedProducts: Product[] = [];
 
-      setProducts(current => [...mappedProducts, ...current]);
-      toast({ title: "Importação concluída!", description: `${mappedProducts.length} produtos inseridos.` });
+      for (const item of payload) {
+        // Tenta inserir individualmente
+        const { data: singleData, error: singleError } = await supabase
+          .from('products')
+          .insert(item)
+          .select()
+          .single();
+
+        if (singleError) {
+           // Tenta fallback simples (sem campos opcionais extras que podem causar erro)
+           const simpleItem = {
+             name: item.name,
+             description: item.description,
+             price: item.price,
+             cost_price: item.cost_price,
+             image: item.image,
+             category: item.category,
+             stock: item.stock,
+             source_url: item.source_url
+           };
+           const { data: fallbackData, error: fallbackError } = await supabase
+            .from('products')
+            .insert(simpleItem)
+            .select()
+            .single();
+            
+           if (fallbackError) {
+             console.error('Individual insert error:', fallbackError);
+             errorCount++;
+             continue;
+           }
+           
+           if (fallbackData) {
+             successCount++;
+             newMappedProducts.push({
+                id: fallbackData.id,
+                name: fallbackData.name,
+                description: fallbackData.description || undefined,
+                price: Number(fallbackData.price),
+                costPrice: fallbackData.cost_price ? Number(fallbackData.cost_price) : undefined,
+                image: fallbackData.image || '/placeholder.svg',
+                category: fallbackData.category as Category,
+                stock: fallbackData.stock,
+                sourceUrl: fallbackData.source_url || undefined,
+                createdAt: new Date(fallbackData.created_at),
+                updatedAt: new Date(fallbackData.updated_at),
+             });
+           }
+        } else if (singleData) {
+          successCount++;
+          newMappedProducts.push({
+            id: singleData.id,
+            name: singleData.name,
+            description: singleData.description || undefined,
+            price: Number(singleData.price),
+            costPrice: singleData.cost_price ? Number(singleData.cost_price) : undefined,
+            image: singleData.image || '/placeholder.svg',
+            category: singleData.category as Category,
+            stock: singleData.stock,
+            sourceUrl: singleData.source_url || undefined,
+            createdAt: new Date(singleData.created_at),
+            updatedAt: new Date(singleData.updated_at),
+            ramGb: typeof singleData.ram_gb === 'number' ? singleData.ram_gb : undefined,
+            storageGb: typeof singleData.storage_gb === 'number' ? singleData.storage_gb : undefined,
+            screenInches: typeof singleData.screen_inches === 'number' ? singleData.screen_inches : undefined,
+            status: singleData.status || undefined,
+            tags: Array.isArray(singleData.tags) ? singleData.tags : undefined,
+            aiGenerated: typeof singleData.ai_generated === 'boolean' ? singleData.ai_generated : undefined,
+            aiConfidence: singleData.ai_confidence || undefined,
+          });
+        }
+      }
+
+      if (successCount > 0) {
+        setProducts(current => [...newMappedProducts, ...current]);
+        toast({ 
+          title: "Importação finalizada", 
+          description: `Sucesso: ${successCount}. Falhas: ${errorCount}.`,
+          variant: errorCount > 0 ? "destructive" : "default"
+        });
+        return newMappedProducts;
+      } else {
+        toast({ 
+          title: "Falha na importação", 
+          description: `Todos os ${errorCount} produtos falharam.`,
+          variant: "destructive"
+        });
+        throw error || new Error("Batch import failed");
+      }
+
     } catch (error) {
       console.error('Error bulk importing products:', error);
-      toast({ title: "Erro na importação", variant: "destructive" });
+      toast({ title: "Erro crítico na importação", variant: "destructive" });
       throw error;
     }
   };

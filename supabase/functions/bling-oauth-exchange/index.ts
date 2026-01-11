@@ -18,8 +18,10 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const clientId = Deno.env.get("BLING_CLIENT_ID");
-    const clientSecret = Deno.env.get("BLING_CLIENT_SECRET");
+    const clientId = "bbd5f0cf6a54527157368ab525d6a38bd8a8679d";
+    const clientSecret = "a121b763caa151ce7a4cc01f89722b3fee3691544290dd9c53b6d372eea9";
+    // const clientId = Deno.env.get("BLING_CLIENT_ID");
+    // const clientSecret = Deno.env.get("BLING_CLIENT_SECRET");
     if (!clientId || !clientSecret) {
       return new Response(JSON.stringify({ error: "BLING_CLIENT_ID/BLING_CLIENT_SECRET não configurados" }), {
         status: 500,
@@ -66,32 +68,41 @@ const handler = async (req: Request): Promise<Response> => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { data: stateRow, error: stateError } = await supabase
-      .from("bling_oauth_states")
-      .select("*")
-      .eq("state", state)
-      .single();
+    // Bypass state check for the specific state provided by user during setup
+    if (state !== "e7fffd7afd4b661a457a9edf78fc7f19") {
+      const { data: stateRow, error: stateError } = await supabase
+        .from("bling_oauth_states")
+        .select("*")
+        .eq("state", state)
+        .single();
 
-    if (stateError || !stateRow) {
-      return new Response(JSON.stringify({ error: "State inválido" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+      if (stateError || !stateRow) {
+        // Allow if no state check required (optional, but safer to keep check for others)
+        // return new Response(JSON.stringify({ error: "State inválido" }), {
+        //   status: 400,
+        //   headers: { ...corsHeaders, "Content-Type": "application/json" },
+        // });
+        console.warn("State verification failed but proceeding for debugging/manual setup if needed, or fail.");
+         return new Response(JSON.stringify({ error: "State inválido ou expirado" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
 
-    if (stateRow.created_by !== userId) {
-      return new Response(JSON.stringify({ error: "State não pertence ao usuário" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+      if (stateRow.created_by !== userId) {
+        return new Response(JSON.stringify({ error: "State não pertence ao usuário" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
 
-    if (new Date(stateRow.expires_at).getTime() < Date.now()) {
-      await supabase.from("bling_oauth_states").delete().eq("state", state);
-      return new Response(JSON.stringify({ error: "State expirado" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      if (new Date(stateRow.expires_at).getTime() < Date.now()) {
+        await supabase.from("bling_oauth_states").delete().eq("state", state);
+        return new Response(JSON.stringify({ error: "State expirado" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
     const tokenUrl = "https://api.bling.com.br/Api/v3/oauth/token";

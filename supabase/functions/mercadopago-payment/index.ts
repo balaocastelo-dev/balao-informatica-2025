@@ -15,7 +15,9 @@ interface PaymentItem {
 }
 
 interface PaymentRequest {
-  items: PaymentItem[];
+  items?: PaymentItem[];
+  transaction_amount?: number;
+  description?: string;
   customer_name: string;
   customer_email: string;
   customer_phone: string;
@@ -41,19 +43,31 @@ serve(async (req) => {
       );
     }
 
-    const { items, customer_name, customer_email, customer_phone, customer_address, order_id, payment_method } = await req.json() as PaymentRequest;
+    const { items, transaction_amount, description, customer_name, customer_email, customer_phone, customer_address, order_id, payment_method } = await req.json() as PaymentRequest;
 
     console.log('Creating payment for order:', order_id);
     console.log('Payment method:', payment_method);
-    console.log('Items:', JSON.stringify(items));
-
+    
     // Calculate total
-    const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    let total = 0;
+    if (transaction_amount) {
+      total = transaction_amount;
+    } else if (items) {
+      console.log('Items:', JSON.stringify(items));
+      total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    }
+
+    if (total <= 0) {
+      return new Response(
+        JSON.stringify({ error: 'Valor total inválido' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     if (payment_method === 'pix') {
       const pixBody = {
         transaction_amount: Number(total.toFixed(2)),
-        description: `Pedido ${order_id || ''}`,
+        description: description || `Pedido ${order_id || ''}`,
         payment_method_id: 'pix',
         payer: {
           email: customer_email,
@@ -111,6 +125,12 @@ serve(async (req) => {
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     } else {
+      if (!items) {
+        return new Response(
+          JSON.stringify({ error: 'Items são obrigatórios para pagamento com cartão' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
       const preferenceData = {
         items: items.map(item => ({
           id: item.id,

@@ -79,6 +79,7 @@ serve(async (req) => {
             "Nunca invente especificações; seja conservador quando não tiver certeza.",
             "Destaque benefícios para diferentes perfis (trabalho, estudos, games, escritório).",
             "Se possível, inclua pontos técnicos do produto pesquisando na internet antes de redigir.",
+            "Não use markdown como negrito (**), itálico ou cabeçalhos.",
           ].join("\n");
           const prompt = [
             `Produto: ${product.name}`,
@@ -89,6 +90,7 @@ serve(async (req) => {
             "- Redija uma descrição de vendas persuasiva com 100–180 palavras.",
             "- Inclua especificações-chave se confirmadas.",
             "- Adapte benefícios para trabalho/estudos/jogos conforme o produto.",
+            "- NÃO use ** para negrito. Escreva em texto corrido.",
             "- Termine com uma chamada de ação sutil.",
           ].join("\n");
           const resp = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -106,6 +108,8 @@ serve(async (req) => {
           if (resp.ok) {
             const json = await resp.json();
             description = (json?.choices?.[0]?.message?.content || "").trim();
+            // Remove markdown bold
+            description = description.replace(/\*\*/g, "");
           }
         }
 

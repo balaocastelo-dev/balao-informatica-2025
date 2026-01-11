@@ -18,10 +18,12 @@ import {
   Info,
   Loader2,
   Shield,
-  Wallet
+  Wallet,
+  Zap
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { PixGenerator } from './PixGenerator';
 
 interface MercadoPagoSettings {
   publicKey: string;
@@ -178,6 +180,10 @@ export function MercadoPagoConfig() {
           <TabsTrigger value="payments" className="gap-2">
             <CreditCard className="w-4 h-4" />
             Métodos de Pagamento
+          </TabsTrigger>
+          <TabsTrigger value="pix-generator" className="gap-2">
+            <QrCode className="w-4 h-4" />
+            Gerador PIX
           </TabsTrigger>
           <TabsTrigger value="help" className="gap-2">
             <Info className="w-4 h-4" />
@@ -391,6 +397,11 @@ export function MercadoPagoConfig() {
               Configure suas credenciais primeiro para habilitar os métodos de pagamento
             </p>
           )}
+        </TabsContent>
+
+        {/* Pix Generator Tab */}
+        <TabsContent value="pix-generator" className="mt-4">
+          <PixGenerator />
         </TabsContent>
 
         {/* Help Tab */}
