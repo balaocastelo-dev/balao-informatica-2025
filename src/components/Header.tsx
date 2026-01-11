@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, Menu, Search, User, LogOut, Package, UserCircle, MessageCircle, Monitor } from 'lucide-react';
+import { ShoppingCart, Menu, Search, User, LogOut, Package, UserCircle, MessageCircle, Monitor, Mic } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useVoiceAgent } from '@/contexts/VoiceAgentContext';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,6 +23,7 @@ export function Header({ onMenuClick }: HeaderProps) {
   const { itemCount } = useCart();
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
+  const { openAgent } = useVoiceAgent();
 
   const handleSignOut = async () => {
     await signOut();
@@ -104,6 +106,15 @@ export function Header({ onMenuClick }: HeaderProps) {
             </div>
           </form>
 
+          {/* Voice Agent Button - Desktop */}
+          <Button
+            onClick={openAgent}
+            className="hidden sm:flex bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white gap-2 font-bold shadow-md hover:scale-105 transition-all duration-300 rounded-full px-2 lg:px-4"
+          >
+            <Mic className="w-5 h-5" />
+            <span className="hidden xl:inline">IA de Vendas</span>
+          </Button>
+
           {/* Monte seu PC Button */}
           <Link to="/montar-pc" className="flex">
             <Button
@@ -172,26 +183,31 @@ export function Header({ onMenuClick }: HeaderProps) {
         </div>
 
         {/* Search Bar - Mobile */}
-        <form 
-          onSubmit={handleSearch}
-          className="sm:hidden pb-3"
-        >
-          <div className="relative">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Buscar produtos..."
-              className="search-input pr-12"
-            />
-            <button
-              type="submit"
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-muted-foreground hover:text-primary transition-colors"
-            >
-              <Search className="w-5 h-5" />
-            </button>
-          </div>
-        </form>
+        <div className="sm:hidden pb-3 flex gap-2">
+          <form 
+            onSubmit={handleSearch}
+            className="flex-1"
+          >
+            <div className="relative">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Buscar produtos..."
+                className="search-input pr-12"
+              />
+              <button
+                type="submit"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-muted-foreground hover:text-primary transition-colors"
+              >
+                <Search className="w-5 h-5" />
+              </button>
+            </div>
+          </form>
+          <Button size="icon" onClick={openAgent} className="bg-red-600 hover:bg-red-700 rounded-lg shrink-0 h-10 w-10">
+             <Mic className="w-5 h-5" />
+          </Button>
+        </div>
       </div>
     </header>
   );

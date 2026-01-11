@@ -51,7 +51,7 @@ export function ProductModal({ product, onClose }: ProductModalProps) {
         {/* Header */}
         <div className="sticky top-0 bg-card z-10 flex items-center justify-between p-4 border-b border-border">
           <span className="category-badge">
-            {categoryInfo?.icon} {categoryInfo?.name}
+            {icon} {categoryInfo?.name || product.category}
           </span>
           <button
             onClick={onClose}

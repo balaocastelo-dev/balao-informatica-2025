@@ -72,6 +72,8 @@ const LoadingFallback = () => (
   </div>
 );
 
+import { VoiceAgentProvider } from "@/contexts/VoiceAgentContext";
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
@@ -82,12 +84,13 @@ const App = () => (
               <BatchOperationsProvider>
                 <PageBlocksProvider>
                   <CartProvider>
-                    <TooltipProvider>
-                      <Toaster />
-                      <Sonner />
-                      <BatchProgressIndicator />
-                      <MenuItemsProvider>
-                        <BrowserRouter>
+                    <VoiceAgentProvider>
+                      <TooltipProvider>
+                        <Toaster />
+                        <Sonner />
+                        <BatchProgressIndicator />
+                        <MenuItemsProvider>
+                          <BrowserRouter>
                           <DomainRedirect />
                           <ScrollToTop />
                           <Suspense fallback={<LoadingFallback />}>
@@ -133,6 +136,7 @@ const App = () => (
                         </BrowserRouter>
                       </MenuItemsProvider>
                     </TooltipProvider>
+                    </VoiceAgentProvider>
                   </CartProvider>
                 </PageBlocksProvider>
               </BatchOperationsProvider>

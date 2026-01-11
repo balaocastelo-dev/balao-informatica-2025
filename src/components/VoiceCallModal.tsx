@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Mic, MicOff, PhoneOff, Volume2, VolumeX, Loader2 } from 'lucide-react';
+import { Mic, MicOff, PhoneOff, Volume2, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useCart } from '@/contexts/CartContext';
-import { useProducts } from '@/contexts/ProductContext';
+import { useNavigate } from 'react-router-dom';
 
 interface VoiceCallModalProps {
   isOpen: boolean;
@@ -15,10 +15,9 @@ interface VoiceCallModalProps {
 export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({ isOpen, onClose }) => {
   const [status, setStatus] = useState<'connecting' | 'connected' | 'listening' | 'processing' | 'speaking' | 'ended'>('connecting');
   const [isMuted, setIsMuted] = useState(false);
-  const [volume, setVolume] = useState(1);
   const [agentConfig, setAgentConfig] = useState<any>(null);
   const { addToCart } = useCart();
-  const { products } = useProducts();
+  const navigate = useNavigate();
   
   // Refs for audio handling
   const recognitionRef = useRef<any>(null);
@@ -31,6 +30,9 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({ isOpen, onClose 
     } else {
       endCall();
     }
+    return () => {
+      endCall();
+    };
   }, [isOpen]);
 
   const startCall = async () => {
@@ -51,17 +53,18 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({ isOpen, onClose 
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       if (SpeechRecognition) {
         recognitionRef.current = new SpeechRecognition();
-        recognitionRef.current.continuous = false; // We want turn-based for now to avoid echo
+        recognitionRef.current.continuous = false; // Turn-based
         recognitionRef.current.interimResults = false;
         recognitionRef.current.lang = 'pt-BR';
 
         recognitionRef.current.onstart = () => {
-          if (status !== 'speaking') setStatus('listening');
+          if (status !== 'speaking' && status !== 'processing') setStatus('listening');
         };
 
         recognitionRef.current.onend = () => {
-          // If we are not processing or speaking, restart listening (keep alive)
-          // But if we just finished speaking, we should listen.
+          // Verify if we should restart listening
+          // We only restart if we are not processing, speaking, or ended
+          // This logic is handled by 'speak' onend
         };
 
         recognitionRef.current.onresult = async (event: any) => {
@@ -78,12 +81,9 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({ isOpen, onClose 
       // 4. Speak Initial Message
       setTimeout(() => {
         setStatus('connected');
-        if (data?.initial_message) {
-          speak(data.initial_message);
-        } else {
-          speak("Olá! Sou o assistente do Balão. Como posso ajudar?");
-        }
-      }, 1500);
+        const greeting = data?.initial_message || "Olá! Sou o assistente do Balão. Como posso ajudar?";
+        speak(greeting);
+      }, 1000);
 
     } catch (error) {
       console.error(error);
@@ -94,14 +94,12 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({ isOpen, onClose 
   const speak = (text: string) => {
     if (!synthRef.current) return;
     
-    // Cancel any current speech
     synthRef.current.cancel();
 
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'pt-BR';
-    utterance.rate = 1.1; // Slightly faster for natural feel
+    utterance.rate = 1.1;
     
-    // Try to find a good voice
     const voices = synthRef.current.getVoices();
     const ptVoice = voices.find(v => v.lang.includes('pt-BR') && v.name.includes('Google')) || voices.find(v => v.lang.includes('pt-BR'));
     if (ptVoice) utterance.voice = ptVoice;
@@ -116,7 +114,7 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({ isOpen, onClose 
   };
 
   const startListening = () => {
-    if (recognitionRef.current && !isMuted) {
+    if (recognitionRef.current && !isMuted && status !== 'ended') {
       try {
         recognitionRef.current.start();
       } catch (e) {
@@ -139,19 +137,57 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({ isOpen, onClose 
       const { data, error } = await supabase.functions.invoke('chat-assistant', {
         body: { 
           messages: [{ role: 'user', content: text }],
-          session_id: 'voice-session-' + Date.now(), // Simplified for now
+          session_id: 'voice-session-' + Date.now(),
           voice_mode: true
         }
       });
 
       if (error) throw error;
 
-      // Extract text from response (assuming standard chat format or special voice format)
-      // The edge function currently returns a stream, but we might need to adjust it for simple JSON in voice mode
-      // Or handle the stream. For simplicity, let's assume we update the edge function to return JSON if voice_mode is true.
+      let replyText = data?.reply || "Desculpe, não entendi.";
+
+      // --- ACTION PARSING ---
       
-      const responseText = data?.reply || "Desculpe, não entendi. Pode repetir?";
-      speak(responseText);
+      // 1. Add to Cart: [ADD_TO_CART: {"id": "..."}]
+      const addToCartRegex = /\[ADD_TO_CART:\s*({.*?}|".*?")\]/g;
+      let match;
+      while ((match = addToCartRegex.exec(replyText)) !== null) {
+          try {
+              let productData = match[1];
+              // Handle cases where it might be just an ID string or a JSON object
+              if (productData.startsWith('"') && productData.endsWith('"')) {
+                productData = productData.slice(1, -1); // Remove quotes
+              } else if (productData.startsWith('{')) {
+                const parsed = JSON.parse(productData);
+                productData = parsed.id;
+              }
+
+              const productId = productData;
+              
+              // Fetch product details to add to cart
+              const { data: product } = await supabase.from('products').select('*').eq('id', productId).single();
+              
+              if (product) {
+                  addToCart(product);
+                  toast({ title: "Adicionado ao carrinho", description: product.name });
+              }
+          } catch (e) {
+              console.error("Error parsing add to cart action", e);
+          }
+      }
+      replyText = replyText.replace(addToCartRegex, "");
+
+      // 2. Checkout: [CHECKOUT]
+      if (replyText.includes('[CHECKOUT]')) {
+          navigate('/carrinho');
+          replyText = replyText.replace('[CHECKOUT]', "");
+          // Maybe close the modal?
+          setTimeout(() => onClose(), 3000); 
+      }
+
+      // ----------------------
+
+      speak(replyText);
 
     } catch (error) {
       console.error(error);
@@ -163,7 +199,6 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({ isOpen, onClose 
     setStatus('ended');
     if (synthRef.current) synthRef.current.cancel();
     if (recognitionRef.current) recognitionRef.current.stop();
-    setTimeout(onClose, 1000);
   };
 
   const toggleMute = () => {
@@ -176,8 +211,8 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({ isOpen, onClose 
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={() => {}}>
-      <DialogContent className="sm:max-w-[400px] h-[600px] p-0 overflow-hidden bg-slate-950 border-slate-800 flex flex-col items-center justify-between shadow-2xl">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-[400px] h-[600px] p-0 overflow-hidden bg-slate-950 border-slate-800 flex flex-col items-center justify-between shadow-2xl [&>button]:hidden">
         <DialogTitle className="sr-only">Chamada de Voz com Assistente</DialogTitle>
         
         {/* Header / Status */}
@@ -232,7 +267,10 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({ isOpen, onClose 
               variant="destructive"
               size="icon"
               className="w-16 h-16 rounded-full shadow-lg bg-red-600 hover:bg-red-700 animate-in zoom-in"
-              onClick={endCall}
+              onClick={() => {
+                  endCall();
+                  setTimeout(onClose, 500);
+              }}
             >
               <PhoneOff className="w-8 h-8" />
             </Button>
@@ -242,7 +280,6 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({ isOpen, onClose 
               size="icon"
               className="w-14 h-14 rounded-full border-0 bg-slate-800 text-white hover:bg-slate-700"
               onClick={() => {
-                // Toggle speaker output (simulated)
                 toast({ title: "Saída de áudio alterada" });
               }}
             >

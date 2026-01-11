@@ -25,18 +25,6 @@ const CategoryContext = createContext<CategoryContextType | undefined>(undefined
 export function CategoryProvider({ children }: { children: ReactNode }) {
   const [categories, setCategories] = useState<CategoryData[]>([]);
   const [loading, setLoading] = useState(true);
-  const defaults: CategoryData[] = [
-    { id: 'local-hardware', name: 'Hardware', slug: 'hardware', order_index: 1, parent_id: null },
-    { id: 'local-monitores', name: 'Monitores', slug: 'monitores', order_index: 2, parent_id: null },
-    { id: 'local-licencas', name: 'Licenças', slug: 'licencas', order_index: 3, parent_id: null },
-    { id: 'local-placa-de-video', name: 'Placa de Vídeo', slug: 'placa-de-video', order_index: 4, parent_id: null },
-    { id: 'local-notebooks', name: 'Notebooks', slug: 'notebooks', order_index: 5, parent_id: null },
-    { id: 'local-consoles', name: 'Consoles', slug: 'consoles', order_index: 6, parent_id: null },
-    { id: 'local-pc-office', name: 'PC Office', slug: 'pc-office', order_index: 7, parent_id: null },
-    { id: 'local-pc-gamer', name: 'PC Gamer', slug: 'pc-gamer', order_index: 8, parent_id: null },
-    { id: 'local-cameras', name: 'Câmeras', slug: 'cameras', order_index: 9, parent_id: null },
-    { id: 'local-acessorios', name: 'Acessórios', slug: 'acessorios', order_index: 10, parent_id: null },
-  ];
 
   const fetchCategories = async () => {
     try {
@@ -52,9 +40,9 @@ export function CategoryProvider({ children }: { children: ReactNode }) {
       console.error('Error fetching categories:', error);
       toast({
         title: "Erro ao carregar categorias",
+        description: "Verifique sua conexão ou tente novamente mais tarde.",
         variant: "destructive",
       });
-      setCategories(defaults);
     } finally {
       setLoading(false);
     }
