@@ -49,58 +49,18 @@ export const BlingIntegration: React.FC = () => {
 
   const handleConnect = async () => {
     try {
-      // Usar implementação direta no cliente para evitar erros de função server-side não configurada
-      const clientId = "bbd5f0cf6a54527157368ab525d6a38bd8a8679d";
-      const redirectUri = `${window.location.origin}/bling/callback`;
-      const state = crypto.randomUUID();
+      console.log("Iniciando conexão via Edge Function...");
+      const { data, error } = await supabase.functions.invoke('bling-oauth-start');
       
-      // Obter usuário atual
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Usuário não autenticado");
-
-      // Salvar state no Supabase para validação posterior
-      const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 minutos
-      const { error: insertError } = await supabase.from("bling_oauth_states").insert({
-        state,
-        created_by: user.id,
-        expires_at: expiresAt,
-      });
-
-      if (insertError) {
-        console.error("Erro ao salvar state:", insertError);
-        // Se falhar ao inserir, pode ser permissão ou tabela inexistente.
-        // Tenta fallback para a função se a inserção direta falhar?
-        // Ou assume que se a inserção falhar, a função também falharia (banco de dados).
-        // Vamos tentar invocar a função como fallback se a inserção direta falhar, 
-        // mas o erro mais provável aqui é a função estar quebrada e a inserção direta funcionar (se o user for admin).
-        throw new Error("Falha ao inicializar segurança da conexão (State).");
+      if (error) throw error;
+      
+      if (data?.authorize_url) {
+        window.location.href = data.authorize_url;
+      } else {
+        throw new Error("URL de autorização não retornada pela função.");
       }
-
-      // Construir URL de autorização
-      const authorizeUrl = new URL("https://www.bling.com.br/Api/v3/oauth/authorize");
-      authorizeUrl.searchParams.set("response_type", "code");
-      authorizeUrl.searchParams.set("client_id", clientId);
-      authorizeUrl.searchParams.set("redirect_uri", redirectUri);
-      authorizeUrl.searchParams.set("state", state);
-
-      window.location.href = authorizeUrl.toString();
-      
     } catch (error) {
       console.error('Erro ao iniciar conexão com Bling:', error);
-      
-      // Fallback: Tentar via Edge Function se o método cliente falhar (ex: erro de permissão na tabela)
-      try {
-        console.log("Tentando fallback via Edge Function...");
-        const { data, error: funcError } = await supabase.functions.invoke('bling-oauth-start');
-        if (funcError) throw funcError;
-        if (data?.authorize_url) {
-          window.location.href = data.authorize_url;
-          return;
-        }
-      } catch (fallbackError) {
-        console.error("Fallback também falhou:", fallbackError);
-      }
-
       toast({ 
         title: 'Erro', 
         description: error instanceof Error ? error.message : 'Falha ao iniciar conexão com Bling.', 
