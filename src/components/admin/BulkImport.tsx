@@ -18,11 +18,13 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export const BulkImport = () => {
   const { bulkImportProducts, loading: productsLoading } = useProducts();
-  const { categories } = useCategories();
+  const { categories, addCategory } = useCategories();
   
   const [inputText, setInputText] = useState('');
   const [profitMargin, setProfitMargin] = useState('25');
   const [selectedCategory, setSelectedCategory] = useState<string>('auto');
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [defaultTags, setDefaultTags] = useState('');
   const [parsedProducts, setParsedProducts] = useState<ParsedProduct[]>([]);
   const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set());
   const [activeTab, setActiveTab] = useState('input');
@@ -45,8 +47,22 @@ export const BulkImport = () => {
     // Converter string de tags separada por vírgula em array de strings
     const tagsList = defaultTags ? defaultTags.split(',').map(t => t.trim()).filter(Boolean) : [];
     
+    // Determinar a categoria padrão a ser usada
+    let categoryToUse = selectedCategory === 'auto' ? undefined : selectedCategory;
+    if (selectedCategory === 'new_category') {
+      if (!newCategoryName.trim()) {
+        toast({
+          title: "Nome da categoria obrigatório",
+          description: "Por favor, informe o nome da nova categoria.",
+          variant: "destructive"
+        });
+        return;
+      }
+      categoryToUse = newCategoryName.trim();
+    }
+    
     const results = parseBulkImport(inputText, {
-      defaultCategory: selectedCategory === 'auto' ? undefined : selectedCategory,
+      defaultCategory: categoryToUse,
       autoDetectCategory: selectedCategory === 'auto',
       profitMargin: margin,
       defaultTags: tagsList

@@ -144,7 +144,9 @@ export const parseBulkImport = (text: string, options: ImportOptions): ParsedPro
     }
 
     // Detectar Tags/Marcas
-    const tags = detectBrands(name);
+    const detectedTags = detectBrands(name);
+    const allTags = [...(options.defaultTags || []), ...detectedTags];
+    const uniqueTags = Array.from(new Set(allTags));
 
     // Validação básica
     const isValid = name.length > 2 && finalPrice > 0;
