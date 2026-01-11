@@ -204,7 +204,6 @@ export const VoiceAgentConfig: React.FC = () => {
             </div>
           </CardContent>
         </Card>
-        </div>
 
         {/* Upload de Documentos */}
         <Card>
