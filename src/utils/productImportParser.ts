@@ -144,6 +144,12 @@ export const parseBulkImport = (text: string, options: ImportOptions): ParsedPro
 
     // Processar imagem (alta resolução)
     const enhancedImage = enhanceImageUrl(image);
+    const isLowRes = isLowResolution(enhancedImage);
+    
+    // Se a imagem for baixa resolução, ignorar o item completamente (conforme solicitado)
+    if (isLowRes) {
+      continue;
+    }
 
     // Detectar Categoria
     let category = options.defaultCategory || 'Outros';
@@ -158,7 +164,7 @@ export const parseBulkImport = (text: string, options: ImportOptions): ParsedPro
 
     // Validação básica
     const isValid = name.length > 2 && finalPrice > 0;
-    const validationError = !isValid 
+    let validationError = !isValid 
       ? (name.length <= 2 ? 'Nome inválido' : 'Preço inválido') 
       : undefined;
 
@@ -198,6 +204,40 @@ const parsePrice = (priceStr: string): number => {
   
   // Se formato americano simples (1234.56)
   return parseFloat(clean);
+};
+
+// Verifica se a URL parece ser de baixa resolução
+const isLowResolution = (url: string): boolean => {
+  if (!url) return false;
+  
+  const lower = url.toLowerCase();
+  
+  // Keywords comuns de thumbnails
+  const thumbKeywords = [
+    'thumb', 'thumbnail', 'mini', 'small', 'tiny', 
+    '50x50', '75x75', '100x100', '150x150', '200x200', '250x250',
+    'width=50', 'width=100', 'width=150', 'width=200',
+    'w=50', 'w=100', 'w=150', 'w=200'
+  ];
+
+  if (thumbKeywords.some(k => lower.includes(k))) {
+    // Exceção: se tiver "max" ou "full" junto, talvez não seja
+    if (!lower.includes('max') && !lower.includes('full')) {
+      return true;
+    }
+  }
+
+  // Amazon specific
+  if (lower.includes('amazon') || lower.includes('media-amazon')) {
+    // _SS40_ ou _SX50_ etc. (se for menor que 300)
+    const match = lower.match(/_[sS][a-zA-Z](\d+)_/);
+    if (match && match[1]) {
+      const size = parseInt(match[1]);
+      if (size < 300) return true;
+    }
+  }
+
+  return false;
 };
 
 const enhanceImageUrl = (url: string): string => {
