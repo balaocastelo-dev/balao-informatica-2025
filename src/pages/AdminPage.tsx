@@ -207,17 +207,9 @@ const AdminPage = () => {
         setIsAdmin(false);
         return;
       }
-      // DEV MODE: Permitir acesso admin para qualquer usuário logado
-      setIsAdmin(true);
-      /*
-      const { data } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id)
-        .eq('role', 'admin')
-        .limit(1);
-      setIsAdmin(!!data && data.length > 0);
-      */
+      
+      // Apenas o usuário balaocastelo@gmail.com é admin
+      setIsAdmin(user.email === 'balaocastelo@gmail.com');
     };
     checkAdmin();
   }, [user]);
