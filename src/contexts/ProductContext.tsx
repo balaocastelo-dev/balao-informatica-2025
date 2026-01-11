@@ -14,8 +14,10 @@ interface ProductContextType {
   getProductsByCategory: (category: Category) => Product[];
   searchProducts: (query: string) => Product[];
   importProducts: (products: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>[], profitMargin: number) => Promise<void>;
-  bulkImportProducts: (products: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>[]) => Promise<Product[]>;
+  bulkImportProducts: (products: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>[]) => Promise<void>;
   refreshProducts: () => Promise<void>;
+  isImporting: boolean;
+  importProgress: number;
 }
 
 const ProductContext = createContext<ProductContextType | undefined>(undefined);
@@ -23,6 +25,8 @@ const ProductContext = createContext<ProductContextType | undefined>(undefined);
 export function ProductProvider({ children }: { children: ReactNode }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState(0);
 
   const extractAttributes = (name: string, description?: string) => {
     const text = `${name} ${description || ''}`.toLowerCase();
@@ -462,6 +466,14 @@ export function ProductProvider({ children }: { children: ReactNode }) {
   const bulkImportProducts = async (
     newProducts: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>[],
   ) => {
+    if (isImporting) {
+      toast({ title: "Importação já em andamento", description: "Aguarde o término da importação atual." });
+      return;
+    }
+
+    setIsImporting(true);
+    setImportProgress(0);
+
     try {
       const payload = newProducts.map(p => ({
         name: p.name,
@@ -481,46 +493,14 @@ export function ProductProvider({ children }: { children: ReactNode }) {
         ai_confidence: p.aiConfidence || null,
       }));
 
-      // Tenta inserir em lote primeiro
-      const { data, error } = await supabase
-        .from('products')
-        .insert(payload)
-        .select();
-
-      if (!error && data) {
-        const mappedProducts: Product[] = data.map(p => ({
-          id: p.id,
-          name: p.name,
-          description: p.description || undefined,
-          price: Number(p.price),
-          costPrice: p.cost_price ? Number(p.cost_price) : undefined,
-          image: p.image || '/placeholder.svg',
-          category: p.category as Category,
-          stock: p.stock,
-          sourceUrl: p.source_url || undefined,
-          createdAt: new Date(p.created_at),
-          updatedAt: new Date(p.updated_at),
-          ramGb: typeof p.ram_gb === 'number' ? p.ram_gb : undefined,
-          storageGb: typeof p.storage_gb === 'number' ? p.storage_gb : undefined,
-          screenInches: typeof p.screen_inches === 'number' ? p.screen_inches : undefined,
-          status: p.status || undefined,
-          tags: Array.isArray(p.tags) ? p.tags : undefined,
-          aiGenerated: typeof p.ai_generated === 'boolean' ? p.ai_generated : undefined,
-          aiConfidence: p.ai_confidence || undefined,
-        }));
-
-        setProducts(current => [...mappedProducts, ...current]);
-        toast({ title: "Importação concluída!", description: `${mappedProducts.length} produtos inseridos.` });
-        return;
-      }
-
-      // Se falhar o lote, tenta um por um (fallback robusto)
-      console.warn('Batch import failed, trying individual inserts:', error);
       let successCount = 0;
       let errorCount = 0;
-      const newMappedProducts: Product[] = [];
+      const total = payload.length;
 
-      for (const item of payload) {
+      // Processamento item a item para feedback granular
+      for (let i = 0; i < total; i++) {
+        const item = payload[i];
+        
         // Tenta inserir individualmente
         const { data: singleData, error: singleError } = await supabase
           .from('products')
@@ -528,49 +508,9 @@ export function ProductProvider({ children }: { children: ReactNode }) {
           .select()
           .single();
 
-        if (singleError) {
-           // Tenta fallback simples (sem campos opcionais extras que podem causar erro)
-           const simpleItem = {
-             name: item.name,
-             description: item.description,
-             price: item.price,
-             cost_price: item.cost_price,
-             image: item.image,
-             category: item.category,
-             stock: item.stock,
-             source_url: item.source_url
-           };
-           const { data: fallbackData, error: fallbackError } = await supabase
-            .from('products')
-            .insert(simpleItem)
-            .select()
-            .single();
-            
-           if (fallbackError) {
-             console.error('Individual insert error:', fallbackError);
-             errorCount++;
-             continue;
-           }
-           
-           if (fallbackData) {
-             successCount++;
-             newMappedProducts.push({
-                id: fallbackData.id,
-                name: fallbackData.name,
-                description: fallbackData.description || undefined,
-                price: Number(fallbackData.price),
-                costPrice: fallbackData.cost_price ? Number(fallbackData.cost_price) : undefined,
-                image: fallbackData.image || '/placeholder.svg',
-                category: fallbackData.category as Category,
-                stock: fallbackData.stock,
-                sourceUrl: fallbackData.source_url || undefined,
-                createdAt: new Date(fallbackData.created_at),
-                updatedAt: new Date(fallbackData.updated_at),
-             });
-           }
-        } else if (singleData) {
+        if (singleData) {
           successCount++;
-          newMappedProducts.push({
+          const newProduct: Product = {
             id: singleData.id,
             name: singleData.name,
             description: singleData.description || undefined,
@@ -589,31 +529,67 @@ export function ProductProvider({ children }: { children: ReactNode }) {
             tags: Array.isArray(singleData.tags) ? singleData.tags : undefined,
             aiGenerated: typeof singleData.ai_generated === 'boolean' ? singleData.ai_generated : undefined,
             aiConfidence: singleData.ai_confidence || undefined,
-          });
+          };
+          
+          setProducts(current => [newProduct, ...current]);
+        } else {
+          console.error('Error importing item:', item.name, singleError);
+          // Tenta fallback simples se falhar
+          const simpleItem = {
+             name: item.name,
+             description: item.description,
+             price: item.price,
+             cost_price: item.cost_price,
+             image: item.image,
+             category: item.category,
+             stock: item.stock,
+             source_url: item.source_url
+           };
+           const { data: fallbackData } = await supabase
+            .from('products')
+            .insert(simpleItem)
+            .select()
+            .single();
+
+            if (fallbackData) {
+              successCount++;
+              setProducts(current => [{
+                id: fallbackData.id,
+                name: fallbackData.name,
+                description: fallbackData.description || undefined,
+                price: Number(fallbackData.price),
+                costPrice: fallbackData.cost_price ? Number(fallbackData.cost_price) : undefined,
+                image: fallbackData.image || '/placeholder.svg',
+                category: fallbackData.category as Category,
+                stock: fallbackData.stock,
+                sourceUrl: fallbackData.source_url || undefined,
+                createdAt: new Date(fallbackData.created_at),
+                updatedAt: new Date(fallbackData.updated_at),
+              }, ...current]);
+            } else {
+              errorCount++;
+            }
         }
+
+        // Atualiza progresso
+        setImportProgress(Math.round(((i + 1) / total) * 100));
+        // Pequeno delay para não travar a UI em loops muito grandes
+        if (i % 5 === 0) await new Promise(resolve => setTimeout(resolve, 0));
       }
 
-      if (successCount > 0) {
-        setProducts(current => [...newMappedProducts, ...current]);
-        toast({ 
-          title: "Importação finalizada", 
-          description: `Sucesso: ${successCount}. Falhas: ${errorCount}.`,
-          variant: errorCount > 0 ? "destructive" : "default"
-        });
-        return newMappedProducts;
-      } else {
-        toast({ 
-          title: "Falha na importação", 
-          description: `Todos os ${errorCount} produtos falharam.`,
-          variant: "destructive"
-        });
-        throw error || new Error("Batch import failed");
-      }
+      toast({ 
+        title: "Importação finalizada", 
+        description: `Sucesso: ${successCount}. Falhas: ${errorCount}.`,
+        variant: errorCount > 0 ? "destructive" : "default"
+      });
 
     } catch (error) {
       console.error('Error bulk importing products:', error);
       toast({ title: "Erro crítico na importação", variant: "destructive" });
-      throw error;
+    } finally {
+      setIsImporting(false);
+      // Mantemos o progresso em 100% ou onde parou para a UI exibir o estado final
+      // setImportProgress(0); 
     }
   };
 

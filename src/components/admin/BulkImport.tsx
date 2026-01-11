@@ -17,7 +17,7 @@ import { AlertCircle, CheckCircle2, Upload, FileText, LayoutGrid, X, Loader2, Tr
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export const BulkImport = () => {
-  const { bulkImportProducts, loading: productsLoading } = useProducts();
+  const { bulkImportProducts, loading: productsLoading, isImporting, importProgress } = useProducts();
   const { categories, addCategory } = useCategories();
   
   const [inputText, setInputText] = useState('');
@@ -30,9 +30,21 @@ export const BulkImport = () => {
   const [parsedProducts, setParsedProducts] = useState<ParsedProduct[]>([]);
   const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set());
   const [activeTab, setActiveTab] = useState('input');
-  const [isImporting, setIsImporting] = useState(false);
-  const [importProgress, setImportProgress] = useState(0);
+  // Local state removed in favor of Context state
   const [generateDescriptions, setGenerateDescriptions] = useState(false);
+
+  // Monitora o fim da importação para limpar a tela
+  React.useEffect(() => {
+    if (!isImporting && importProgress === 100 && parsedProducts.length > 0) {
+      const timer = setTimeout(() => {
+        setInputText('');
+        setParsedProducts([]);
+        setSelectedIndices(new Set());
+        setActiveTab('input');
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [isImporting, importProgress, parsedProducts.length]);
 
   const handleRemoveProduct = (indexToRemove: number) => {
     setParsedProducts(prev => prev.filter((_, i) => i !== indexToRemove));
@@ -195,39 +207,13 @@ export const BulkImport = () => {
       return;
     }
 
-    setIsImporting(true);
-    setImportProgress(10);
-
-    try {
-      // Usamos profitMargin 0 porque o preço já foi calculado no parser
-      await bulkImportProducts(productsToImport);
-      
-      setImportProgress(100);
-      toast({
-        title: "Importação concluída!",
-        description: `${productsToImport.length} produtos foram adicionados.`
-      });
-      
-      // Limpar tudo após sucesso
-      setTimeout(() => {
-        setInputText('');
-        setParsedProducts([]);
-        setSelectedIndices(new Set());
-        setActiveTab('input');
-        setImportProgress(0);
-        setIsImporting(false);
-      }, 1500);
-      
-    } catch (error) {
-      console.error(error);
-      setIsImporting(false);
-      setImportProgress(0);
-      toast({
-        title: "Erro na importação",
-        description: "Ocorreu um erro ao salvar os produtos.",
-        variant: "destructive"
-      });
-    }
+    // Inicia a importação em background via Context
+    bulkImportProducts(productsToImport);
+    
+    toast({
+      title: "Importação iniciada",
+      description: "O processo continuará em segundo plano. Você pode navegar para outras páginas.",
+    });
   };
 
   const validCount = parsedProducts.filter(p => p.isValid).length;
@@ -235,18 +221,32 @@ export const BulkImport = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold tracking-tight">Importação em Massa</h2>
-        {isImporting && <span className="text-sm text-muted-foreground animate-pulse">Processando...</span>}
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold tracking-tight">Importação em Massa</h2>
+          {isImporting && (
+            <div className="flex items-center gap-2 text-sm text-primary animate-pulse">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Importando {importProgress}%</span>
+            </div>
+          )}
+        </div>
+        
+        {isImporting && (
+          <div className="w-full space-y-1">
+            <Progress value={importProgress} className="w-full h-2 transition-all" />
+            <p className="text-xs text-muted-foreground text-right">Processando em segundo plano...</p>
+          </div>
+        )}
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2 lg:w-[400px]">
-          <TabsTrigger value="input" disabled={isImporting}>
+          <TabsTrigger value="input">
             <FileText className="mr-2 h-4 w-4" />
             Texto / Entrada
           </TabsTrigger>
-          <TabsTrigger value="preview" disabled={parsedProducts.length === 0 || isImporting}>
+          <TabsTrigger value="preview" disabled={parsedProducts.length === 0}>
             <LayoutGrid className="mr-2 h-4 w-4" />
             Pré-visualização ({parsedProducts.length})
           </TabsTrigger>
@@ -383,7 +383,8 @@ export const BulkImport = () => {
           )}
 
           {isImporting && (
-            <Progress value={importProgress} className="w-full h-2" />
+             // Progress moved to top
+             null
           )}
 
           <div className="grid grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10 gap-1.5">
