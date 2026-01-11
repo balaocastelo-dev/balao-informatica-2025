@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.asaas-wallet]
 verify_jwt = false
+
+[functions.og-product]
+verify_jwt = false

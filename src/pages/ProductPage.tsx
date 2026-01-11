@@ -91,20 +91,21 @@ export default function ProductPage() {
   }, [product?.sourceUrl, product?.name]);
 
   const handleShare = async () => {
-    const url = window.location.href;
+    // Smart Link para gerar preview correto no WhatsApp (via Supabase Edge Function)
+    const smartLink = `https://eossaxfosnmtjksefekk.supabase.co/functions/v1/og-product?id=${product?.id}`;
     
     if (navigator.share) {
       try {
         await navigator.share({
           title: product?.name,
           text: `Confira ${product?.name} por ${product ? formatPrice(product.price) : ''}`,
-          url: url,
+          url: smartLink,
         });
       } catch (err) {
         // User cancelled
       }
     } else {
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(smartLink);
       toast.success("Link copiado!");
     }
   };
