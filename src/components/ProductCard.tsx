@@ -114,9 +114,19 @@ export function ProductCard({ product, onClick, viewMode = 'grid' }: ProductCard
             containerClass="absolute inset-0"
             className="w-full h-full object-contain p-2 transition-transform duration-300 group-hover:scale-105"
           />
-          {Array.isArray(product.tags) && product.tags.length > 0 && (
+          {/* Custom Badges */}
+          {Array.isArray(product.tags) && product.tags.filter(t => t.startsWith('badge:')).map((tag, i) => (
+            <span 
+              key={`badge-${i}`} 
+              className="absolute left-2 bg-[#E30613] text-white text-[10px] font-bold px-1.5 py-0.5 rounded z-10 shadow-md uppercase tracking-wide"
+              style={{ top: `${8 + i * 28}px` }}
+            >
+              {tag.replace('badge:', '')}
+            </span>
+          ))}
+          {Array.isArray(product.tags) && product.tags.filter(t => !t.startsWith('badge:')).length > 0 && (
             <div className="absolute bottom-2 left-2 right-2 flex flex-wrap gap-1 z-10">
-              {product.tags.slice(0, 3).map((tag, i) => (
+              {product.tags.filter(t => !t.startsWith('badge:')).slice(0, 3).map((tag, i) => (
                 <span key={i} className="bg-secondary/80 text-foreground text-[10px] px-1.5 py-0.5 rounded">
                   {tag}
                 </span>
