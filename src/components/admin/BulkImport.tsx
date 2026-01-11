@@ -28,6 +28,7 @@ export const BulkImport = () => {
   const [activeTab, setActiveTab] = useState('input');
   const [isImporting, setIsImporting] = useState(false);
   const [importProgress, setImportProgress] = useState(0);
+  const [generateDescriptions, setGenerateDescriptions] = useState(false);
 
   const handleParse = () => {
     if (!inputText.trim()) {
