@@ -22,13 +22,14 @@ const handler = async (req: Request): Promise<Response> => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const authHeader = req.headers.get("authorization") || "";
 
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
     });
 
-    const { data: userData, error: userError } = await supabase.auth.getUser();
+    const { data: userData, error: userError } = await supabaseUser.auth.getUser();
     if (userError || !userData?.user) {
       return new Response(JSON.stringify({ error: "Não autenticado" }), {
         status: 401,
@@ -38,7 +39,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     const userId = userData.user.id;
 
-    const { data: isAdmin, error: roleError } = await supabase.rpc("has_role", {
+    const { data: isAdmin, error: roleError } = await supabaseUser.rpc("has_role", {
       _user_id: userId,
       _role: "admin",
     });
@@ -55,7 +56,8 @@ const handler = async (req: Request): Promise<Response> => {
     const state = crypto.randomUUID();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
-    const { error: insertError } = await supabase.from("bling_oauth_states").insert({
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+    const { error: insertError } = await supabaseAdmin.from("bling_oauth_states").insert({
       state,
       created_by: userId,
       expires_at: expiresAt,
