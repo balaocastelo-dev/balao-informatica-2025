@@ -60,21 +60,25 @@ export function MercadoPagoConfig() {
   const loadSettings = async () => {
     setIsLoading(true);
     try {
-      const saved = localStorage.getItem('mercadopago_settings');
-      if (saved) {
-        const parsed = JSON.parse(saved);
+      const { data, error } = await supabase
+        .from('store_settings')
+        .select('value')
+        .eq('key', 'mercadopago_config')
+        .maybeSingle();
+
+      if (data?.value) {
+        const parsed = typeof data.value === 'string' ? JSON.parse(data.value) : data.value;
         setSettings(parsed);
-        if (providerSettings.provider === 'mercadopago') {
-          setIsConnected(!!parsed.accessToken && !!parsed.publicKey);
-        }
-      }
-      const prov = localStorage.getItem('payment_provider_settings');
-      if (prov) {
-        const parsedProv = JSON.parse(prov);
+        setIsConnected(!!parsed.accessToken && !!parsed.publicKey);
         setProviderSettings({ provider: 'mercadopago' });
       }
     } catch (error) {
       console.error('Error loading settings:', error);
+      toast({
+        title: 'Erro ao carregar',
+        description: 'Não foi possível carregar as configurações.',
+        variant: 'destructive',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -94,8 +98,26 @@ export function MercadoPagoConfig() {
 
     setIsSaving(true);
     try {
-      localStorage.setItem('mercadopago_settings', JSON.stringify(settings));
-      localStorage.setItem('payment_provider_settings', JSON.stringify({ provider: 'mercadopago' }));
+      // Save full config for admin
+      const { error: configError } = await supabase
+        .from('store_settings')
+        .upsert({
+          key: 'mercadopago_config',
+          value: settings
+        });
+
+      if (configError) throw configError;
+
+      // Save public key for frontend
+      const { error: publicError } = await supabase
+        .from('store_settings')
+        .upsert({
+          key: 'mercadopago_public_key',
+          value: { publicKey: settings.publicKey, pixEnabled: settings.pixEnabled, cardEnabled: settings.cardEnabled }
+        });
+
+      if (publicError) throw publicError;
+
       setIsConnected(true);
       toast({
         title: 'Configurações salvas!',
@@ -113,24 +135,34 @@ export function MercadoPagoConfig() {
     }
   };
 
-  const handleDisconnect = () => {
-    localStorage.removeItem('mercadopago_settings');
-    localStorage.removeItem('payment_provider_settings');
-    setSettings({
-      publicKey: '',
-      accessToken: '',
-      pixEnabled: true,
-      cardEnabled: true,
-      testMode: true,
-    });
-    setProviderSettings({
-      provider: 'mercadopago',
-    });
-    setIsConnected(false);
-    toast({
-      title: 'Desconectado',
-      description: 'Integrações de pagamento foram desconectadas.',
-    });
+  const handleDisconnect = async () => {
+    try {
+      await supabase.from('store_settings').delete().eq('key', 'mercadopago_config');
+      await supabase.from('store_settings').delete().eq('key', 'mercadopago_public_key');
+      
+      setSettings({
+        publicKey: '',
+        accessToken: '',
+        pixEnabled: true,
+        cardEnabled: true,
+        testMode: true,
+      });
+      setProviderSettings({
+        provider: 'mercadopago',
+      });
+      setIsConnected(false);
+      toast({
+        title: 'Desconectado',
+        description: 'Integrações de pagamento foram desconectadas.',
+      });
+    } catch (error) {
+      console.error('Error disconnecting:', error);
+      toast({
+        title: 'Erro ao desconectar',
+        description: 'Tente novamente.',
+        variant: 'destructive',
+      });
+    }
   };
 
   if (isLoading) {
