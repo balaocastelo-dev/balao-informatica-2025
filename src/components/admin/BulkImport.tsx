@@ -114,18 +114,47 @@ export const BulkImport = () => {
   };
 
   const handleImport = async () => {
+    if (selectedCategory === 'new_category' && newCategoryName.trim()) {
+      try {
+        const slug = newCategoryName.trim().toLowerCase()
+          .replace(/[^\w\s-]/g, '')
+          .replace(/\s+/g, '-');
+        
+        await addCategory(newCategoryName.trim(), slug);
+      } catch (error) {
+        console.error("Erro ao criar categoria:", error);
+      }
+    }
+
     const productsToImport = parsedProducts
       .filter((_, index) => selectedIndices.has(index))
-      .map(p => ({
-        name: p.name,
-        price: p.price,
-        costPrice: p.costPrice,
-        image: p.image,
-        category: p.category,
-        stock: 10, // Default stock
-        sourceUrl: p.sourceUrl,
-        tags: p.tags
-      }));
+      .map(p => {
+        // Encontrar o slug da categoria
+        let categorySlug = p.category.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
+        
+        // 1. Tentar encontrar na lista de categorias existentes
+        const existingCategory = categories.find(c => c.name.toLowerCase() === p.category.toLowerCase());
+        if (existingCategory) {
+          categorySlug = existingCategory.slug;
+        } 
+        // 2. Se for a nova categoria sendo criada
+        else if (selectedCategory === 'new_category' && p.category === newCategoryName.trim()) {
+          categorySlug = newCategoryName.trim().toLowerCase()
+            .replace(/[^\w\s-]/g, '')
+            .replace(/\s+/g, '-');
+        }
+
+        return {
+          name: p.name,
+          price: p.price,
+          costPrice: p.costPrice,
+          image: p.image,
+          category: categorySlug,
+          stock: 10, // Default stock
+          sourceUrl: p.sourceUrl,
+          tags: p.tags
+        };
+      });
 
     if (productsToImport.length === 0) {
       toast({

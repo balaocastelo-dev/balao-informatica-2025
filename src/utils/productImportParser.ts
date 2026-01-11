@@ -2,6 +2,7 @@ export interface ImportOptions {
   defaultCategory?: string;
   profitMargin?: number;
   autoDetectCategory?: boolean;
+  defaultTags?: string[];
 }
 
 export interface ParsedProduct {

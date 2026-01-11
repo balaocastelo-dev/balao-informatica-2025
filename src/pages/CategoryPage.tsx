@@ -33,6 +33,17 @@ const CategoryPage = () => {
     // Return parent slug + all subcategory slugs
     return [parentSlug, ...subcategories.map(c => c.slug)];
   };
+
+  // Get all subcategory names for a parent category (to support legacy/broken data)
+  const getSubcategoryNames = (parentSlug: string): string[] => {
+    const parentCategory = categories.find(c => c.slug === parentSlug);
+    if (!parentCategory) return [];
+    
+    const subcategories = categories.filter(c => c.parent_id === parentCategory.id);
+    
+    // Return parent name + all subcategory names
+    return [parentCategory.name, ...subcategories.map(c => c.name)];
+  };
   
   // If category is "todos", show all products, otherwise filter by category and subcategories
   const rawProducts = useMemo(() => {
@@ -42,7 +53,12 @@ const CategoryPage = () => {
     if (!categoryId) return [];
     
     const categorySlugs = getSubcategorySlugs(categoryId);
-    return products.filter(p => categorySlugs.includes(p.category));
+    const categoryNames = getSubcategoryNames(categoryId);
+    
+    return products.filter(p => 
+      categorySlugs.includes(p.category) || 
+      categoryNames.includes(p.category)
+    );
   }, [products, categoryId, categories, isAllProducts]);
 
   const filteredProducts = useMemo(() => {
