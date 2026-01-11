@@ -84,13 +84,13 @@ const App = () => (
               <BatchOperationsProvider>
                 <PageBlocksProvider>
                   <CartProvider>
-                    <VoiceAgentProvider>
-                      <TooltipProvider>
-                        <Toaster />
-                        <Sonner />
-                        <BatchProgressIndicator />
-                        <MenuItemsProvider>
-                          <BrowserRouter>
+                    <TooltipProvider>
+                      <Toaster />
+                      <Sonner />
+                      <BatchProgressIndicator />
+                      <MenuItemsProvider>
+                        <BrowserRouter>
+                          <VoiceAgentProvider>
                           <DomainRedirect />
                           <ScrollToTop />
                           <Suspense fallback={<LoadingFallback />}>
@@ -133,10 +133,10 @@ const App = () => (
                               <Route path="*" element={<NotFound />} />
                             </Routes>
                           </Suspense>
+                          </VoiceAgentProvider>
                         </BrowserRouter>
                       </MenuItemsProvider>
                     </TooltipProvider>
-                    </VoiceAgentProvider>
                   </CartProvider>
                 </PageBlocksProvider>
               </BatchOperationsProvider>
