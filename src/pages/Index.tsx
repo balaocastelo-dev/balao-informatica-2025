@@ -3,7 +3,6 @@ import { Link, useSearchParams } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { HeroBanner } from "@/components/HeroBanner";
 import { ProductGrid } from "@/components/ProductGrid";
-import { RecommendedBrands } from "@/components/RecommendedBrands";
 import { LocalBusinessSchema, SEOHead } from "@/components/SEOHead";
 import { useProducts } from "@/contexts/ProductContext";
 import { usePageBlocks } from "@/contexts/PageBlocksContext";
@@ -266,19 +265,6 @@ const Index = () => {
               <div key={block.id} className="mt-8 container-balao">
                 <HeroBanner singleBanner />
               </div>
-            );
-          }
-
-          if (block.block_type === "brands") {
-            return (
-              <section key={block.id} className="bg-white py-12 mt-12 border-y border-zinc-100">
-                <div className="container-balao">
-                  <h3 className="text-xl font-bold text-center mb-8 uppercase tracking-wide text-zinc-400">
-                    Parceiros Oficiais
-                  </h3>
-                  <RecommendedBrands />
-                </div>
-              </section>
             );
           }
 
