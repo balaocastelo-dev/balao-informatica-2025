@@ -91,11 +91,49 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({ isOpen, onClose 
     }
   };
 
-  const speak = (text: string) => {
+  const speak = async (text: string) => {
+    // Stop any current speech
+    if (synthRef.current) synthRef.current.cancel();
+
+    // Try OpenAI TTS if key exists
+    if (agentConfig?.openai_api_key) {
+      try {
+        setStatus('speaking');
+        const response = await fetch("https://api.openai.com/v1/audio/speech", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${agentConfig.openai_api_key}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "tts-1",
+            input: text,
+            voice: agentConfig.voice_id || "alloy",
+          }),
+        });
+
+        if (!response.ok) throw new Error("OpenAI TTS Failed");
+
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const audio = new Audio(url);
+        
+        audio.onended = () => {
+          setStatus('listening');
+          startListening();
+          URL.revokeObjectURL(url);
+        };
+        
+        audio.play();
+        return; // Success
+      } catch (e) {
+        console.error("TTS Error, falling back to browser:", e);
+        // Fallback below
+      }
+    }
+
     if (!synthRef.current) return;
     
-    synthRef.current.cancel();
-
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'pt-BR';
     utterance.rate = 1.1;

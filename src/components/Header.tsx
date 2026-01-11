@@ -99,20 +99,21 @@ export function Header({ onMenuClick }: HeaderProps) {
               />
               <button
                 type="submit"
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-muted-foreground hover:text-primary transition-colors"
+                className="absolute right-0 top-0 h-full px-4 text-muted-foreground hover:text-primary transition-colors"
               >
                 <Search className="w-5 h-5" />
               </button>
             </div>
           </form>
 
-          {/* Voice Agent Button - Desktop */}
+          {/* Voice Agent Button */}
           <Button
             onClick={openAgent}
-            className="hidden sm:flex bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white gap-2 font-bold shadow-md hover:scale-105 transition-all duration-300 rounded-full px-2 lg:px-4"
+            className="hidden sm:flex bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white gap-2 font-bold shadow-lg hover:shadow-purple-500/25 transition-all duration-300 rounded-full animate-pulse hover:animate-none"
+            title="Falar com Especialista IA"
           >
             <Mic className="w-5 h-5" />
-            <span className="hidden xl:inline">IA de Vendas</span>
+            <span className="hidden xl:inline">IA Expert</span>
           </Button>
 
           {/* Monte seu PC Button */}

@@ -60,7 +60,7 @@ const AdminPage = () => {
   
   const [isAdmin, setIsAdmin] = useState(false);
 
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'bulk-import' | 'banners' | 'categories' | 'brands' | 'layout' | 'email' | 'orders' | 'bling' | 'config' | 'coupons'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'bulk-import' | 'banners' | 'categories' | 'brands' | 'layout' | 'email' | 'orders' | 'bling' | 'config' | 'coupons' | 'voice-agent'>('dashboard');
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showBannerModal, setShowBannerModal] = useState(false);
