@@ -173,13 +173,10 @@ export default function ProductPage() {
         ]}
       />
       
-      {/* ALTERAÇÃO PRINCIPAL AQUI:
-         Usamos 'h-[calc(100dvh-theme(spacing.32))]' para calcular a altura exata da tela 
-         menos o cabeçalho (aprox), evitando rolagem no mobile.
-      */}
-      <div className="container mx-auto px-4 pb-4 h-[calc(100dvh-80px)] md:h-auto flex flex-col md:block">
+      {/* Layout padrão com scroll natural no mobile */}
+      <div className="container mx-auto px-4 pb-4 md:h-auto flex flex-col md:block">
         
-        {/* Botão de voltar (oculto em telas muito pequenas se necessário, ou mantido compacto) */}
+        {/* Botão de voltar */}
         <div className="shrink-0 py-2">
             <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="h-8">
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -187,36 +184,29 @@ export default function ProductPage() {
             </Button>
         </div>
 
-        <div className="flex-1 flex flex-col md:grid md:grid-cols-2 md:gap-8 md:items-start min-h-0">
+        <div className="flex flex-col md:grid md:grid-cols-2 md:gap-8 md:items-start">
           
-          {/* ÁREA DA IMAGEM:
-             Mobile: basis-5/12 (aprox 40% da altura disponível) e bg-card para destaque.
-             Desktop: Comportamento normal.
-          */}
-          <div className="basis-5/12 md:basis-auto bg-card rounded-lg p-4 flex items-center justify-center mb-4 md:mb-0 shrink-0 relative">
+          {/* ÁREA DA IMAGEM */}
+          <div className="bg-card rounded-lg p-4 flex items-center justify-center mb-4 md:mb-0 relative aspect-square md:aspect-auto md:h-[500px]">
             <img 
               src={product.image} 
               alt={product.name} 
-              className="w-full h-full object-contain max-h-full" 
+              className="w-full h-full object-contain" 
             />
           </div>
 
-          {/* ÁREA DE TEXTO E BOTÕES:
-             Mobile: basis-7/12, flex-col para distribuir o conteúdo.
-             Overflow-y-auto permite rolar SÓ o texto se for muito grande, mas mantém botões visíveis.
-          */}
-          <div className="basis-7/12 md:basis-auto flex flex-col md:block justify-between min-h-0 space-y-2 md:space-y-6">
+          {/* ÁREA DE TEXTO E BOTÕES */}
+          <div className="flex flex-col md:block space-y-4 md:space-y-6">
             
-            {/* Bloco de Informações (Título, Descrição) */}
-            <div className="overflow-y-auto px-1">
+            {/* Bloco de Informações */}
+            <div className="px-1">
               <div>
                 <h1 className="text-lg md:text-3xl font-bold text-foreground leading-tight">{product.name}</h1>
                 {product.category && <span className="text-xs text-muted-foreground">Ref: {product.category}</span>}
               </div>
 
-              {/* line-clamp-3 limita o texto a 3 linhas no mobile para não ocupar tudo */}
               {product.description && (
-                <p className="text-muted-foreground text-xs md:text-base mt-2 line-clamp-3 md:line-clamp-none">
+                <p className="text-muted-foreground text-xs md:text-base mt-2">
                   {product.description}
                 </p>
               )}
@@ -236,8 +226,8 @@ export default function ProductPage() {
               )}
             </div>
 
-            {/* Bloco de Preço e Ação (Sempre visível no fundo do container mobile) */}
-            <div className="space-y-3 pt-2 shrink-0 bg-background md:bg-transparent">
+            {/* Bloco de Preço e Ação */}
+            <div className="space-y-3 pt-4 border-t border-zinc-100 bg-background md:bg-transparent">
               <div className="space-y-1">
                 <p className="text-2xl md:text-4xl font-bold text-primary">{formatPrice(product.price)}</p>
                 <p className="text-xs md:text-sm text-muted-foreground">ou 12x de {formatPrice(product.price / 12)} sem juros</p>
