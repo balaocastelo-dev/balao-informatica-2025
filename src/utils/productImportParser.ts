@@ -72,8 +72,15 @@ export const parseBulkImport = (text: string, options: ImportOptions): ParsedPro
     let sourceUrl = '';
     
     // 1. Extrair URL de imagem
-    const urlRegex = /(https?:\/\/[^\s]+(?:\.jpg|\.png|\.webp|\.jpeg)[^\s]*)/i;
-    const imgMatch = trimmedLine.match(urlRegex);
+    // Primeiro tenta encontrar URL com extensão de imagem explícita
+    const urlRegex = /(https?:\/\/[^\s]+(?:\.jpg|\.png|\.webp|\.jpeg|\.gif|\.bmp|\.tiff)[^\s]*)/i;
+    let imgMatch = trimmedLine.match(urlRegex);
+    
+    // Se não encontrar com extensão, tenta qualquer URL HTTP/HTTPS
+    if (!imgMatch) {
+      const anyUrlRegex = /(https?:\/\/[^\s]+)/i;
+      imgMatch = trimmedLine.match(anyUrlRegex);
+    }
     
     if (imgMatch) {
       image = imgMatch[0];
@@ -205,9 +212,6 @@ const enhanceImageUrl = (url: string): string => {
 
   // Padrões comuns de redimensionamento
   
-  // Kabum, etc: _m.jpg, _g.jpg -> remover ou padronizar
-  newUrl = newUrl.replace(/_[mps]\.(jpg|png|webp)$/i, '_g.$1'); // Força grande se existir padrão
-  
   // Amazon: remover ._SX200_ etc
   // Ex: https://m.media-amazon.com/images/I/61j4+J9M6dL._AC_SX679_.jpg -> https://m.media-amazon.com/images/I/61j4+J9M6dL.jpg
   if (newUrl.includes('amazon') || newUrl.includes('media-amazon')) {
@@ -221,11 +225,9 @@ const enhanceImageUrl = (url: string): string => {
     newUrl = newUrl.replace(/-[OI]\.webp/i, '-F.webp');
   }
 
-  // Substituição genérica de paths
-  newUrl = newUrl.replace('/medium/', '/large/');
-  newUrl = newUrl.replace('/thumb/', '/large/');
-  newUrl = newUrl.replace('/thumbnail/', '/full/');
-
+  // OBS: Removido redimensionamento genérico (kabum, medium->large) pois estava quebrando links válidos
+  // e causando perda de imagens na importação.
+  
   return newUrl;
 };
 
