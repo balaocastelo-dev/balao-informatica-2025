@@ -30,8 +30,7 @@ import {
   FolderEdit,
   CopyPlus,
   Sparkles,
-  Tag,
-  Mic
+  Tag
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { PageLayoutEditor } from '@/components/admin/PageLayoutEditor';
@@ -43,8 +42,6 @@ import { CategoryProductManager } from '@/components/admin/CategoryProductManage
 import { BrandManagement } from '@/components/admin/BrandManagement';
 import { CouponsManagement } from '@/components/admin/CouponsManagement';
 import { BulkImport } from '@/components/admin/BulkImport';
-import { BlingIntegration } from '@/components/admin/BlingIntegration';
-import { VoiceAgentConfig } from '@/components/admin/VoiceAgentConfig';
 
 import { useMenuItems } from '@/contexts/MenuItemsContext';
 
@@ -60,7 +57,7 @@ const AdminPage = () => {
   
   const [isAdmin, setIsAdmin] = useState(false);
 
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'bulk-import' | 'banners' | 'categories' | 'brands' | 'layout' | 'email' | 'orders' | 'bling' | 'config' | 'coupons' | 'voice-agent'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'bulk-import' | 'banners' | 'categories' | 'brands' | 'layout' | 'email' | 'orders' | 'config' | 'coupons'>('dashboard');
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showBannerModal, setShowBannerModal] = useState(false);
@@ -819,29 +816,7 @@ const AdminPage = () => {
             onClick={() => {}}
             className="hidden"
           />
-          <button
-            onClick={() => setActiveTab('bling')}
-            className={`px-3 py-2 font-medium transition-colors border-b-2 -mb-px flex items-center gap-2 whitespace-nowrap ${
-              activeTab === 'bling' 
-                ? 'text-primary border-primary' 
-                : 'text-muted-foreground border-transparent hover:text-foreground'
-            }`}
-          >
-            <Settings className="w-4 h-4" />
-            Bling ERP
-          </button>
-          
-          <button
-            onClick={() => setActiveTab('voice-agent')}
-            className={`px-3 py-2 font-medium transition-colors border-b-2 -mb-px flex items-center gap-2 whitespace-nowrap ${
-              activeTab === 'voice-agent' 
-                ? 'text-primary border-primary' 
-                : 'text-muted-foreground border-transparent hover:text-foreground'
-            }`}
-          >
-            <Mic className="w-4 h-4" />
-            Agente de Voz
-          </button>
+
         </div>
 
         {/* Dashboard Tab */}
@@ -853,25 +828,7 @@ const AdminPage = () => {
         {/* Orders Tab */}
         {activeTab === 'orders' && <OrdersManagement />}
 
-        {/* Bling Tab */}
-        {activeTab === 'bling' && (
-          <div className="space-y-8">
-            <BlingIntegration />
-          </div>
-        )}
 
-        {/* Voice Agent Tab */}
-        {activeTab === 'voice-agent' && (
-          <div className="space-y-8">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-bold text-foreground">Agente de Vendas por Voz</h2>
-                <p className="text-muted-foreground">Configure a personalidade, voz e conhecimento do seu assistente.</p>
-              </div>
-            </div>
-            <VoiceAgentConfig />
-          </div>
-        )}
 
         {/* Configuração Tab */}
         {activeTab === 'config' && (

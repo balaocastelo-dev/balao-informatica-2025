@@ -59,7 +59,6 @@ const LandingAcessoriosGamerPage = lazy(() => import("./pages/LandingAcessoriosG
 const LandingVisitaTecnicaPage = lazy(() => import("./pages/LandingVisitaTecnicaPage"));
 const ThankYouPage = lazy(() => import("./pages/ThankYouPage"));
 const ChatCentralPage = lazy(() => import("./pages/ChatCentralPage"));
-const BlingCallbackPage = lazy(() => import("./pages/BlingCallbackPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const BlogPage = lazy(() => import("./pages/BlogPage"));
 const BlogArticlePage = lazy(() => import("./pages/BlogArticlePage"));
@@ -71,8 +70,6 @@ const LoadingFallback = () => (
     <Loader2 className="h-8 w-8 animate-spin text-primary" />
   </div>
 );
-
-import { VoiceAgentProvider } from "@/contexts/VoiceAgentContext";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -90,7 +87,6 @@ const App = () => (
                       <BatchProgressIndicator />
                       <MenuItemsProvider>
                         <BrowserRouter>
-                          <VoiceAgentProvider>
                           <DomainRedirect />
                           <ScrollToTop />
                           <Suspense fallback={<LoadingFallback />}>
@@ -106,7 +102,6 @@ const App = () => (
                               <Route path="/perfil" element={<ProfilePage />} />
                               <Route path="/montar-pc" element={<PCBuilderPage />} />
                               <Route path="/chat-central" element={<ChatCentralPage />} />
-                              <Route path="/bling/callback" element={<BlingCallbackPage />} />
                               <Route path="/sobre" element={<SobreNosPage />} />
                               <Route path="/consignacao" element={<ConsignacaoPage />} />
                               <Route path="/manutencao" element={<ManutencaoPage />} />
@@ -133,7 +128,6 @@ const App = () => (
                               <Route path="*" element={<NotFound />} />
                             </Routes>
                           </Suspense>
-                          </VoiceAgentProvider>
                         </BrowserRouter>
                       </MenuItemsProvider>
                     </TooltipProvider>
