@@ -42,10 +42,14 @@ export const BulkImport = () => {
 
     const margin = parseFloat(profitMargin) || 0;
     
+    // Converter string de tags separada por vírgula em array de strings
+    const tagsList = defaultTags ? defaultTags.split(',').map(t => t.trim()).filter(Boolean) : [];
+    
     const results = parseBulkImport(inputText, {
       defaultCategory: selectedCategory === 'auto' ? undefined : selectedCategory,
       autoDetectCategory: selectedCategory === 'auto',
-      profitMargin: margin
+      profitMargin: margin,
+      defaultTags: tagsList
     });
 
     if (results.length === 0) {

@@ -47,7 +47,20 @@ export const BlingIntegration: React.FC = () => {
     }
   };
 
-  const authUrl = "https://www.bling.com.br/Api/v3/oauth/authorize?response_type=code&client_id=bbd5f0cf6a54527157368ab525d6a38bd8a8679d&state=e7fffd7afd4b661a457a9edf78fc7f19";
+  const handleConnect = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('bling-oauth-start');
+      if (error) throw error;
+      if (data?.authorize_url) {
+        window.location.href = data.authorize_url;
+      } else {
+        throw new Error('URL de autorização não retornada');
+      }
+    } catch (error) {
+      console.error('Erro ao iniciar conexão com Bling:', error);
+      toast({ title: 'Erro', description: 'Falha ao iniciar conexão com Bling.', variant: 'destructive' });
+    }
+  };
 
   return (
     <Card>
@@ -78,11 +91,9 @@ export const BlingIntegration: React.FC = () => {
 
         {status === 'disconnected' ? (
           <div className="space-y-2">
-            <Button className="w-full sm:w-auto" asChild>
-              <a href={authUrl} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="w-4 h-4 mr-2" />
-                Conectar Agora
-              </a>
+            <Button className="w-full sm:w-auto" onClick={handleConnect}>
+              <ExternalLink className="w-4 h-4 mr-2" />
+              Conectar Agora
             </Button>
             <p className="text-xs text-muted-foreground">
               Você será redirecionado para o Bling para autorizar o acesso.

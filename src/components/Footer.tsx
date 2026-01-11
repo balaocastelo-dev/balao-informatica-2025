@@ -1,13 +1,27 @@
 import { Link } from 'react-router-dom';
-import { MapPin, Phone, Mail, Globe } from 'lucide-react';
+import { MapPin, Phone, Mail, Globe, ChevronDown } from 'lucide-react';
+import { useState } from 'react';
 
 export function Footer() {
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
     <footer className="bg-foreground text-background mt-auto">
       <div className="container-balao py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        
+        {/* Mobile Toggle */}
+        <button 
+          className="md:hidden flex items-center justify-between w-full mb-6 py-2 border-b border-background/20"
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          <h3 className="font-semibold text-lg">Informações da Empresa</h3>
+          <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+        </button>
+
+        {/* Content Wrapper - Always visible on desktop, conditional on mobile */}
+        <div className={`${isOpen ? 'block' : 'hidden'} md:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 transition-all duration-300 ease-in-out`}>
           {/* Logo and Description */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 mb-8 md:mb-0">
             <Link to="/">
               <img
                 src="https://www.balaodainformatica.com.br/media/wysiwyg/balao500.png"
@@ -22,7 +36,7 @@ export function Footer() {
           </div>
 
           {/* Contact Info */}
-          <div>
+          <div className="mb-8 md:mb-0">
             <h3 className="font-semibold text-lg mb-4">Contato</h3>
             <ul className="space-y-3 text-sm text-background/80">
               <li className="flex items-start gap-2">
