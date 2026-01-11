@@ -169,10 +169,13 @@ export default function CartPage() {
 
       // 2. Send to Bling
       if (order) {
+         console.log("Syncing order to Bling:", order);
          const blingResult = await BlingService.sendOrder(order);
          if (!blingResult.success) {
            console.error("Bling sync failed:", blingResult.error);
+           // We don't block the checkout if Bling fails, but we log it
          } else {
+           console.log("Bling sync success:", blingResult.data);
            toast({ title: "Pedido sincronizado com Bling!" });
          }
       }
@@ -181,18 +184,17 @@ export default function CartPage() {
         `• ${item.quantity}x ${item.product.name} - ${(item.product.price * item.quantity).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`
       ).join('\n');
 
-      const subtotalStr = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-      const discountStr = couponDiscount > 0 ? `\nDesconto: - ${couponDiscount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}` : '';
+      const subtotal = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      const discount = couponDiscount > 0 ? `\nDesconto: - ${couponDiscount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}` : '';
       const finalTotalStr = finalTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
       const message = `*Novo Pedido - Balão da Informática*\n\n` +
-        `*ID:* #${order?.id?.slice(0,8)}\n` +
         `*Cliente:* ${customerData.name}\n` +
         `*Email:* ${customerData.email}\n` +
         `*Telefone:* ${customerData.phone}\n\n` +
         `*Endereço de Entrega:*\n${getFullAddress()}\n\n` +
         `*Itens do Pedido:*\n${itemsList}\n\n` +
-        `*Resumo:*\nSubtotal: ${subtotalStr}${discountStr}\n` +
+        `*Resumo:*\nSubtotal: ${subtotal}${discount}\n` +
         `*Total: ${finalTotalStr}*\n\n` +
         `Gostaria de finalizar este pedido.`;
 
@@ -207,9 +209,8 @@ export default function CartPage() {
         title: 'Redirecionando...',
         description: 'Finalize seu pedido no WhatsApp.',
       });
-
     } catch (err) {
-      console.error(err);
+      console.error("Checkout error:", err);
       toast({ title: "Erro ao processar pedido", description: "Tente novamente.", variant: "destructive" });
     } finally {
       setIsProcessing(false);
@@ -392,4 +393,46 @@ export default function CartPage() {
                   <Separator />
 
                   <div className="space-y-2">
-                    <div className="flex justify-be
+                    <div className="flex justify-between text-sm">
+                      <span>Subtotal</span>
+                      <span>{total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                    </div>
+                    {couponDiscount > 0 && (
+                      <div className="flex justify-between text-sm text-green-600">
+                        <span>Desconto</span>
+                        <span>- {couponDiscount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-lg font-bold pt-2">
+                      <span>Total</span>
+                      <span>{Math.max(0, total - couponDiscount).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                    </div>
+                  </div>
+                </CardContent>
+                <CardFooter>
+                  <Button 
+                    className="w-full h-12 text-lg bg-[#25D366] hover:bg-[#128C7E] text-white" 
+                    onClick={handleCheckout}
+                    disabled={isProcessing}
+                  >
+                    {isProcessing ? (
+                      <>
+                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                        Processando...
+                      </>
+                    ) : (
+                      <>
+                        <MessageCircle className="w-5 h-5 mr-2" />
+                        Finalizar no WhatsApp
+                      </>
+                    )}
+                  </Button>
+                </CardFooter>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Layout>
+  );
+}
