@@ -19,6 +19,9 @@ import { toast } from '@/hooks/use-toast';
 import { CouponInput } from '@/components/CouponInput';
 import { Separator } from '@/components/ui/separator';
 
+import { supabase } from "@/integrations/supabase/client";
+import { BlingService } from "@/services/bling";
+
 interface CustomerData {
   name: string;
   email: string;
@@ -51,6 +54,8 @@ export default function CartPage() {
     city: '',
     state: ''
   });
+
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // Load User Profile
   useEffect(() => {
@@ -124,45 +129,91 @@ export default function CartPage() {
     return parts.join(', ');
   };
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     const error = validateForm();
     if (error) {
       toast({ title: 'Atenção', description: error, variant: 'destructive' });
       return;
     }
 
-    const itemsList = items.map(item => 
-      `• ${item.quantity}x ${item.product.name} - ${(item.product.price * item.quantity).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`
-    ).join('\n');
+    setIsProcessing(true);
 
-    const subtotal = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    const discount = couponDiscount > 0 ? `\nDesconto: - ${couponDiscount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}` : '';
-    const finalTotal = Math.max(0, total - couponDiscount).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    try {
+      const finalTotal = Math.max(0, total - couponDiscount);
 
-    const message = `*Novo Pedido - Balão da Informática*\n\n` +
-      `*Cliente:* ${customerData.name}\n` +
-      `*Email:* ${customerData.email}\n` +
-      `*Telefone:* ${customerData.phone}\n\n` +
-      `*Endereço de Entrega:*\n${getFullAddress()}\n\n` +
-      `*Itens do Pedido:*\n${itemsList}\n\n` +
-      `*Resumo:*\nSubtotal: ${subtotal}${discount}\n` +
-      `*Total: ${finalTotal}*\n\n` +
-      `Gostaria de finalizar este pedido.`;
+      // 1. Create Order
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          user_id: user?.id || null,
+          status: 'pending',
+          total: finalTotal,
+          customer_name: customerData.name,
+          customer_email: customerData.email,
+          customer_phone: customerData.phone,
+          shipping_address: getFullAddress(),
+          payment_method: 'whatsapp',
+          payment_status: 'pending',
+          items: items.map(i => ({
+              id: i.product.id,
+              name: i.product.name,
+              price: i.product.price,
+              quantity: i.quantity,
+              image: i.product.image
+          }))
+        })
+        .select()
+        .single();
 
-    const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/5519987510267?text=${encodedMessage}`;
+      if (orderError) throw orderError;
 
-    window.open(whatsappUrl, '_blank');
-    
-    // Optional: Clear cart logic. 
-    // We might want to keep it in case they come back, but standard flow is to clear.
-    // Let's clear it to avoid confusion.
-    clearCart();
-    
-    toast({
-      title: 'Redirecionando...',
-      description: 'Finalize seu pedido no WhatsApp.',
-    });
+      // 2. Send to Bling
+      if (order) {
+         const blingResult = await BlingService.sendOrder(order);
+         if (!blingResult.success) {
+           console.error("Bling sync failed:", blingResult.error);
+         } else {
+           toast({ title: "Pedido sincronizado com Bling!" });
+         }
+      }
+
+      const itemsList = items.map(item => 
+        `• ${item.quantity}x ${item.product.name} - ${(item.product.price * item.quantity).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`
+      ).join('\n');
+
+      const subtotalStr = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      const discountStr = couponDiscount > 0 ? `\nDesconto: - ${couponDiscount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}` : '';
+      const finalTotalStr = finalTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+      const message = `*Novo Pedido - Balão da Informática*\n\n` +
+        `*ID:* #${order?.id?.slice(0,8)}\n` +
+        `*Cliente:* ${customerData.name}\n` +
+        `*Email:* ${customerData.email}\n` +
+        `*Telefone:* ${customerData.phone}\n\n` +
+        `*Endereço de Entrega:*\n${getFullAddress()}\n\n` +
+        `*Itens do Pedido:*\n${itemsList}\n\n` +
+        `*Resumo:*\nSubtotal: ${subtotalStr}${discountStr}\n` +
+        `*Total: ${finalTotalStr}*\n\n` +
+        `Gostaria de finalizar este pedido.`;
+
+      const encodedMessage = encodeURIComponent(message);
+      const whatsappUrl = `https://wa.me/5519987510267?text=${encodedMessage}`;
+
+      window.open(whatsappUrl, '_blank');
+      
+      clearCart();
+      
+      toast({
+        title: 'Redirecionando...',
+        description: 'Finalize seu pedido no WhatsApp.',
+      });
+
+    } catch (err) {
+      console.error(err);
+      toast({ title: "Erro ao processar pedido", description: "Tente novamente.", variant: "destructive" });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   if (items.length === 0) {
@@ -341,36 +392,4 @@ export default function CartPage() {
                   <Separator />
 
                   <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Subtotal</span>
-                      <span>{total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
-                    </div>
-                    {couponDiscount > 0 && (
-                      <div className="flex justify-between text-sm text-green-600">
-                        <span>Desconto</span>
-                        <span>- {couponDiscount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between text-lg font-bold pt-2">
-                      <span>Total</span>
-                      <span>{Math.max(0, total - couponDiscount).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
-                    </div>
-                  </div>
-                </CardContent>
-                <CardFooter>
-                  <Button 
-                    className="w-full h-12 text-lg bg-[#25D366] hover:bg-[#128C7E] text-white" 
-                    onClick={handleCheckout}
-                  >
-                    <MessageCircle className="w-5 h-5 mr-2" />
-                    Finalizar no WhatsApp
-                  </Button>
-                </CardFooter>
-              </Card>
-            </div>
-          </div>
-        </div>
-      </div>
-    </Layout>
-  );
-}
+                    <div className="flex justify-be

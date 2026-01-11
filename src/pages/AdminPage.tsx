@@ -40,7 +40,9 @@ import { OrdersManagement } from '@/components/admin/OrdersManagement';
 import { BannerManagement } from '@/components/admin/BannerManagement';
 import { CategoryProductManager } from '@/components/admin/CategoryProductManager';
 import { BrandManagement } from '@/components/admin/BrandManagement';
-import { CouponsManagement } from '@/components/admin/CouponsManagement';
+import { BlingIntegration } from "@/components/admin/BlingIntegration";
+
+// ... inside the component tabs ...
 import { BulkImport } from '@/components/admin/BulkImport';
 
 import { useMenuItems } from '@/contexts/MenuItemsContext';

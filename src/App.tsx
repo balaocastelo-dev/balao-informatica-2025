@@ -62,6 +62,7 @@ const ChatCentralPage = lazy(() => import("./pages/ChatCentralPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const BlogPage = lazy(() => import("./pages/BlogPage"));
 const BlogArticlePage = lazy(() => import("./pages/BlogArticlePage"));
+import { BlingCallbackPage } from "./pages/admin/BlingCallbackPage";
 
 const queryClient = new QueryClient();
 
@@ -97,6 +98,7 @@ const App = () => (
                               <Route path="/busca" element={<SearchPage />} />
                               <Route path="/carrinho" element={<CartPage />} />
                               <Route path="/admin" element={<AdminPage />} />
+                              <Route path="/admin/bling/callback" element={<BlingCallbackPage />} />
                               <Route path="/auth" element={<AuthPage />} />
                               <Route path="/pedidos" element={<OrdersPage />} />
                               <Route path="/perfil" element={<ProfilePage />} />
