@@ -12,7 +12,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const clientId = Deno.env.get("BLING_CLIENT_ID");
+    const clientId = Deno.env.get("BLING_CLIENT_ID") || "bbd5f0cf6a54527157368ab525d6a38bd8a8679d";
     if (!clientId) {
       return new Response(JSON.stringify({ error: "BLING_CLIENT_ID não configurado" }), {
         status: 500,
