@@ -14,8 +14,19 @@ import { BatchOperationsProvider } from "@/contexts/BatchOperationsContext";
 import { LandingPageConfigProvider } from "@/contexts/LandingPageConfigContext";
 import { BatchProgressIndicator } from "@/components/BatchProgressIndicator";
 import { MenuItemsProvider } from "./contexts/MenuItemsContext";
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { Loader2 } from "lucide-react";
+
+// Componente para redirecionar domínio Lovable para o oficial
+const DomainRedirect = () => {
+  useEffect(() => {
+    if (window.location.hostname.includes('lovable.app')) {
+      const newUrl = 'https://www.balao.info' + window.location.pathname + window.location.search;
+      window.location.href = newUrl;
+    }
+  }, []);
+  return null;
+};
 
 // Lazy loading pages
 const Index = lazy(() => import("./pages/Index"));
@@ -77,6 +88,7 @@ const App = () => (
                       <BatchProgressIndicator />
                       <MenuItemsProvider>
                         <BrowserRouter>
+                          <DomainRedirect />
                           <ScrollToTop />
                           <Suspense fallback={<LoadingFallback />}>
                             <Routes>

@@ -81,7 +81,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signInWithGoogle = async () => {
-    const redirectUrl = `${window.location.origin}/`;
+    let redirectUrl = `${window.location.origin}/`;
+    
+    // Se estiver em produção (não localhost), força o domínio correto
+    if (!window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1')) {
+      redirectUrl = 'https://www.balao.info/';
+    }
     
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
