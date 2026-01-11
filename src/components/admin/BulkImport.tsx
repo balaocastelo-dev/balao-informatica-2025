@@ -386,41 +386,41 @@ export const BulkImport = () => {
             <Progress value={importProgress} className="w-full h-2" />
           )}
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
+          <div className="grid grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10 gap-1.5">
             {parsedProducts.map((product, index) => (
               <Card key={index} className={`relative overflow-hidden group/card transition-all ${!product.isValid ? 'border-destructive/50 bg-destructive/5' : selectedIndices.has(index) ? 'border-primary ring-1 ring-primary/20' : ''}`}>
-                <div className="absolute top-2 right-2 z-20 flex gap-1 opacity-0 group-hover/card:opacity-100 transition-opacity">
+                <div className="absolute top-0.5 right-0.5 z-20 flex gap-1 opacity-0 group-hover/card:opacity-100 transition-opacity">
                    <Button
                      size="icon"
                      variant="destructive"
-                     className="h-6 w-6 rounded-full shadow-sm"
+                     className="h-4 w-4 rounded-full shadow-sm"
                      onClick={(e) => {
                        e.stopPropagation();
                        handleRemoveProduct(index);
                      }}
                      title="Remover produto"
                    >
-                     <X className="h-3 w-3" />
+                     <X className="h-2 w-2" />
                    </Button>
                 </div>
                 
                 {!product.isValid && (
-                  <div className="absolute top-2 right-2 z-10 group-hover/card:opacity-0 transition-opacity">
-                    <AlertCircle className="h-5 w-5 text-destructive" />
+                  <div className="absolute top-0.5 right-0.5 z-10 group-hover/card:opacity-0 transition-opacity">
+                    <AlertCircle className="h-3.5 w-3.5 text-destructive" />
                   </div>
                 )}
                 
-                <div className="absolute top-2 left-2 z-10">
+                <div className="absolute top-0.5 left-0.5 z-10">
                   <Checkbox 
                     checked={selectedIndices.has(index)}
                     onCheckedChange={() => toggleSelection(index)}
                     disabled={!product.isValid}
-                    className="bg-white/80 backdrop-blur-sm data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
+                    className="h-3 w-3 bg-white/80 backdrop-blur-sm data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
                   />
                 </div>
 
-                <CardContent className="p-3 space-y-2">
-                  <div className="aspect-square rounded-md overflow-hidden bg-muted relative group">
+                <CardContent className="p-1.5 space-y-1">
+                  <div className="aspect-square rounded-sm overflow-hidden bg-muted relative group">
                     {product.image ? (
                       <img 
                         src={product.image} 
@@ -432,38 +432,38 @@ export const BulkImport = () => {
                       />
                     ) : (
                       <div className="flex items-center justify-center h-full text-muted-foreground bg-zinc-50">
-                        <FileText className="h-8 w-8 opacity-20" />
+                        <FileText className="h-5 w-5 opacity-20" />
                       </div>
                     )}
-                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] p-2 text-center cursor-pointer" onClick={() => window.open(product.image, '_blank')}>
-                      Ver imagem
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[8px] p-0.5 text-center cursor-pointer" onClick={() => window.open(product.image, '_blank')}>
+                      Ver
                     </div>
                   </div>
 
-                  <div className="space-y-1">
-                    <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider truncate">
+                  <div className="space-y-0.5">
+                    <div className="text-[8px] font-medium text-muted-foreground uppercase tracking-wider truncate">
                       {product.category}
                     </div>
-                    <h3 className="font-medium text-xs line-clamp-2 h-8 leading-tight" title={product.name}>
+                    <h3 className="font-medium text-[9px] leading-3 line-clamp-2 h-[1.5em]" title={product.name}>
                       {product.name || <span className="text-destructive italic">Nome não identificado</span>}
                     </h3>
                   </div>
 
-                  <div className="pt-2 border-t flex justify-between items-end">
+                  <div className="pt-1 border-t flex justify-between items-end">
                     <div>
                       {product.costPrice && product.costPrice !== product.price && (
-                        <div className="text-[10px] text-muted-foreground line-through">
+                        <div className="text-[8px] text-muted-foreground line-through leading-none mb-0.5">
                           {product.costPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                         </div>
                       )}
-                      <div className="font-bold text-sm text-primary">
+                      <div className="font-bold text-[10px] text-primary leading-none">
                         {product.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                       </div>
                     </div>
                   </div>
 
                   {product.validationError && (
-                    <div className="text-[10px] text-destructive mt-1 bg-destructive/10 p-1 rounded leading-tight">
+                    <div className="text-[8px] text-destructive mt-0.5 bg-destructive/10 p-0.5 rounded leading-tight">
                       {product.validationError}
                     </div>
                   )}
