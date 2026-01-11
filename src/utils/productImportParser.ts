@@ -3,6 +3,7 @@ export interface ImportOptions {
   profitMargin?: number;
   autoDetectCategory?: boolean;
   defaultTags?: string[];
+  ribbonLabel?: string;
 }
 
 export interface ParsedProduct {
@@ -160,6 +161,12 @@ export const parseBulkImport = (text: string, options: ImportOptions): ParsedPro
     // Detectar Tags/Marcas
     const detectedTags = detectBrands(name);
     const allTags = [...(options.defaultTags || []), ...detectedTags];
+    
+    // Adicionar Fita (Ribbon) se configurada
+    if (options.ribbonLabel) {
+      allTags.push(`badge:${options.ribbonLabel}`);
+    }
+
     const uniqueTags = Array.from(new Set(allTags));
 
     // Validação básica

@@ -27,6 +27,8 @@ export const BulkImport = () => {
   const [defaultTags, setDefaultTags] = useState('');
   const [highlightTag, setHighlightTag] = useState('');
   const [stockQuantity, setStockQuantity] = useState('10');
+  const [ribbonType, setRibbonType] = useState('none');
+  const [customRibbonText, setCustomRibbonText] = useState('');
   const [parsedProducts, setParsedProducts] = useState<ParsedProduct[]>([]);
   const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set());
   const [activeTab, setActiveTab] = useState('input');
@@ -104,11 +106,20 @@ export const BulkImport = () => {
       categoryToUse = newCategoryName.trim();
     }
     
+    // Configurar Ribbon
+    let ribbonLabel: string | undefined = undefined;
+    if (ribbonType === 'custom' && customRibbonText.trim()) {
+      ribbonLabel = customRibbonText.trim();
+    } else if (ribbonType !== 'none' && ribbonType !== 'custom') {
+      ribbonLabel = ribbonType === 'novidade' ? 'Novidade' : 'Usado';
+    }
+
     const results = parseBulkImport(inputText, {
       defaultCategory: categoryToUse,
       autoDetectCategory: selectedCategory === 'auto',
       profitMargin: margin,
-      defaultTags: tagsList
+      defaultTags: tagsList,
+      ribbonLabel: ribbonLabel
     });
 
     if (results.length === 0) {
@@ -289,6 +300,31 @@ export const BulkImport = () => {
                     placeholder="Ex: promoção, usado, black friday"
                   />
                   <p className="text-xs text-muted-foreground">Separadas por vírgula. Serão adicionadas a todos os itens.</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Fita / Ribbon (Opcional)</Label>
+                  <Select value={ribbonType} onValueChange={setRibbonType}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sem fita" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Nenhuma</SelectItem>
+                      <SelectItem value="novidade">Novidade</SelectItem>
+                      <SelectItem value="usado">Usado</SelectItem>
+                      <SelectItem value="custom">Personalizada...</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {ribbonType === 'custom' && (
+                    <Input 
+                      className="mt-2"
+                      placeholder="Texto da fita (Ex: Oferta)"
+                      value={customRibbonText}
+                      onChange={e => setCustomRibbonText(e.target.value)}
+                      maxLength={15}
+                    />
+                  )}
+                  <p className="text-xs text-muted-foreground">Aparecerá como uma faixa no card do produto.</p>
                 </div>
 
                 <div className="space-y-2">
