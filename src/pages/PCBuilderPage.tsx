@@ -511,76 +511,110 @@ export default function PCBuilderPage() {
           <div className="flex flex-col md:flex-row gap-8">
             
             {/* === SIDEBAR (Desktop Steps) === */}
-            <aside className="hidden md:block w-64 shrink-0 space-y-2 sticky top-24 h-fit max-h-[calc(100vh-120px)] overflow-y-auto pr-2 custom-scrollbar">
+            <aside className="hidden md:block w-72 shrink-0 space-y-4 sticky top-24 h-fit max-h-[calc(100vh-120px)] overflow-y-auto pr-2 custom-scrollbar">
                <div className="mb-6 px-2">
-                <h1 className="text-2xl font-black tracking-tight text-zinc-900">
-                  Monte seu PC
-                  <span className="text-[#E30613] block text-sm font-bold uppercase tracking-wider mt-1">Inteligente</span>
-                </h1>
-                <p className="text-xs text-zinc-500 mt-2">
-                  Escolha as peças e verifique a compatibilidade em tempo real.
+                <div className="flex items-center justify-between mb-2">
+                  <h1 className="text-2xl font-black tracking-tight text-zinc-900 leading-none">
+                    Monte seu <span className="text-[#E30613]">PC</span>
+                  </h1>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={handleGlobalReset}
+                    className="h-8 w-8 text-zinc-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                    title="Reiniciar Montagem"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+                <p className="text-xs text-zinc-500 font-medium">
+                  Selecione as peças e verifique a compatibilidade automaticamente.
                 </p>
               </div>
 
-              {BUILD_STEPS.map((step, idx) => {
-                const count = (selectedParts[step.id] || []).length;
-                const isCurrent = idx === currentStep && !showSummary;
-                const isCompleted = count > 0;
+              <div className="space-y-1.5">
+                {BUILD_STEPS.map((step, idx) => {
+                  const count = (selectedParts[step.id] || []).length;
+                  const isCurrent = idx === currentStep && !showSummary;
+                  const isCompleted = count > 0;
 
-                return (
-                  <button
-                    key={step.id}
-                    onClick={() => {
-                      setCurrentStep(idx);
-                      setShowSummary(false);
-                    }}
-                    className={cn(
-                      "w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left group",
-                      isCurrent 
-                        ? "bg-zinc-900 text-white shadow-lg shadow-zinc-200" 
-                        : "hover:bg-white hover:shadow-sm text-zinc-600",
-                      !isCurrent && isCompleted && "bg-green-50 text-green-700 border border-green-100"
-                    )}
-                  >
-                    <div className={cn(
-                      "p-2 rounded-lg transition-colors",
-                      isCurrent ? "bg-white/10 text-white" : isCompleted ? "bg-green-100 text-green-600" : "bg-zinc-100 text-zinc-400 group-hover:bg-zinc-200"
-                    )}>
-                      {isCompleted && !isCurrent ? <Check className="w-4 h-4" /> : step.icon}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className={cn("text-sm font-bold truncate", isCurrent ? "text-white" : "text-zinc-700")}>
-                        {step.name}
-                      </p>
-                      <p className={cn("text-[10px] truncate", isCurrent ? "text-zinc-400" : "text-zinc-400")}>
-                        {count > 0 ? `${count} selecionado(s)` : step.description}
-                      </p>
-                    </div>
-                    {step.required && !isCompleted && (
-                       <div className="w-1.5 h-1.5 rounded-full bg-red-400" title="Obrigatório" />
-                    )}
-                  </button>
-                );
-              })}
+                  return (
+                    <button
+                      key={step.id}
+                      onClick={() => {
+                        setCurrentStep(idx);
+                        setShowSummary(false);
+                      }}
+                      className={cn(
+                        "w-full flex items-center gap-3 p-2.5 rounded-xl transition-all text-left group border relative overflow-hidden",
+                        isCurrent 
+                          ? "bg-zinc-900 border-zinc-900 text-white shadow-lg shadow-zinc-200" 
+                          : "bg-white border-transparent hover:border-zinc-200 hover:bg-zinc-50 text-zinc-600",
+                        !isCurrent && isCompleted && "bg-green-50/50 border-green-100 text-green-700"
+                      )}
+                    >
+                      {/* Progress Bar Background for Completed Steps */}
+                      {!isCurrent && isCompleted && (
+                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-green-500 rounded-l-xl" />
+                      )}
+
+                      <div className={cn(
+                        "p-2 rounded-lg transition-colors shrink-0",
+                        isCurrent ? "bg-white/10 text-white" : isCompleted ? "bg-green-100 text-green-600" : "bg-zinc-100 text-zinc-400 group-hover:bg-zinc-200"
+                      )}>
+                        {isCompleted && !isCurrent ? <Check className="w-4 h-4" /> : step.icon}
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-center">
+                          <p className={cn("text-sm font-bold truncate", isCurrent ? "text-white" : "text-zinc-700")}>
+                            {step.name}
+                          </p>
+                          {step.required && !isCompleted && !isCurrent && (
+                            <div className="w-1.5 h-1.5 rounded-full bg-red-400 shadow-sm" title="Obrigatório" />
+                          )}
+                        </div>
+                        <p className={cn("text-[10px] truncate leading-tight", isCurrent ? "text-zinc-400" : "text-zinc-400")}>
+                          {count > 0 ? (
+                            <span className="font-medium text-green-600 flex items-center gap-1">
+                              {count} item(ns) <Check className="w-2.5 h-2.5" />
+                            </span>
+                          ) : (
+                            step.description
+                          )}
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
 
               <div className="pt-4 mt-4 border-t border-zinc-200">
                 <button
                   onClick={() => setShowSummary(true)}
                   className={cn(
-                    "w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left",
+                    "w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left border-2 border-dashed",
                     showSummary 
-                      ? "bg-zinc-900 text-white shadow-lg" 
-                      : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
+                      ? "bg-zinc-900 border-zinc-900 text-white shadow-lg" 
+                      : "border-zinc-200 hover:border-zinc-300 text-zinc-600 hover:bg-zinc-50"
                   )}
                 >
-                  <div className="p-2 rounded-lg bg-white/10">
+                  <div className={cn("p-2 rounded-lg", showSummary ? "bg-white/10" : "bg-zinc-100")}>
                     <FileText className="w-4 h-4" />
                   </div>
                   <div>
                     <p className="text-sm font-bold">Resumo do Pedido</p>
-                    <p className="text-[10px] opacity-70">Finalizar montagem</p>
+                    <p className="text-[10px] opacity-70">Revisar e finalizar</p>
                   </div>
                 </button>
+                
+                <Button 
+                  variant="outline" 
+                  className="w-full mt-4 border-red-100 text-red-600 hover:bg-red-50 hover:border-red-200"
+                  onClick={handleGlobalReset}
+                >
+                  <Trash2 className="w-4 h-4 mr-2" /> Reiniciar Montagem
+                </Button>
               </div>
             </aside>
 
@@ -712,53 +746,68 @@ export default function PCBuilderPage() {
                 /* === PRODUCT SELECTION VIEW === */
                 <div className="animate-in fade-in duration-300">
                   {/* Step Header */}
-                  <div className="bg-white rounded-2xl border border-zinc-100 p-6 mb-6 shadow-sm relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-4 opacity-5">
-                      {React.cloneElement(BUILD_STEPS[currentStep].icon as React.ReactElement, { className: "w-32 h-32" })}
+                  <div className="bg-gradient-to-br from-white to-zinc-50 rounded-2xl border border-zinc-100 p-6 mb-6 shadow-sm relative overflow-hidden group">
+                    <div className="absolute -right-6 -bottom-6 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity duration-500 transform rotate-12">
+                      {React.cloneElement(BUILD_STEPS[currentStep].icon as React.ReactElement, { className: "w-48 h-48" })}
                     </div>
                     
                     <div className="relative z-10">
-                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div>
-                          <div className="flex items-center gap-2 text-zinc-500 text-sm font-medium mb-1 uppercase tracking-wider">
-                            <span className="bg-zinc-100 px-2 py-0.5 rounded text-[10px]">Etapa {currentStep + 1} de {BUILD_STEPS.length}</span>
+                      <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-6">
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="bg-white/50 backdrop-blur text-zinc-500 border-zinc-200">
+                              ETAPA {currentStep + 1} DE {BUILD_STEPS.length}
+                            </Badge>
                             {BUILD_STEPS[currentStep].required ? (
-                              <span className="text-red-500 flex items-center gap-1"><AlertTriangle className="w-3 h-3"/> Obrigatório</span>
+                              <Badge variant="secondary" className="bg-red-50 text-red-600 border-red-100 hover:bg-red-100">
+                                OBRIGATÓRIO
+                              </Badge>
                             ) : (
-                              <span className="text-green-600 flex items-center gap-1"><Check className="w-3 h-3"/> Opcional</span>
+                              <Badge variant="secondary" className="bg-green-50 text-green-600 border-green-100 hover:bg-green-100">
+                                OPCIONAL
+                              </Badge>
                             )}
                           </div>
-                          <h2 className="text-3xl font-black text-zinc-800 mb-1">{BUILD_STEPS[currentStep].name}</h2>
-                          <p className="text-zinc-500 max-w-lg">{BUILD_STEPS[currentStep].description}</p>
+                          
+                          <div>
+                            <h2 className="text-3xl md:text-4xl font-black text-zinc-900 tracking-tight">
+                              {BUILD_STEPS[currentStep].name}
+                            </h2>
+                            <p className="text-zinc-500 text-sm md:text-base max-w-xl mt-1 leading-relaxed">
+                              {BUILD_STEPS[currentStep].description}
+                            </p>
+                          </div>
                         </div>
                         
-                        <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-                           <div className="relative flex-1 sm:w-64">
+                        <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto bg-white/50 p-1 rounded-xl backdrop-blur-sm">
+                           <div className="relative flex-1 sm:w-72">
                               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
                               <Input
-                                placeholder={`Buscar ${BUILD_STEPS[currentStep].name.toLowerCase()}...`}
-                                className="pl-9 bg-zinc-50 border-zinc-200 focus:bg-white transition-all"
+                                placeholder="Buscar componente..."
+                                className="pl-9 bg-white border-zinc-200 focus:border-zinc-300 focus:ring-zinc-100 h-10 transition-all shadow-sm"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                               />
                            </div>
-                           <PriceFilter
-                              minPrice={minPrice}
-                              maxPrice={maxPrice}
-                              onFilterChange={(min, max) => {
-                                setMinPrice(min);
-                                setMaxPrice(max);
-                              }}
-                              sortOrder={sortOrder}
-                              onSortChange={(order) => setSortOrder(order)}
-                           />
+                           <div className="shrink-0">
+                             <PriceFilter
+                                minPrice={minPrice}
+                                maxPrice={maxPrice}
+                                onFilterChange={(min, max) => {
+                                  setMinPrice(min);
+                                  setMaxPrice(max);
+                                }}
+                                sortOrder={sortOrder}
+                                onSortChange={(order) => setSortOrder(order)}
+                             />
+                           </div>
                         </div>
                       </div>
                     </div>
                   </div>
 
                   {/* Products Grid */}
-                  <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
+                  <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {loading ? (
                       Array.from({ length: 8 }).map((_, i) => (
                         <div key={i} className="bg-white rounded-xl border border-zinc-100 p-4 animate-pulse space-y-3">
@@ -779,43 +828,48 @@ export default function PCBuilderPage() {
                             key={product.id}
                             onClick={() => handleCardClick(product)}
                             className={cn(
-                              "group relative bg-white rounded-xl border transition-all duration-200 overflow-hidden cursor-pointer hover:shadow-lg hover:-translate-y-1",
-                              isSelected ? "border-green-500 ring-1 ring-green-500" : "border-zinc-200 hover:border-zinc-300"
+                              "group relative bg-white rounded-2xl border transition-all duration-300 overflow-hidden cursor-pointer",
+                              isSelected 
+                                ? "border-green-500 ring-1 ring-green-500 shadow-md shadow-green-100" 
+                                : "border-zinc-100 hover:border-zinc-300 hover:shadow-xl hover:shadow-zinc-100 hover:-translate-y-1"
                             )}
                           >
                              {isSelected && (
-                               <div className="absolute top-3 right-3 z-10 bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm animate-in zoom-in">
-                                 SELECIONADO {qty > 1 && `(${qty})`}
+                               <div className="absolute top-3 right-3 z-20 flex items-center gap-1 bg-green-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-lg shadow-green-200 animate-in zoom-in duration-200">
+                                 <Check className="w-3 h-3" />
+                                 {qty > 1 ? `${qty} SELECIONADOS` : 'SELECIONADO'}
                                </div>
                              )}
 
-                             <div className="aspect-square p-6 flex items-center justify-center bg-white relative">
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                             <div className="aspect-square p-8 flex items-center justify-center bg-white relative overflow-hidden">
+                                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-zinc-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                                 <img 
                                   src={product.image || "/placeholder.png"} 
                                   alt={product.name}
-                                  className="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-300" 
+                                  className="w-full h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-500 ease-out" 
                                 />
                              </div>
 
-                             <div className="p-4 border-t border-zinc-50">
-                               <div className="mb-2 h-10 overflow-hidden">
-                                 <h3 className="text-xs md:text-sm font-medium text-zinc-700 line-clamp-2 leading-relaxed">
+                             <div className="p-4 border-t border-zinc-50 bg-white relative z-10">
+                               <div className="mb-3 h-[2.5rem] overflow-hidden">
+                                 <h3 className="text-xs font-medium text-zinc-600 line-clamp-2 leading-relaxed group-hover:text-zinc-900 transition-colors">
                                    {product.name}
                                  </h3>
                                </div>
                                
                                <div className="flex items-end justify-between gap-2">
-                                 <div>
-                                   <p className="text-[10px] text-zinc-400 font-medium uppercase">À vista</p>
-                                   <p className="text-sm md:text-base font-black text-green-600">{formatPrice(product.price)}</p>
+                                 <div className="flex flex-col">
+                                   <span className="text-[10px] text-zinc-400 font-medium uppercase tracking-wider">À vista</span>
+                                   <span className="text-base font-black text-green-600 leading-none">{formatPrice(product.price)}</span>
                                  </div>
                                  <Button 
                                    size="sm" 
-                                   variant={isSelected ? "destructive" : "secondary"}
+                                   variant={isSelected ? "destructive" : "default"}
                                    className={cn(
-                                     "h-8 w-8 p-0 rounded-full shadow-sm", 
-                                     isSelected ? "bg-red-50 text-red-500 hover:bg-red-100" : "bg-zinc-900 text-white hover:bg-black"
+                                     "h-9 w-9 p-0 rounded-xl shadow-sm transition-all duration-300", 
+                                     isSelected 
+                                       ? "bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600" 
+                                       : "bg-zinc-900 text-white hover:bg-black hover:scale-105"
                                    )}
                                    onClick={(e) => {
                                      if (isSelected) {
@@ -832,12 +886,23 @@ export default function PCBuilderPage() {
                         );
                       })
                     ) : (
-                      <div className="col-span-full py-20 text-center">
-                        <div className="w-16 h-16 bg-zinc-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <div className="col-span-full py-20 text-center bg-white rounded-3xl border border-dashed border-zinc-200">
+                        <div className="w-20 h-20 bg-zinc-50 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
                           <Search className="w-8 h-8 text-zinc-300" />
                         </div>
-                        <h3 className="text-lg font-bold text-zinc-800 mb-1">Nenhum produto encontrado</h3>
-                        <p className="text-zinc-500">Tente ajustar os filtros ou buscar por outro termo.</p>
+                        <h3 className="text-lg font-bold text-zinc-800 mb-1">Ops! Nada encontrado.</h3>
+                        <p className="text-zinc-500 max-w-xs mx-auto">Não encontramos produtos compatíveis com seus filtros nesta categoria.</p>
+                        <Button 
+                          variant="link" 
+                          onClick={() => {
+                            setSearchTerm("");
+                            setMinPrice(null);
+                            setMaxPrice(null);
+                          }}
+                          className="mt-2 text-red-600"
+                        >
+                          Limpar filtros
+                        </Button>
                       </div>
                     )}
                   </div>
@@ -866,6 +931,16 @@ export default function PCBuilderPage() {
                    className="hidden sm:flex border-red-100 text-red-500 hover:bg-red-50 hover:border-red-200"
                  >
                    <Trash2 className="w-4 h-4 mr-2" /> Limpar
+                 </Button>
+                 
+                 {/* Mobile Reset Button */}
+                 <Button
+                   variant="ghost"
+                   size="icon"
+                   onClick={handleGlobalReset}
+                   className="sm:hidden text-zinc-400 hover:text-red-500 hover:bg-red-50"
+                 >
+                    <Trash2 className="w-5 h-5" />
                  </Button>
 
                  {!showSummary ? (
