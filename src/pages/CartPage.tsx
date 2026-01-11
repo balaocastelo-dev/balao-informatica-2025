@@ -14,10 +14,14 @@ import {
   User, 
   MapPin, 
   MessageCircle,
+  ArrowRight,
+  ArrowLeft,
+  CheckCircle2
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { CouponInput } from '@/components/CouponInput';
 import { Separator } from '@/components/ui/separator';
+import confetti from 'canvas-confetti';
 
 import { supabase } from "@/integrations/supabase/client";
 import { BlingService } from "@/services/bling";
@@ -35,10 +39,18 @@ interface CustomerData {
   state: string;
 }
 
+const STEPS = [
+  { id: 'personal', title: 'Dados Pessoais', icon: User },
+  { id: 'cep', title: 'Localização', icon: MapPin },
+  { id: 'address', title: 'Endereço', icon: MapPin },
+  { id: 'review', title: 'Revisão', icon: CheckCircle2 },
+];
+
 export default function CartPage() {
   const { items, removeFromCart, clearCart, total } = useCart();
   const { user, profile } = useAuth();
   
+  const [step, setStep] = useState(0);
   const [isLoadingCep, setIsLoadingCep] = useState(false);
   const [couponDiscount, setCouponDiscount] = useState<number>(0);
   
@@ -96,25 +108,52 @@ export default function CartPage() {
             state: data.uf || ''
           }));
           toast({ title: 'Endereço encontrado!', description: 'Complete com o número.' });
+          // Optional: Auto advance if address found? Maybe better to let user click next to confirm.
+        } else {
+          toast({ title: 'CEP não encontrado', variant: 'destructive' });
         }
       } catch (error) {
         console.error('Error fetching CEP:', error);
+        toast({ title: 'Erro ao buscar CEP', variant: 'destructive' });
       } finally {
         setIsLoadingCep(false);
       }
     }
   };
 
-  const validateForm = () => {
-    if (!customerData.name.trim()) return 'Nome é obrigatório';
-    // Basic validation, phone is important for WhatsApp contact but here we are sending TO WhatsApp.
-    // Still good to have their contact in the message.
-    if (!customerData.phone.trim()) return 'Telefone é obrigatório';
-    if (!customerData.cep.trim() || customerData.cep.replace(/\D/g, '').length !== 8) return 'CEP inválido';
-    if (!customerData.street.trim()) return 'Endereço incompleto';
-    if (!customerData.number.trim()) return 'Número é obrigatório';
-    if (!customerData.city.trim() || !customerData.state.trim()) return 'Cidade/Estado obrigatórios';
-    return null;
+  const validateStep = (currentStep: number) => {
+    switch (currentStep) {
+      case 0: // Personal
+        if (!customerData.name.trim()) return 'Nome é obrigatório';
+        if (!customerData.email.trim()) return 'Email é obrigatório';
+        if (!customerData.phone.trim()) return 'Telefone é obrigatório';
+        return null;
+      case 1: // CEP
+        if (!customerData.cep.trim() || customerData.cep.replace(/\D/g, '').length !== 8) return 'CEP inválido';
+        return null;
+      case 2: // Address Details
+        if (!customerData.street.trim()) return 'Rua é obrigatória';
+        if (!customerData.number.trim()) return 'Número é obrigatório';
+        if (!customerData.neighborhood.trim()) return 'Bairro é obrigatório';
+        if (!customerData.city.trim()) return 'Cidade é obrigatória';
+        if (!customerData.state.trim()) return 'Estado é obrigatório';
+        return null;
+      default:
+        return null;
+    }
+  };
+
+  const nextStep = () => {
+    const error = validateStep(step);
+    if (error) {
+      toast({ title: 'Atenção', description: error, variant: 'destructive' });
+      return;
+    }
+    setStep(prev => Math.min(prev + 1, STEPS.length - 1));
+  };
+
+  const prevStep = () => {
+    setStep(prev => Math.max(prev - 1, 0));
   };
 
   const getFullAddress = () => {
@@ -130,7 +169,7 @@ export default function CartPage() {
   };
 
   const handleCheckout = async () => {
-    const error = validateForm();
+    const error = validateStep(2); // Validate address again just in case
     if (error) {
       toast({ title: 'Atenção', description: error, variant: 'destructive' });
       return;
@@ -173,12 +212,38 @@ export default function CartPage() {
          const blingResult = await BlingService.sendOrder(order);
          if (!blingResult.success) {
            console.error("Bling sync failed:", blingResult.error);
-           // We don't block the checkout if Bling fails, but we log it
          } else {
            console.log("Bling sync success:", blingResult.data);
            toast({ title: "Pedido sincronizado com Bling!" });
          }
       }
+
+      // 3. Animation
+      const duration = 3 * 1000;
+      const animationEnd = Date.now() + duration;
+      const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+      const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min;
+
+      const interval: any = setInterval(function() {
+        const timeLeft = animationEnd - Date.now();
+
+        if (timeLeft <= 0) {
+          return clearInterval(interval);
+        }
+
+        const particleCount = 50 * (timeLeft / duration);
+        // since particles fall down, start a bit higher than random
+        confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
+        confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
+      }, 250);
+      
+      // Center burst
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 }
+      });
 
       const itemsList = items.map(item => 
         `• ${item.quantity}x ${item.product.name} - ${(item.product.price * item.quantity).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`
@@ -201,14 +266,16 @@ export default function CartPage() {
       const encodedMessage = encodeURIComponent(message);
       const whatsappUrl = `https://wa.me/5519987510267?text=${encodedMessage}`;
 
-      window.open(whatsappUrl, '_blank');
-      
-      clearCart();
-      
-      toast({
-        title: 'Redirecionando...',
-        description: 'Finalize seu pedido no WhatsApp.',
-      });
+      // Delay redirect slightly to show animation
+      setTimeout(() => {
+        window.open(whatsappUrl, '_blank');
+        clearCart();
+        toast({
+            title: 'Redirecionando...',
+            description: 'Finalize seu pedido no WhatsApp.',
+        });
+      }, 1500);
+
     } catch (err) {
       console.error("Checkout error:", err);
       toast({ title: "Erro ao processar pedido", description: "Tente novamente.", variant: "destructive" });
@@ -239,196 +306,300 @@ export default function CartPage() {
   return (
     <Layout>
       <div className="container-balao pt-4 pb-12">
-        <h1 className="text-3xl font-bold text-foreground mb-8">Finalizar Compra</h1>
-
-        <div className="grid lg:grid-cols-12 gap-8">
-          {/* Left Column: Customer Details */}
-          <div className="lg:col-span-7 space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <User className="w-5 h-5 text-primary" />
-                  Seus Dados
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Nome Completo</Label>
-                  <Input 
-                    value={customerData.name} 
-                    onChange={e => setCustomerData({...customerData, name: e.target.value})}
-                    placeholder="Ex: João Silva"
-                  />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Email</Label>
-                    <Input 
-                      type="email"
-                      value={customerData.email} 
-                      onChange={e => setCustomerData({...customerData, email: e.target.value})}
-                      placeholder="seu@email.com"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Telefone / WhatsApp</Label>
-                    <Input 
-                      value={customerData.phone} 
-                      onChange={e => setCustomerData({...customerData, phone: e.target.value})}
-                      placeholder="(00) 00000-0000"
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MapPin className="w-5 h-5 text-primary" />
-                  Endereço de Entrega
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>CEP</Label>
-                    <div className="relative">
-                      <Input 
-                        value={customerData.cep} 
-                        onChange={handleCepChange}
-                        placeholder="00000-000"
-                        maxLength={9}
-                      />
-                      {isLoadingCep && (
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                          <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Cidade</Label>
-                    <Input value={customerData.city} readOnly className="bg-muted" />
-                  </div>
-                </div>
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-foreground mb-4">Finalizar Compra</h1>
+            
+            {/* Steps Indicator */}
+            <div className="flex items-center justify-between relative">
+              <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-muted -z-10 rounded-full" />
+              <div 
+                className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-primary -z-10 rounded-full transition-all duration-300" 
+                style={{ width: `${(step / (STEPS.length - 1)) * 100}%` }}
+              />
+              
+              {STEPS.map((s, i) => {
+                const Icon = s.icon;
+                const isActive = i === step;
+                const isCompleted = i < step;
                 
-                <div className="grid grid-cols-4 gap-4">
-                  <div className="col-span-3 space-y-2">
-                    <Label>Rua</Label>
-                    <Input 
-                      value={customerData.street} 
-                      onChange={e => setCustomerData({...customerData, street: e.target.value})}
-                    />
+                return (
+                  <div key={s.id} className="flex flex-col items-center gap-2 bg-background px-2">
+                    <div className={`
+                      w-10 h-10 rounded-full flex items-center justify-center border-2 transition-colors
+                      ${isActive || isCompleted ? 'border-primary bg-primary text-primary-foreground' : 'border-muted bg-background text-muted-foreground'}
+                    `}>
+                      <Icon className="w-5 h-5" />
+                    </div>
+                    <span className={`text-xs font-medium ${isActive || isCompleted ? 'text-primary' : 'text-muted-foreground'}`}>
+                      {s.title}
+                    </span>
                   </div>
-                  <div className="space-y-2">
-                    <Label>Número</Label>
-                    <Input 
-                      value={customerData.number} 
-                      onChange={e => setCustomerData({...customerData, number: e.target.value})}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Bairro</Label>
-                    <Input 
-                      value={customerData.neighborhood} 
-                      onChange={e => setCustomerData({...customerData, neighborhood: e.target.value})}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Complemento</Label>
-                    <Input 
-                      value={customerData.complement} 
-                      onChange={e => setCustomerData({...customerData, complement: e.target.value})}
-                      placeholder="Ex: Apto 101"
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                );
+              })}
+            </div>
           </div>
 
-          {/* Right Column: Order Summary */}
-          <div className="lg:col-span-5">
-            <div className="sticky top-24 space-y-6">
-              <Card>
+          <div className="grid lg:grid-cols-12 gap-8">
+            {/* Left Column: Form Steps */}
+            <div className="lg:col-span-7">
+              <Card className="h-full">
                 <CardHeader>
-                  <CardTitle>Resumo do Pedido</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    {step === 0 && <User className="w-5 h-5 text-primary" />}
+                    {step === 1 && <MapPin className="w-5 h-5 text-primary" />}
+                    {step === 2 && <MapPin className="w-5 h-5 text-primary" />}
+                    {step === 3 && <CheckCircle2 className="w-5 h-5 text-primary" />}
+                    {STEPS[step].title}
+                  </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-3 max-h-[300px] overflow-auto pr-2">
-                    {items.map(item => (
-                      <div key={item.product.id} className="flex gap-3">
-                        <div className="w-16 h-16 bg-white rounded-md border p-1 flex-shrink-0">
-                          <img src={item.product.image} alt={item.product.name} className="w-full h-full object-contain" />
+                <CardContent className="space-y-6 min-h-[300px]">
+                  
+                  {/* Step 0: Personal Info */}
+                  {step === 0 && (
+                    <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+                      <div className="space-y-2">
+                        <Label>Nome Completo</Label>
+                        <Input 
+                          value={customerData.name} 
+                          onChange={e => setCustomerData({...customerData, name: e.target.value})}
+                          placeholder="Ex: João Silva"
+                          autoFocus
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Email</Label>
+                        <Input 
+                          type="email"
+                          value={customerData.email} 
+                          onChange={e => setCustomerData({...customerData, email: e.target.value})}
+                          placeholder="seu@email.com"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Telefone / WhatsApp</Label>
+                        <Input 
+                          value={customerData.phone} 
+                          onChange={e => setCustomerData({...customerData, phone: e.target.value})}
+                          placeholder="(00) 00000-0000"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Step 1: CEP */}
+                  {step === 1 && (
+                    <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+                      <div className="space-y-2">
+                        <Label>Digite seu CEP</Label>
+                        <div className="relative">
+                          <Input 
+                            value={customerData.cep} 
+                            onChange={handleCepChange}
+                            placeholder="00000-000"
+                            maxLength={9}
+                            className="text-lg tracking-wider"
+                            autoFocus
+                          />
+                          {isLoadingCep && (
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                              <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                            </div>
+                          )}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex justify-between items-start">
-                            <p className="text-sm font-medium line-clamp-2">{item.product.name}</p>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-6 w-6 text-muted-foreground hover:text-destructive -mr-2"
-                              onClick={() => removeFromCart(item.product.id)}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
+                        <p className="text-sm text-muted-foreground">
+                          Buscaremos seu endereço automaticamente.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Step 2: Address Details */}
+                  {step === 2 && (
+                    <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+                       <div className="p-4 bg-muted/50 rounded-lg mb-4">
+                          <p className="text-sm font-medium">{customerData.street}</p>
+                          <p className="text-sm text-muted-foreground">{customerData.neighborhood} - {customerData.city}/{customerData.state}</p>
+                          <Button variant="link" className="p-0 h-auto text-xs" onClick={() => setStep(1)}>Alterar CEP</Button>
+                       </div>
+
+                       <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Número</Label>
+                          <Input 
+                            value={customerData.number} 
+                            onChange={e => setCustomerData({...customerData, number: e.target.value})}
+                            autoFocus
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Complemento</Label>
+                          <Input 
+                            value={customerData.complement} 
+                            onChange={e => setCustomerData({...customerData, complement: e.target.value})}
+                            placeholder="Apto, Bloco..."
+                          />
+                        </div>
+                       </div>
+                       
+                       {/* Fields for manual correction if needed */}
+                       <div className="space-y-2">
+                          <Label>Rua</Label>
+                          <Input 
+                            value={customerData.street} 
+                            onChange={e => setCustomerData({...customerData, street: e.target.value})}
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                           <div className="space-y-2">
+                            <Label>Bairro</Label>
+                            <Input 
+                              value={customerData.neighborhood} 
+                              onChange={e => setCustomerData({...customerData, neighborhood: e.target.value})}
+                            />
                           </div>
-                          <div className="flex items-center justify-between mt-1">
-                            <p className="text-sm text-muted-foreground">Qtd: {item.quantity}</p>
-                            <p className="text-sm font-semibold">
-                              {(item.product.price * item.quantity).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                            </p>
+                          <div className="space-y-2">
+                            <Label>Cidade</Label>
+                            <Input value={customerData.city} readOnly className="bg-muted" />
                           </div>
+                        </div>
+                    </div>
+                  )}
+
+                  {/* Step 3: Review */}
+                  {step === 3 && (
+                    <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+                      <div className="rounded-lg border p-4 space-y-3">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="font-medium">Dados de Contato</p>
+                            <p className="text-sm text-muted-foreground">{customerData.name}</p>
+                            <p className="text-sm text-muted-foreground">{customerData.email}</p>
+                            <p className="text-sm text-muted-foreground">{customerData.phone}</p>
+                          </div>
+                          <Button variant="ghost" size="sm" onClick={() => setStep(0)}><User className="w-4 h-4" /></Button>
+                        </div>
+                        <Separator />
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="font-medium">Endereço de Entrega</p>
+                            <p className="text-sm text-muted-foreground">{getFullAddress()}</p>
+                          </div>
+                          <Button variant="ghost" size="sm" onClick={() => setStep(2)}><MapPin className="w-4 h-4" /></Button>
                         </div>
                       </div>
-                    ))}
-                  </div>
-
-                  <Separator />
-                  <CouponInput onApply={setCouponDiscount} />
-                  <Separator />
-
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Subtotal</span>
-                      <span>{total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
-                    </div>
-                    {couponDiscount > 0 && (
-                      <div className="flex justify-between text-sm text-green-600">
-                        <span>Desconto</span>
-                        <span>- {couponDiscount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                      
+                      <div className="bg-green-50 p-4 rounded-lg border border-green-100 text-green-800">
+                        <p className="font-medium flex items-center gap-2">
+                          <MessageCircle className="w-4 h-4" />
+                          Pronto para finalizar!
+                        </p>
+                        <p className="text-sm mt-1">
+                          Ao clicar em finalizar, você será redirecionado para o WhatsApp para confirmar seu pedido com um de nossos atendentes.
+                        </p>
                       </div>
-                    )}
-                    <div className="flex justify-between text-lg font-bold pt-2">
-                      <span>Total</span>
-                      <span>{Math.max(0, total - couponDiscount).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                     </div>
-                  </div>
+                  )}
+
                 </CardContent>
-                <CardFooter>
+                <CardFooter className="flex justify-between">
                   <Button 
-                    className="w-full h-12 text-lg bg-[#25D366] hover:bg-[#128C7E] text-white" 
-                    onClick={handleCheckout}
-                    disabled={isProcessing}
+                    variant="outline" 
+                    onClick={prevStep}
+                    disabled={step === 0 || isProcessing}
                   >
-                    {isProcessing ? (
-                      <>
-                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                        Processando...
-                      </>
-                    ) : (
-                      <>
-                        <MessageCircle className="w-5 h-5 mr-2" />
-                        Finalizar no WhatsApp
-                      </>
-                    )}
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Voltar
                   </Button>
+                  
+                  {step < STEPS.length - 1 ? (
+                    <Button onClick={nextStep}>
+                      Próximo
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  ) : (
+                     <Button 
+                      className="bg-[#25D366] hover:bg-[#128C7E] text-white" 
+                      onClick={handleCheckout}
+                      disabled={isProcessing}
+                    >
+                      {isProcessing ? (
+                        <>
+                          <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                          Processando...
+                        </>
+                      ) : (
+                        <>
+                          <MessageCircle className="w-5 h-5 mr-2" />
+                          Finalizar Pedido
+                        </>
+                      )}
+                    </Button>
+                  )}
                 </CardFooter>
               </Card>
+            </div>
+
+            {/* Right Column: Order Summary (Always visible) */}
+            <div className="lg:col-span-5">
+              <div className="sticky top-24 space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Resumo do Pedido</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-3 max-h-[300px] overflow-auto pr-2">
+                      {items.map(item => (
+                        <div key={item.product.id} className="flex gap-3">
+                          <div className="w-16 h-16 bg-white rounded-md border p-1 flex-shrink-0">
+                            <img src={item.product.image} alt={item.product.name} className="w-full h-full object-contain" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex justify-between items-start">
+                              <p className="text-sm font-medium line-clamp-2">{item.product.name}</p>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-6 w-6 text-muted-foreground hover:text-destructive -mr-2"
+                                onClick={() => removeFromCart(item.product.id)}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                            <div className="flex items-center justify-between mt-1">
+                              <p className="text-sm text-muted-foreground">Qtd: {item.quantity}</p>
+                              <p className="text-sm font-semibold">
+                                {(item.product.price * item.quantity).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <Separator />
+                    <CouponInput onApply={setCouponDiscount} />
+                    <Separator />
+
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Subtotal</span>
+                        <span>{total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                      </div>
+                      {couponDiscount > 0 && (
+                        <div className="flex justify-between text-sm text-green-600">
+                          <span>Desconto</span>
+                          <span>- {couponDiscount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between text-lg font-bold pt-2">
+                        <span>Total</span>
+                        <span>{Math.max(0, total - couponDiscount).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </div>
         </div>
