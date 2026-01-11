@@ -27,8 +27,11 @@ function html({ title, description, image, pageUrl, type }: { title: string; des
 <meta name="twitter:title" content="${title}">
 <meta name="twitter:description" content="${description}">
 <meta name="twitter:image" content="${image}">
+<script>window.location.href = "${pageUrl}";</script>
 </head>
-<body></body>
+<body>
+  <p>Redirecionando para <a href="${pageUrl}">${title}</a>...</p>
+</body>
 </html>`;
 }
 
@@ -43,13 +46,19 @@ serve(async (req) => {
   if (error || !data) {
     return new Response("not found", { status: 404 });
   }
-  const title = `${data.name} | Balão da Informática - Campinas`;
   const price = typeof data.price === "number" ? data.price : Number(data.price || 0);
+  const title = `${data.name} - ${formatBRL(price)} | Balão da Informática`;
   const descBase = data.description || data.name;
   const description = `${formatBRL(price)} • ${descBase}`;
   const image = data.image || "https://www.balaodainformatica.com.br/media/wysiwyg/balao500.png";
+  
+  // Resolve relative images
+  const finalImage = image.startsWith('/') 
+    ? `https://www.balao.info${image}`
+    : image;
+
   const pageUrl = `${host}/produto/${data.id}`;
-  const body = html({ title, description, image, pageUrl, type: "product" });
+  const body = html({ title, description, image: finalImage, pageUrl, type: "product" });
   return new Response(body, {
     headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=900" },
   });
