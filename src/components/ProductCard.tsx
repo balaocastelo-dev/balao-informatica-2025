@@ -114,11 +114,6 @@ export function ProductCard({ product, onClick, viewMode = 'grid' }: ProductCard
             containerClass="absolute inset-0"
             className="w-full h-full object-contain p-2 transition-transform duration-300 group-hover:scale-105"
           />
-          {product.stock !== undefined && product.stock <= 3 && product.stock > 0 && (
-            <span className="absolute top-2 left-2 bg-primary text-primary-foreground text-[10px] font-semibold px-1.5 py-0.5 rounded z-10">
-              Últimas!
-            </span>
-          )}
           {Array.isArray(product.tags) && product.tags.length > 0 && (
             <div className="absolute bottom-2 left-2 right-2 flex flex-wrap gap-1 z-10">
               {product.tags.slice(0, 3).map((tag, i) => (
@@ -160,17 +155,12 @@ export function ProductCard({ product, onClick, viewMode = 'grid' }: ProductCard
           containerClass="absolute inset-0"
           className="w-full h-full object-contain p-3 transition-transform duration-300 group-hover:scale-105"
         />
-        {product.stock !== undefined && product.stock <= 3 && product.stock > 0 && (
-          <span className="absolute top-3 left-3 bg-primary text-primary-foreground text-xs font-semibold px-2 py-1 rounded z-10 shadow-md">
-            Últimas unidades!
-          </span>
-        )}
         {/* Custom Badges */}
         {Array.isArray(product.tags) && product.tags.filter(t => t.startsWith('badge:')).map((tag, i) => (
           <span 
             key={`badge-${i}`} 
             className="absolute left-3 bg-[#E30613] text-white text-xs font-bold px-2 py-1 rounded z-10 shadow-md uppercase tracking-wide"
-            style={{ top: product.stock !== undefined && product.stock <= 3 && product.stock > 0 ? `${12 + (i + 1) * 32}px` : `${12 + i * 32}px` }}
+            style={{ top: `${12 + i * 32}px` }}
           >
             {tag.replace('badge:', '')}
           </span>

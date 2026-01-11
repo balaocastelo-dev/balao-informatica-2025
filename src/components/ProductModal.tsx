@@ -90,7 +90,7 @@ export function ProductModal({ product, onClose }: ProductModalProps) {
                   <Package className="w-4 h-4 text-muted-foreground" />
                   {product.stock > 0 ? (
                     <span className="text-green-600 font-medium">
-                      {product.stock} unidades em estoque
+                      Em estoque
                     </span>
                   ) : (
                     <span className="text-destructive font-medium">

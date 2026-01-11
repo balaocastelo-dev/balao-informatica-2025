@@ -235,7 +235,7 @@ export default function ProductPage() {
 
               {product.stock !== undefined && (
                 <p className={`text-xs md:text-sm font-medium ${product.stock > 0 ? "text-green-600" : "text-destructive"}`}>
-                  {product.stock > 0 ? `${product.stock} un. disponíveis` : "Indisponível"}
+                  {product.stock > 0 ? "Disponível" : "Indisponível"}
                 </p>
               )}
 
