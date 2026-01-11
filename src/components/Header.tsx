@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, Menu, Search, User, LogOut, Package, UserCircle, MessageCircle, Monitor, Mic } from 'lucide-react';
+import { ShoppingCart, Menu, Search, User, LogOut, Package, UserCircle, MessageCircle, Monitor } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { useVoiceAgent } from '@/contexts/VoiceAgentContext';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,7 +22,6 @@ export function Header({ onMenuClick }: HeaderProps) {
   const { itemCount } = useCart();
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
-  const { openAgent } = useVoiceAgent();
 
   const handleSignOut = async () => {
     await signOut();
@@ -105,16 +103,6 @@ export function Header({ onMenuClick }: HeaderProps) {
               </button>
             </div>
           </form>
-
-          {/* Voice Agent Button */}
-          <Button
-            onClick={openAgent}
-            className="hidden sm:flex bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white gap-2 font-bold shadow-lg hover:shadow-purple-500/25 transition-all duration-300 rounded-full animate-pulse hover:animate-none"
-            title="Falar com Especialista IA"
-          >
-            <Mic className="w-5 h-5" />
-            <span className="hidden xl:inline">IA Expert</span>
-          </Button>
 
           {/* Monte seu PC Button */}
           <Link to="/montar-pc" className="flex">
@@ -205,9 +193,6 @@ export function Header({ onMenuClick }: HeaderProps) {
               </button>
             </div>
           </form>
-          <Button size="icon" onClick={openAgent} className="bg-red-600 hover:bg-red-700 rounded-lg shrink-0 h-10 w-10">
-             <Mic className="w-5 h-5" />
-          </Button>
         </div>
       </div>
     </header>
