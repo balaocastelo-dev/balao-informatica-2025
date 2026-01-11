@@ -158,7 +158,7 @@ export const parseBulkImport = (text: string, options: ImportOptions): ParsedPro
       costPrice: Number(costPrice.toFixed(2)),
       image: enhancedImage,
       category,
-      tags,
+      tags: uniqueTags,
       sourceUrl: image || undefined, // Usa a imagem como sourceUrl se não tiver outra
       originalLine: line,
       isValid,

@@ -133,6 +133,7 @@ export function ProductProvider({ children }: { children: ReactNode }) {
           ram_gb: attrs.ramGb ?? null,
           storage_gb: attrs.storageGb ?? null,
           screen_inches: attrs.screenInches ?? null,
+          tags: product.tags || null,
         })
         .select()
         .single();

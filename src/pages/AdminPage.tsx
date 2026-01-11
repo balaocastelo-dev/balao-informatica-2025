@@ -75,6 +75,7 @@ const AdminPage = () => {
     description: '',
     stock: '',
     sourceUrl: '',
+    tags: '',
   });
 
   // Banner form state
@@ -252,6 +253,7 @@ const AdminPage = () => {
       description: '',
       stock: '',
       sourceUrl: '',
+      tags: '',
     });
     setEditingProduct(null);
   };
@@ -268,6 +270,7 @@ const AdminPage = () => {
       description: formData.description,
       stock: formData.stock ? parseInt(formData.stock) : undefined,
       sourceUrl: formData.sourceUrl || undefined,
+      tags: formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(Boolean) : undefined,
     };
 
     if (editingProduct) {
@@ -292,6 +295,7 @@ const AdminPage = () => {
       description: product.description || '',
       stock: product.stock?.toString() || '',
       sourceUrl: product.sourceUrl || '',
+      tags: product.tags?.join(', ') || '',
     });
     setEditingProduct(product);
     setShowAddModal(true);
@@ -1465,6 +1469,18 @@ const AdminPage = () => {
                     className="input-field"
                     placeholder="https://www.kabum.com.br/produto/..."
                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">Etiquetas (Tags)</label>
+                  <input
+                    type="text"
+                    value={formData.tags}
+                    onChange={e => setFormData({ ...formData, tags: e.target.value })}
+                    className="input-field"
+                    placeholder="Ex: promoção, usado, gamer"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Separe por vírgulas</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">

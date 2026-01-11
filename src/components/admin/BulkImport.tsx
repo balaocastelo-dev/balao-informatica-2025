@@ -184,13 +184,33 @@ export const BulkImport = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="auto">✨ Auto-detectar (Recomendado)</SelectItem>
+                      <SelectItem value="new_category">➕ Nova Categoria...</SelectItem>
                       {categories.map(cat => (
                         <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+                  {selectedCategory === 'new_category' && (
+                    <Input 
+                      className="mt-2"
+                      placeholder="Nome da nova categoria"
+                      value={newCategoryName}
+                      onChange={e => setNewCategoryName(e.target.value)}
+                    />
+                  )}
                 </div>
                 
+                <div className="space-y-2">
+                  <Label>Etiquetas Padrão (Tags)</Label>
+                  <Input 
+                    type="text" 
+                    value={defaultTags} 
+                    onChange={e => setDefaultTags(e.target.value)}
+                    placeholder="Ex: promoção, usado, black friday"
+                  />
+                  <p className="text-xs text-muted-foreground">Separadas por vírgula. Serão adicionadas a todos os itens.</p>
+                </div>
+
                 <div className="space-y-2">
                   <Label>Margem de Lucro (%)</Label>
                   <Input 
