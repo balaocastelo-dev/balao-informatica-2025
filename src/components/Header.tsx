@@ -54,7 +54,7 @@ export function Header({ onMenuClick }: HeaderProps) {
       }`}
     >
       <div className="container-balao">
-        <div className="flex items-center justify-between h-16 sm:h-20 gap-4">
+        <div className="flex items-center justify-between h-16 sm:h-20 gap-2 sm:gap-4">
           {/* Menu Button - Always visible on left */}
           <button
             onClick={onMenuClick}
@@ -75,7 +75,7 @@ export function Header({ onMenuClick }: HeaderProps) {
 
           {/* WhatsApp Button */}
           <Button
-            className="hidden lg:flex bg-[#25D366] hover:bg-[#128C7E] text-white gap-2 font-bold shadow-md hover:scale-105 transition-all duration-300 rounded-full"
+            className="flex bg-[#25D366] hover:bg-[#128C7E] text-white gap-2 font-bold shadow-md hover:scale-105 transition-all duration-300 rounded-full px-2 lg:px-4"
             onClick={() => window.open('https://wa.me/5519987510267', '_blank')}
           >
             <MessageCircle className="w-5 h-5" />
@@ -105,9 +105,9 @@ export function Header({ onMenuClick }: HeaderProps) {
           </form>
 
           {/* Monte seu PC Button */}
-          <Link to="/montar-pc" className="hidden lg:flex">
+          <Link to="/montar-pc" className="flex">
             <Button
-              className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white gap-2 font-bold shadow-md hover:scale-105 transition-all duration-300 rounded-full"
+              className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white gap-2 font-bold shadow-md hover:scale-105 transition-all duration-300 rounded-full px-2 lg:px-4"
             >
               <Monitor className="w-5 h-5" />
               <span className="hidden xl:inline">Monte seu PC</span>
