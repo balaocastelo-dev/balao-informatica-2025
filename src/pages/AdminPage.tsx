@@ -59,7 +59,7 @@ const AdminPage = () => {
   
   const [isAdmin, setIsAdmin] = useState(false);
 
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'bulk-import' | 'banners' | 'categories' | 'brands' | 'layout' | 'email' | 'orders' | 'coupons'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'bulk-import' | 'banners' | 'categories' | 'brands' | 'layout' | 'email' | 'orders' | 'coupons' | 'integrations'>('dashboard');
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showBannerModal, setShowBannerModal] = useState(false);
@@ -788,6 +788,17 @@ const AdminPage = () => {
             Cupons
           </button>
           <button
+            onClick={() => setActiveTab('integrations')}
+            className={`px-3 py-2 font-medium transition-colors border-b-2 -mb-px flex items-center gap-2 whitespace-nowrap ${
+              activeTab === 'integrations' 
+                ? 'text-primary border-primary' 
+                : 'text-muted-foreground border-transparent hover:text-foreground'
+            }`}
+          >
+            <Settings className="w-4 h-4" />
+            Integrações
+          </button>
+          <button
             onClick={() => {}}
             className="hidden"
           />
@@ -808,6 +819,13 @@ const AdminPage = () => {
 
  
  
+
+        {/* Integrations Tab */}
+        {activeTab === 'integrations' && (
+          <div className="space-y-6">
+            <BlingIntegration />
+          </div>
+        )}
 
         {/* Bulk Import Tab */}
         {activeTab === 'bulk-import' && (
