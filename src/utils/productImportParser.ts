@@ -212,28 +212,38 @@ const isLowResolution = (url: string): boolean => {
   
   const lower = url.toLowerCase();
   
+  // 1. Kabum (se ainda tiver _m, _p, _peq é porque não conseguiu converter)
+  if (lower.includes('kabum.com.br') && (lower.includes('_m.') || lower.includes('_p.') || lower.includes('_peq.'))) {
+    return true;
+  }
+
+  // 2. Terabyte (thumbs)
+  if (lower.includes('terabyteshop.com.br') && (lower.includes('_t.') || lower.includes('/thumbs/'))) {
+    return true;
+  }
+  
   // Keywords comuns de thumbnails
   const thumbKeywords = [
     'thumb', 'thumbnail', 'mini', 'small', 'tiny', 
-    '50x50', '75x75', '100x100', '150x150', '200x200', '250x250',
-    'width=50', 'width=100', 'width=150', 'width=200',
-    'w=50', 'w=100', 'w=150', 'w=200'
+    '50x50', '75x75', '100x100', '150x150', '200x200', '250x250', '300x300',
+    'width=50', 'width=100', 'width=150', 'width=200', 'width=300',
+    'w=50', 'w=100', 'w=150', 'w=200', 'w=300'
   ];
 
   if (thumbKeywords.some(k => lower.includes(k))) {
     // Exceção: se tiver "max" ou "full" junto, talvez não seja
-    if (!lower.includes('max') && !lower.includes('full')) {
+    if (!lower.includes('max') && !lower.includes('full') && !lower.includes('high')) {
       return true;
     }
   }
 
   // Amazon specific
   if (lower.includes('amazon') || lower.includes('media-amazon')) {
-    // _SS40_ ou _SX50_ etc. (se for menor que 300)
+    // _SS40_ ou _SX50_ etc. (se for menor que 500)
     const match = lower.match(/_[sS][a-zA-Z](\d+)_/);
     if (match && match[1]) {
       const size = parseInt(match[1]);
-      if (size < 300) return true;
+      if (size < 500) return true;
     }
   }
 
@@ -246,27 +256,47 @@ const enhanceImageUrl = (url: string): string => {
   let newUrl = url;
 
   // Remover parâmetros de query que limitam tamanho (comuns em muitos e-commerce)
-  if (newUrl.includes('?')) {
-    // newUrl = newUrl.split('?')[0]; // Cuidado, alguns precisam dos params
+  // Mas cuidado para não remover tudo se a imagem depender de query params
+  
+  // 1. Kabum
+  // Ex: https://images.kabum.com.br/produtos/fotos/123456/produto_123456_m.jpg -> _g.jpg
+  if (newUrl.includes('kabum.com.br')) {
+    newUrl = newUrl.replace(/_m\.(jpg|png|webp|gif)/i, '_g.$1');
+    newUrl = newUrl.replace(/_p\.(jpg|png|webp|gif)/i, '_g.$1');
+    newUrl = newUrl.replace(/_peq\.(jpg|png|webp|gif)/i, '_g.$1');
   }
 
-  // Padrões comuns de redimensionamento
-  
-  // Amazon: remover ._SX200_ etc
+  // 2. Terabyte Shop
+  // Tentar substituir thumbs por imagens full se padrão conhecido
+  if (newUrl.includes('terabyteshop.com.br')) {
+    newUrl = newUrl.replace(/_t\.(jpg|png|webp)/i, '_g.$1');
+    newUrl = newUrl.replace(/_small\.(jpg|png|webp)/i, '.$1');
+  }
+
+  // 3. Amazon: remover ._SX200_ etc
   // Ex: https://m.media-amazon.com/images/I/61j4+J9M6dL._AC_SX679_.jpg -> https://m.media-amazon.com/images/I/61j4+J9M6dL.jpg
   if (newUrl.includes('amazon') || newUrl.includes('media-amazon')) {
-    newUrl = newUrl.replace(/\._[A-Z]{2}\d+_?/, '');
+    newUrl = newUrl.replace(/\._[A-Z]{2,4}\d+_?/, '');
+    newUrl = newUrl.replace(/\._AC_/, '');
   }
 
-  // Mercado Livre
+  // 4. Mercado Livre
   // Ex: ...-O.jpg -> ...-F.jpg (Original/Full)
   if (newUrl.includes('mercadolivre') || newUrl.includes('mlstatic')) {
     newUrl = newUrl.replace(/-[OI]\.jpg/i, '-F.jpg');
     newUrl = newUrl.replace(/-[OI]\.webp/i, '-F.webp');
+    newUrl = newUrl.replace(/-[OI]\.png/i, '-F.png');
   }
 
-  // OBS: Removido redimensionamento genérico (kabum, medium->large) pois estava quebrando links válidos
-  // e causando perda de imagens na importação.
+  // 5. Google / Shopee / Geral - Remover params de redimensionamento
+  if (newUrl.includes('?')) {
+     // Tenta remover params explícitos de tamanho
+     // Ex: image.jpg?width=200 -> image.jpg
+     // Mas mantém outros params que podem ser necessários
+     newUrl = newUrl.replace(/([?&])(width|w|height|h|size|resize)=\d+/gi, '$1');
+     // Limpar se ficou pontuação solta
+     newUrl = newUrl.replace(/[?&]+$/, '');
+  }
   
   return newUrl;
 };
