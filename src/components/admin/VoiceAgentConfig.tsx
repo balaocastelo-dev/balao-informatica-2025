@@ -15,6 +15,7 @@ export const VoiceAgentConfig: React.FC = () => {
     openai_api_key: '',
     bling_api_key: '',
     voice_id: 'alloy',
+    model: 'gpt-4o-mini',
     initial_message: '',
     system_prompt: '',
     is_active: true
@@ -38,6 +39,7 @@ export const VoiceAgentConfig: React.FC = () => {
       setSettings({
         openai_api_key: data.openai_api_key || '',
         voice_id: data.voice_id || 'alloy',
+        model: (data as any).model || 'gpt-4o-mini',
         initial_message: data.initial_message || '',
         system_prompt: data.system_prompt || '',
         is_active: data.is_active ?? true
@@ -171,6 +173,23 @@ export const VoiceAgentConfig: React.FC = () => {
                 />
               </div>
               <p className="text-xs text-muted-foreground">Chave necessária para o serviço de voz e inteligência.</p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Modelo</Label>
+              <Select 
+                value={settings.model} 
+                onValueChange={v => setSettings({...settings, model: v})}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o modelo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="gpt-4o-mini">GPT-4o Mini (Rápido)</SelectItem>
+                  <SelectItem value="gpt-4o">GPT-4o (Inteligente)</SelectItem>
+                  <SelectItem value="gpt-realtime">GPT-Realtime (Experimental)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             
             <div className="space-y-2">

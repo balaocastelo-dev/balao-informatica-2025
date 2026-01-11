@@ -64,7 +64,7 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({ isOpen, onClose 
         // Fallback to provided key if DB key is missing or short
         openai_api_key: (data?.openai_api_key && data.openai_api_key.length > 20) ? data.openai_api_key : "sk-proj-" + "PabeNuZry1GdTsXcOdNe_U1c2HfUfDFMPR3BFi6X7fvjRtBGPMdchoyHfUAG65V_UBdX" + "-cEMyxT3BlbkFJbB6cBP6xXp-6Vx8O4cjrqMMk_qMaaLF5CLzNCqne55oyscrp1ZCpWzznT8Nj_Q6v9etL8WR8gA",
         voice_id: data?.voice_id || "alloy",
-        system_prompt: data?.system_prompt || "Você é um assistente de vendas da Balão da Informática. Seja curto, direto e prestativo. Fale português do Brasil natural. Se o usuário quiser comprar algo, sugira produtos. Para adicionar ao carrinho, responda APENAS com o comando: [ADD_TO_CART: {\"id\": \"ID_DO_PRODUTO\"}]. Para finalizar a compra, responda: [CHECKOUT]."
+        system_prompt: data?.system_prompt || "Você é um assistente de vendas da Balão da Informática. Seu objetivo é ajudar o cliente a encontrar produtos e tirar dúvidas. \n\nIMPORTANTE:\n- Fale SEMPRE em Português do Brasil de forma fluida, natural e educada.\n- Seja objetivo, mas amigável.\n- Se o usuário perguntar preço, busque o produto.\n- Para adicionar ao carrinho, use o comando: [ADD_TO_CART: {\"id\": \"ID_DO_PRODUTO\"}].\n- Para finalizar, use: [CHECKOUT]."
       };
       
       setAgentConfig(config);
@@ -74,13 +74,21 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({ isOpen, onClose 
 
       // 2. Initialize Audio Recording (VAD)
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+            audio: {
+                echoCancellation: false,
+                noiseSuppression: false,
+                autoGainControl: false,
+                channelCount: 1,
+                sampleRate: 16000
+            } 
+        });
         
         // Setup Audio Context for VAD
         const AudioContext = (window.AudioContext || (window as any).webkitAudioContext);
         audioContextRef.current = new AudioContext();
         analyserRef.current = audioContextRef.current.createAnalyser();
-        analyserRef.current.fftSize = 256;
+        analyserRef.current.fftSize = 512; // Higher resolution for better low-volume detection
         sourceRef.current = audioContextRef.current.createMediaStreamSource(stream);
         sourceRef.current.connect(analyserRef.current);
 
@@ -96,7 +104,7 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({ isOpen, onClose 
             if (audioChunksRef.current.length > 0) {
                 const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
                 audioChunksRef.current = []; // Reset chunks
-                if (status !== 'ended') {
+                if (statusRef.current !== 'ended') {
                     setStatus('processing');
                     await processAudioInput(audioBlob, config);
                 }
@@ -108,7 +116,7 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({ isOpen, onClose 
 
         // Speak Greeting
         setTimeout(() => {
-            const greeting = config.initial_message || "Olá! Sou o assistente do Balão. Como posso ajudar?";
+            const greeting = config.initial_message || "Olá! Sou o assistente do Balão. Como posso ajudar você hoje?";
             speak(greeting, config);
         }, 1000);
 
@@ -190,7 +198,7 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({ isOpen, onClose 
         const formData = new FormData();
         formData.append("file", audioBlob, "audio.webm");
         formData.append("model", "whisper-1");
-        formData.append("language", "pt");
+        formData.append("language", "pt"); // Force Portuguese
 
         const transResponse = await fetch("https://api.openai.com/v1/audio/transcriptions", {
             method: "POST",
@@ -200,11 +208,18 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({ isOpen, onClose 
             body: formData
         });
 
-        if (!transResponse.ok) throw new Error("Whisper Error");
+        if (!transResponse.ok) {
+            const err = await transResponse.text();
+            console.error("Whisper Error:", err);
+            throw new Error("Whisper Error: " + err);
+        }
         const transData = await transResponse.json();
         const userText = transData.text;
 
+        console.log("User said:", userText);
+
         if (!userText || userText.trim().length < 2) {
+            console.log("Ignoring empty/short input");
             setStatus('listening');
             return; // Ignore empty/noise
         }
@@ -238,15 +253,19 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({ isOpen, onClose 
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                model: "gpt-4o", // High intelligence model as requested (simulating "realtime" quality)
+                model: "gpt-4o", // Always use gpt-4o for best reasoning, even if config says 'realtime' (which is for WS)
                 messages: newMessages,
                 tools: tools,
                 tool_choice: "auto",
-                temperature: 0.7,
+                temperature: 0.6, // Slightly lower for more focused answers
             })
         });
 
-        if (!chatResponse.ok) throw new Error("GPT Error");
+        if (!chatResponse.ok) {
+             const err = await chatResponse.text();
+             console.error("GPT Error:", err);
+             throw new Error("GPT Error: " + err);
+        }
         const chatData = await chatResponse.json();
         const choice = chatData.choices[0];
         let assistantMessage = choice.message;
@@ -341,7 +360,7 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({ isOpen, onClose 
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            model: "tts-1-hd", 
+            model: "tts-1", // Changed from tts-1-hd for lower latency (more "fluid" response time)
             input: text,
             voice: config.voice_id || "alloy",
           }),
