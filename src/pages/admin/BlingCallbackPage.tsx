@@ -25,8 +25,8 @@ export function BlingCallbackPage() {
       
       if (!settings) {
         // Fallback to localStorage
-        const localClientId = localStorage.getItem("bling_client_id");
-        const localClientSecret = localStorage.getItem("bling_client_secret");
+        const localClientId = localStorage.getItem("bling_client_id") || "96f38dbc512f18abde6c338c696946d591b66c4a";
+        const localClientSecret = localStorage.getItem("bling_client_secret") || "5e6628e22ff163c42e3b1793a9a360232e1246ef2072238293d6bd9c3008";
         
         if (localClientId && localClientSecret) {
            // Mock settings object
