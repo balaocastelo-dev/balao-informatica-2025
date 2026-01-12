@@ -52,7 +52,7 @@ export function BlingCallbackPage() {
         body: new URLSearchParams({
           grant_type: "authorization_code",
           code: authCode,
-          redirect_uri: window.location.origin + "/admin/bling/callback" // Must match exactly
+          redirect_uri: "https://www.balao.info/admin/bling/callback" // Must match exactly with authorize param
         })
       });
 

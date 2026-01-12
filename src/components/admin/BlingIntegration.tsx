@@ -72,7 +72,8 @@ export function BlingIntegration() {
     
     // Construct Auth URL
     const state = Math.random().toString(36).substring(7);
-    const redirectUri = `${window.location.origin}/admin/bling/callback`;
+    // FORCE production URL to match Bling App settings
+    const redirectUri = "https://www.balao.info/admin/bling/callback";
     const authUrl = `https://www.bling.com.br/Api/v3/oauth/authorize?response_type=code&client_id=${clientId}&state=${state}&redirect_uri=${encodeURIComponent(redirectUri)}`;
     
     window.location.href = authUrl;
