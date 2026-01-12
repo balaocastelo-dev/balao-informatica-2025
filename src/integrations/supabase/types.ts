@@ -558,6 +558,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      increment_coupon_usage: {
+        Args: {
+          coupon_id: string
+        }
+        Returns: void
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

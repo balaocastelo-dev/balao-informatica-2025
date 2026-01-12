@@ -59,6 +59,7 @@ export default function CartPage() {
   const [step, setStep] = useState(0);
   const [isLoadingCep, setIsLoadingCep] = useState(false);
   const [couponDiscount, setCouponDiscount] = useState<number>(0);
+  const [couponData, setCouponData] = useState<CouponValidationSuccess | null>(null);
   
   const [customerData, setCustomerData] = useState<CustomerData>({
     name: '',
