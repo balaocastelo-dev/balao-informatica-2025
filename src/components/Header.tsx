@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart, Menu, Search, User, LogOut, Package, UserCircle, MessageCircle, Monitor } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
+import { useProducts } from '@/contexts/ProductContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { SearchPreview } from '@/components/SearchPreview';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,9 +22,43 @@ export function Header({ onMenuClick }: HeaderProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isScrolled, setIsScrolled] = useState(false);
   const [logoClicks, setLogoClicks] = useState<number[]>([]);
+  const [showPreview, setShowPreview] = useState(false);
+  const desktopSearchRef = useRef<HTMLFormElement>(null);
+  const mobileSearchRef = useRef<HTMLFormElement>(null);
+  
   const { itemCount } = useCart();
+  const { products } = useProducts();
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
+
+  // Filter products for preview
+  const previewProducts = searchQuery.trim().length >= 2 
+    ? products
+        .filter(p => {
+          const q = searchQuery.toLowerCase();
+          return (
+            p.name.toLowerCase().includes(q) ||
+            p.category.toLowerCase().includes(q) ||
+            p.description?.toLowerCase().includes(q)
+          );
+        })
+        .slice(0, 5)
+    : [];
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+      const isDesktop = desktopSearchRef.current?.contains(target);
+      const isMobile = mobileSearchRef.current?.contains(target);
+      
+      if (!isDesktop && !isMobile) {
+        setShowPreview(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleSignOut = async () => {
     await signOut();
@@ -104,6 +140,7 @@ export function Header({ onMenuClick }: HeaderProps) {
 
           {/* Search Bar */}
           <form 
+            ref={desktopSearchRef}
             onSubmit={handleSearch}
             className="flex-1 max-w-xl hidden sm:block"
           >
@@ -112,6 +149,7 @@ export function Header({ onMenuClick }: HeaderProps) {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => setShowPreview(true)}
                 placeholder="Buscar produtos..."
                 className="search-input pr-12"
               />
@@ -121,6 +159,11 @@ export function Header({ onMenuClick }: HeaderProps) {
               >
                 <Search className="w-5 h-5" />
               </button>
+              <SearchPreview 
+                results={previewProducts} 
+                visible={showPreview} 
+                onSelect={() => setShowPreview(false)} 
+              />
             </div>
           </form>
 
@@ -194,6 +237,7 @@ export function Header({ onMenuClick }: HeaderProps) {
         {/* Search Bar - Mobile */}
         <div className="sm:hidden pb-3 flex gap-2">
           <form 
+            ref={mobileSearchRef}
             onSubmit={handleSearch}
             className="flex-1"
           >
@@ -202,6 +246,7 @@ export function Header({ onMenuClick }: HeaderProps) {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => setShowPreview(true)}
                 placeholder="Buscar produtos..."
                 className="search-input pr-12"
               />
@@ -211,6 +256,11 @@ export function Header({ onMenuClick }: HeaderProps) {
               >
                 <Search className="w-5 h-5" />
               </button>
+              <SearchPreview 
+                results={previewProducts} 
+                visible={showPreview} 
+                onSelect={() => setShowPreview(false)} 
+              />
             </div>
           </form>
         </div>

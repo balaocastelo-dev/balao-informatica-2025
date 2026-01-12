@@ -16,10 +16,10 @@ interface Message {
   products?: Product[];
 }
 
-const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-assistant`;
+const CHAT_URL = '/api/chat-grok';
 const STORAGE_KEY = 'balao-chat-messages';
 const STORAGE_SESSION = 'balao-chat-session';
-const ASSISTANT_ENABLED = false;
+const ASSISTANT_ENABLED = true;
 
 const ChatBot = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -226,6 +226,7 @@ const ChatBot = () => {
     setMessages(prev => [...prev, userMessage]);
     setInput('');
 
+    let suggestions: Product[] = [];
     try {
       const intent = inferIntent(userMessage.content);
       const nextContext = {
@@ -243,22 +244,11 @@ const ChatBot = () => {
         nextContext.category ||
         (nextContext.usage ? usageCategoryMap[nextContext.usage] : undefined);
 
-      let suggestions = searchLocalProducts(intent.query, derivedCategory);
+      suggestions = searchLocalProducts(intent.query, derivedCategory);
       if (suggestions.length === 0 && derivedCategory) {
         suggestions = products
           .filter(p => (p.stock ?? 0) > 0 && p.category === derivedCategory)
           .slice(0, 10);
-      }
-      
-      if (suggestions.length > 0) {
-        const replyText = `Encontrei algumas opções de ${derivedCategory || 'produtos'} para você:`;
-        setMessages(prev => [
-          ...prev,
-          { role: 'assistant', content: replyText },
-          { role: 'assistant', content: 'cards', products: suggestions }
-        ]);
-        speak(replyText);
-        return;
       }
     } catch {}
 
@@ -293,25 +283,36 @@ const ChatBot = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
+          // Authorization not needed for local API route as it handles keys server-side
         },
         body: JSON.stringify({
           session_id: localStorage.getItem(STORAGE_SESSION),
           messages: [...messages, userMessage],
           tools: ['searchProducts', 'addToCart', 'getProductDetails'],
-          products: products.slice(0, 200).map(p => ({
+          products: (suggestions.length > 0 ? suggestions : products.slice(0, 50)).map(p => ({
             id: p.id,
             name: p.name,
             price: p.price,
-            image: p.image,
             category: p.category,
             stock: p.stock
           }))
         })
       });
 
-      if (!response.ok || !response.body) {
-        const replyText = 'Vou verificar no estoque e te retorno com as melhores opções.';
+      if (!response.ok) {
+        // If response is not ok, it might be a JSON error or network error
+        // Let's try to parse if it's a known fallback response from our API
+        let replyText = 'Estou verificando minha base de conhecimento...';
+        try {
+            const data = await response.json();
+            if (data.choices && data.choices[0]) {
+                 // It's our fallback response from the API when keys are missing
+                 replyText = data.choices[0].message.content;
+            }
+        } catch {
+             replyText = 'Desculpe, estou com dificuldade de conexão com meu cérebro digital agora. Mas posso te ajudar a buscar produtos pelo menu!';
+        }
+        
         setMessages(prev => [
           ...prev,
           {
@@ -322,6 +323,8 @@ const ChatBot = () => {
         speak(replyText);
         return;
       }
+
+      if (!response.body) return;
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
@@ -336,41 +339,36 @@ const ChatBot = () => {
         sseBuffer += chunk;
 
         const lines = sseBuffer.split(/\r?\n/);
-        // Keep last line if not terminated by newline
-        sseBuffer = lines[lines.length - 1]?.trim() ? lines[lines.length - 1] : '';
+        sseBuffer = lines.pop() || ''; // Keep last incomplete line
 
-        for (let i = 0; i < lines.length - 1; i++) {
-          const line = lines[i].trim();
-          if (!line) continue;
-          if (line === 'data: [DONE]') continue;
-          if (line.startsWith('data:')) {
-            const payload = line.slice(5).trim();
-            if (!payload) continue;
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed || trimmed === 'data: [DONE]') continue;
+          
+          if (trimmed.startsWith('data: ')) {
+            const dataStr = trimmed.slice(6);
             try {
-              const json = JSON.parse(payload);
-              const choice = (json?.choices || [])[0];
-              const delta = choice?.delta;
-              const contentPiece = typeof delta?.content === 'string' ? delta.content : '';
+              const json = JSON.parse(dataStr);
+              const contentPiece = json.choices?.[0]?.delta?.content || '';
               if (contentPiece) {
                 assistantText += contentPiece;
                 setMessages(prev => {
-                  const arr = [...prev];
-                  arr[arr.length - 1] = { role: 'assistant', content: assistantText };
-                  return arr;
+                  const newArr = [...prev];
+                  newArr[newArr.length - 1] = { role: 'assistant', content: assistantText };
+                  return newArr;
                 });
               }
-            } catch {
-              // ignore non-JSON or partial frames
+            } catch (e) {
+               // ignore json parse error
             }
-          } else {
-            // ignore non-SSE lines like "OPENROUTER PROCESSING"
           }
         }
       }
       assistantContent = assistantText || assistantContent;
       speak(assistantContent);
-    } catch {
-      const replyText = 'Não encontrei exatamente isso. Vou buscar alternativas próximas.';
+    } catch (err) {
+      console.error(err);
+      const replyText = 'Tive um pequeno lapso de memória. Pode repetir?';
       setMessages(prev => [
         ...prev,
         { role: 'assistant', content: replyText }
@@ -379,6 +377,12 @@ const ChatBot = () => {
     } finally {
       setIsLoading(false);
       tryHandleActionFromAssistant(assistantContent);
+      if (suggestions.length > 0) {
+        setMessages(prev => [
+          ...prev,
+          { role: 'assistant', content: 'cards', products: suggestions }
+        ]);
+      }
     }
   };
  
