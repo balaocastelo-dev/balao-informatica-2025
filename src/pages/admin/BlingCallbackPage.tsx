@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -9,6 +9,8 @@ export function BlingCallbackPage() {
   const code = searchParams.get("code");
   const state = searchParams.get("state");
 
+  const [errorDetails, setErrorDetails] = useState<string | null>(null);
+
   useEffect(() => {
     if (code) {
       handleCallback(code);
@@ -17,6 +19,7 @@ export function BlingCallbackPage() {
 
   const handleCallback = async (authCode: string) => {
     try {
+      setErrorDetails(null);
       // 1. Save code to DB first (optional, but good for debugging)
       let { data: settings } = await supabase.from("bling_settings").select("*").single();
       
@@ -96,18 +99,37 @@ export function BlingCallbackPage() {
       toast.success("Conectado ao Bling com sucesso!");
       navigate("/admin");
       
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      toast.error("Erro ao conectar com Bling. Verifique o console.");
-      navigate("/admin");
+      const errorMessage = error.message || "Erro desconhecido";
+      setErrorDetails(errorMessage);
+      toast.error(`Erro: ${errorMessage}`);
+      // Do not navigate away immediately so user can see the error
     }
   };
 
   return (
-    <div className="flex items-center justify-center h-screen">
-      <div className="text-center">
-        <h2 className="text-xl font-bold mb-2">Conectando ao Bling...</h2>
-        <p className="text-muted-foreground">Por favor aguarde.</p>
+    <div className="flex flex-col items-center justify-center h-screen p-4">
+      <div className="text-center max-w-md">
+        <h2 className="text-xl font-bold mb-4">Conectando ao Bling...</h2>
+        {errorDetails ? (
+          <div className="bg-destructive/15 text-destructive p-4 rounded-md border border-destructive/20 text-left overflow-auto max-h-[300px]">
+            <p className="font-semibold mb-2">Ocorreu um erro:</p>
+            <code className="text-xs break-all whitespace-pre-wrap">{errorDetails}</code>
+            <p className="text-sm mt-4 text-muted-foreground">
+              Verifique se o "Redirect URI" no aplicativo do Bling está EXATAMENTE igual a: <br/>
+              <strong className="select-all">https://www.balao.info/admin/bling/callback</strong>
+            </p>
+            <button 
+              onClick={() => navigate("/admin")}
+              className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 w-full"
+            >
+              Voltar para Admin
+            </button>
+          </div>
+        ) : (
+          <p className="text-muted-foreground">Por favor aguarde enquanto finalizamos a conexão.</p>
+        )}
       </div>
     </div>
   );

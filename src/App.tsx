@@ -20,11 +20,26 @@ import { Loader2 } from "lucide-react";
 // Componente para redirecionar domínio Lovable para o oficial
 const DomainRedirect = () => {
   useEffect(() => {
-    if (window.location.hostname.includes('lovable.app')) {
+    const currentUrl = window.location.href;
+    const hostname = window.location.hostname;
+    
+    // Redirect Lovable domains
+    if (hostname.includes('lovable.app')) {
       const newUrl = 'https://www.balao.info' + window.location.pathname + window.location.search;
       window.location.href = newUrl;
+      return;
+    }
+    
+    // Redirect Vercel project links (dashboard previews) to production if needed
+    // The user mentioned: vercel.com/thiagos-projects-901dca76/balao-informatica-2025
+    // Note: vercel.com links are usually the dashboard, not the app. 
+    // If the user meant *.vercel.app links, we can catch them here.
+    if (hostname.includes('vercel.app') && !hostname.includes('balao-informatica-2025.vercel.app')) {
+       // Optional: Redirect other vercel previews to main site? 
+       // For now, let's just log or ignore unless explicitly asked to force all traffic to balao.info
     }
   }, []);
+
   return null;
 };
 
