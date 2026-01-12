@@ -204,9 +204,7 @@ export default function CartPage() {
       const finalTotal = Math.max(0, total - couponDiscount);
 
       // 1. Create Order
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert({
+      const orderPayload = {
           user_id: user?.id || null,
           status: 'pending',
           total: finalTotal,
@@ -224,16 +222,35 @@ export default function CartPage() {
               quantity: i.quantity,
               image: i.product.image
           }))
-        })
+      };
+
+      let { data: order, error: orderError } = await supabase
+        .from('orders')
+        .insert(orderPayload)
         .select()
         .single();
+
+      // Fallback: If column missing, try without customer_document
+      if (orderError && (orderError.message?.includes('customer_document') || orderError.code === '42703')) {
+          console.warn("Retrying order without customer_document...");
+          const { customer_document, ...fallbackPayload } = orderPayload;
+          const retry = await supabase
+            .from('orders')
+            .insert(fallbackPayload)
+            .select()
+            .single();
+          order = retry.data;
+          orderError = retry.error;
+      }
 
       if (orderError) throw orderError;
 
       // 2. Send to Bling
       if (order) {
          console.log("Syncing order to Bling:", order);
-         const blingResult = await BlingService.sendOrder(order);
+         // Ensure CPF is present for Bling even if DB rejected it
+         const orderForBling = { ...order, customer_document: customerData.cpf };
+         const blingResult = await BlingService.sendOrder(orderForBling);
          if (!blingResult.success) {
            console.error("Bling sync failed:", blingResult.error);
          } else {
