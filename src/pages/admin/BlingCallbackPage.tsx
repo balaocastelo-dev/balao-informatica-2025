@@ -18,12 +18,21 @@ export function BlingCallbackPage() {
   const handleCallback = async (authCode: string) => {
     try {
       // 1. Save code to DB first (optional, but good for debugging)
-      const { data: settings } = await supabase.from("bling_settings").select("*").single();
+      let { data: settings } = await supabase.from("bling_settings").select("*").single();
       
       if (!settings) {
-        toast.error("Configurações não encontradas. Configure o Client ID/Secret primeiro.");
-        navigate("/admin");
-        return;
+        // Fallback to localStorage
+        const localClientId = localStorage.getItem("bling_client_id");
+        const localClientSecret = localStorage.getItem("bling_client_secret");
+        
+        if (localClientId && localClientSecret) {
+           // Mock settings object
+           settings = { id: 'local', client_id: localClientId, client_secret: localClientSecret };
+        } else {
+           toast.error("Configurações não encontradas. Configure o Client ID/Secret primeiro.");
+           navigate("/admin");
+           return;
+        }
       }
 
       // 2. Exchange code for token
@@ -65,11 +74,24 @@ export function BlingCallbackPage() {
       const data = await response.json();
       
       // 3. Save tokens
-      await supabase.from("bling_settings").update({
-        access_token: data.access_token,
-        refresh_token: data.refresh_token,
-        expires_at: Date.now() + (data.expires_in * 1000)
-      }).eq("id", settings.id);
+      if (settings.id !== 'local') {
+          const { error: updateError } = await supabase.from("bling_settings").update({
+            access_token: data.access_token,
+            refresh_token: data.refresh_token,
+            expires_at: Date.now() + (data.expires_in * 1000)
+          }).eq("id", settings.id);
+          
+          if (updateError) {
+             console.error("Update error:", updateError);
+             localStorage.setItem("bling_access_token", data.access_token);
+             toast.warning("Token salvo localmente (Erro no DB)");
+          }
+      } else {
+          // Save to localStorage
+          localStorage.setItem("bling_access_token", data.access_token);
+          localStorage.setItem("bling_refresh_token", data.refresh_token);
+          toast.warning("Token salvo localmente (Modo fallback)");
+      }
 
       toast.success("Conectado ao Bling com sucesso!");
       navigate("/admin");

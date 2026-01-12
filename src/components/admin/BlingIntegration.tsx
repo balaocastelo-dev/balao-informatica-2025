@@ -57,7 +57,11 @@ export function BlingIntegration() {
     }
 
     if (error) {
-      toast.error("Erro ao salvar configurações");
+      console.error("Erro ao salvar no Supabase:", error);
+      // Fallback to localStorage
+      localStorage.setItem("bling_client_id", clientId);
+      localStorage.setItem("bling_client_secret", clientSecret);
+      toast.warning("Salvo localmente! (Tabela não encontrada no banco). Pode prosseguir.");
     } else {
       toast.success("Configurações salvas!");
     }
