@@ -93,6 +93,7 @@ export function ProductProvider({ children }: { children: ReactNode }) {
             ramGb: typeof p.ram_gb === 'number' ? p.ram_gb : undefined,
             storageGb: typeof p.storage_gb === 'number' ? p.storage_gb : undefined,
             screenInches: typeof p.screen_inches === 'number' ? p.screen_inches : undefined,
+            additionalCategories: p.additional_categories || [],
           }));
           allProducts.push(...mappedProducts);
           page++;
@@ -138,6 +139,7 @@ export function ProductProvider({ children }: { children: ReactNode }) {
           storage_gb: attrs.storageGb ?? null,
           screen_inches: attrs.screenInches ?? null,
           tags: product.tags || null,
+          additional_categories: product.additionalCategories || null,
         })
         .select()
         .single();
@@ -195,6 +197,7 @@ export function ProductProvider({ children }: { children: ReactNode }) {
         tags: Array.isArray(data.tags) ? data.tags : undefined,
         aiGenerated: typeof data.ai_generated === 'boolean' ? data.ai_generated : undefined,
         aiConfidence: data.ai_confidence || undefined,
+        additionalCategories: data.additional_categories || [],
       };
 
       setProducts(current => [newProduct, ...current]);
@@ -223,6 +226,7 @@ export function ProductProvider({ children }: { children: ReactNode }) {
       if (updates.tags !== undefined) dbUpdates.tags = updates.tags;
       if (updates.aiGenerated !== undefined) dbUpdates.ai_generated = updates.aiGenerated;
       if (updates.aiConfidence !== undefined) dbUpdates.ai_confidence = updates.aiConfidence;
+      if (updates.additionalCategories !== undefined) dbUpdates.additional_categories = updates.additionalCategories;
       const existing = products.find(p => p.id === id);
       const textName = updates.name ?? existing?.name ?? '';
       const textDesc = updates.description ?? existing?.description ?? '';
@@ -342,7 +346,10 @@ export function ProductProvider({ children }: { children: ReactNode }) {
   };
 
   const getProductsByCategory = (category: Category) => {
-    return products.filter(product => product.category === category);
+    return products.filter(product => 
+      product.category === category || 
+      product.additionalCategories?.includes(category)
+    );
   };
 
   const searchProducts = (query: string) => {

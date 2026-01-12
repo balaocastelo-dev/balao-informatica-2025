@@ -17,6 +17,7 @@ export interface Product {
   tags?: string[];
   aiGenerated?: boolean;
   aiConfidence?: 'low' | 'medium' | 'high';
+  additionalCategories?: string[];
 }
 
 export type Category = string;

@@ -18,6 +18,7 @@ export function CategoryProductManager() {
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
   const [showMoveModal, setShowMoveModal] = useState(false);
   const [moveCategorySearch, setMoveCategorySearch] = useState('');
+  const [moveMode, setMoveMode] = useState<'move' | 'add'>('move');
 
   // Filter categories by search
   const filteredCategories = useMemo(() => {
@@ -119,7 +120,28 @@ export function CategoryProductManager() {
     const count = selectedProducts.size;
     
     for (const productId of selectedProducts) {
-      await updateProduct(productId, { category: targetCategory.slug });
+      const product = products.find(p => p.id === productId);
+      if (!product) continue;
+
+      if (moveMode === 'move') {
+        // Mover totalmente: altera a categoria principal e remove a nova categoria dos adicionais se existir
+        const newAdditional = (product.additionalCategories || []).filter(c => c !== targetCategory.slug);
+        
+        await updateProduct(productId, { 
+          category: targetCategory.slug,
+          additionalCategories: newAdditional
+        });
+      } else {
+        // Adicionar também: mantém a principal e adiciona aos adicionais
+        if (product.category === targetCategory.slug) continue; // Já é a principal
+        
+        const currentAdditional = product.additionalCategories || [];
+        if (!currentAdditional.includes(targetCategory.slug)) {
+          await updateProduct(productId, { 
+            additionalCategories: [...currentAdditional, targetCategory.slug] 
+          });
+        }
+      }
     }
     
     setSelectedProducts(new Set());
@@ -127,8 +149,8 @@ export function CategoryProductManager() {
     setMoveCategorySearch('');
     
     toast({
-      title: 'Produtos movidos!',
-      description: `${count} produto(s) movido(s) para "${targetCategory.name}"`
+      title: moveMode === 'move' ? 'Produtos movidos!' : 'Categoria adicionada!',
+      description: `${count} produto(s) ${moveMode === 'move' ? 'movido(s) para' : 'agora também em'} "${targetCategory.name}"`
     });
   };
 
@@ -437,8 +459,31 @@ export function CategoryProductManager() {
               </div>
 
               <p className="text-muted-foreground mb-4">
-                Selecione a categoria de destino:
+                Selecione a ação e a categoria de destino:
               </p>
+
+              <div className="flex gap-2 mb-4 p-1 bg-secondary rounded-lg">
+                <button
+                  onClick={() => setMoveMode('move')}
+                  className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                    moveMode === 'move'
+                      ? 'bg-background shadow-sm text-foreground'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  Mover Totalmente
+                </button>
+                <button
+                  onClick={() => setMoveMode('add')}
+                  className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                    moveMode === 'add'
+                      ? 'bg-background shadow-sm text-foreground'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  Adicionar Também
+                </button>
+              </div>
 
               <div className="relative mb-4">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
