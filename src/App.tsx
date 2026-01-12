@@ -105,6 +105,7 @@ const App = () => (
                         <BrowserRouter>
                           <DomainRedirect />
                           <ScrollToTop />
+                          <AuroraBackground />
                           <Suspense fallback={<LoadingFallback />}>
                             <Routes>
                               <Route path="/" element={<Index />} />
