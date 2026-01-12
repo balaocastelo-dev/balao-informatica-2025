@@ -30,8 +30,8 @@ WITH CHECK (true);
 INSERT INTO public.bling_settings (id, client_id, client_secret)
 VALUES (
   'default',
-  '6ebfe752d7d5df4aa89669bb505ec8c852920ffe',
-  'a839dec385b4501534fa016f1ad4f996f18188f0960a9bc07c2130f3119b'
+  '96f38dbc512f18abde6c338c696946d591b66c4a',
+  '5e6628e22ff163c42e3b1793a9a360232e1246ef2072238293d6bd9c3008'
 )
 ON CONFLICT (id) DO UPDATE SET
   client_id = EXCLUDED.client_id,

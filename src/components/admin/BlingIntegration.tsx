@@ -7,8 +7,8 @@ import { toast } from "sonner";
 import { AlertCircle, CheckCircle, RefreshCw } from "lucide-react";
 
 export function BlingIntegration() {
-  const [clientId, setClientId] = useState("");
-  const [clientSecret, setClientSecret] = useState("");
+  const [clientId, setClientId] = useState("96f38dbc512f18abde6c338c696946d591b66c4a");
+  const [clientSecret, setClientSecret] = useState("5e6628e22ff163c42e3b1793a9a360232e1246ef2072238293d6bd9c3008");
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<"connected" | "disconnected" | "checking">("checking");
 
