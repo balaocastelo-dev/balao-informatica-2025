@@ -52,26 +52,32 @@ export function BlingCallbackPage() {
       // Let's assume we can try to save the code and let a background job handle it, OR 
       // just try the fetch. Bling V3 uses Basic Auth with ClientID:Secret.
       
-      const credentials = btoa(`${settings.client_id}:${settings.client_secret}`);
+      // USE VERCEL SERVERLESS FUNCTION TO BYPASS CORS
+      // We send credentials in body because we are in a protected Admin environment 
+      // and we want to avoid complex env var setup for the user right now.
       
-      const response = await fetch("https://www.bling.com.br/Api/v3/oauth/token", {
+      const response = await fetch("/api/bling-token", {
         method: "POST",
         headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          "Authorization": `Basic ${credentials}`,
-          "Accept": "application/json"
+          "Content-Type": "application/json",
         },
-        body: new URLSearchParams({
-          grant_type: "authorization_code",
+        body: JSON.stringify({
           code: authCode,
-          redirect_uri: "https://www.balao.info/admin/bling/callback" // Must match exactly with authorize param
+          client_id: settings.client_id,
+          client_secret: settings.client_secret,
+          redirect_uri: "https://www.balao.info/admin/bling/callback"
         })
       });
 
       if (!response.ok) {
-        const errText = await response.text();
-        console.error("Bling Auth Error:", errText);
-        throw new Error("Falha na autenticação com Bling");
+        // If 404, it means we are on localhost without Vercel Dev or API not deployed
+        if (response.status === 404) {
+           throw new Error("API de token não encontrada. Se estiver no localhost, isso é esperado (Vercel Functions não rodam no Vite padrão). Se estiver em produção, verifique se o deploy finalizou.");
+        }
+        
+        const errData = await response.json().catch(() => ({ details: response.statusText }));
+        console.error("Bling Auth Error:", errData);
+        throw new Error(`Falha na autenticação: ${errData.details || JSON.stringify(errData)}`);
       }
 
       const data = await response.json();
