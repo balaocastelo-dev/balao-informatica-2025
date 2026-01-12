@@ -31,7 +31,7 @@ export function useCoupon() {
         console.error('Erro ao buscar cupom:', error);
         const err: CouponValidationResult = {
           success: false,
-          error: { code: 'INVALID_CODE', message: 'Erro ao validar cupom' },
+          error: { code: 'INVALID_CODE', message: `Erro ao validar cupom: ${error.message}` },
         };
         setResult(err);
         return err;

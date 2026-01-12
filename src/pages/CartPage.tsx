@@ -204,6 +204,15 @@ export default function CartPage() {
     try {
       const finalTotal = Math.max(0, total - couponDiscount);
 
+      // Increment coupon usage if applicable
+      if (couponData) {
+        try {
+          await supabase.rpc('increment_coupon_usage', { coupon_id: couponData.coupon_id });
+        } catch (err) {
+          console.error('Failed to increment coupon usage:', err);
+        }
+      }
+
       // 1. Create Order
       const orderPayload = {
           user_id: user?.id || null,

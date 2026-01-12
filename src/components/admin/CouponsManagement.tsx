@@ -118,7 +118,8 @@ export function CouponsManagement() {
     if (editing) {
       const { error } = await supabase.from('coupons').update(payload).eq('id', editing.id);
       if (error) {
-        toast({ title: 'Erro ao atualizar cupom', variant: 'destructive' });
+        console.error('Erro ao atualizar cupom:', error);
+        toast({ title: 'Erro ao atualizar cupom', description: error.message, variant: 'destructive' });
       } else {
         toast({ title: 'Cupom atualizado!' });
         setShowForm(false);
@@ -128,7 +129,8 @@ export function CouponsManagement() {
     } else {
       const { error } = await supabase.from('coupons').insert(payload);
       if (error) {
-        toast({ title: 'Erro ao criar cupom', variant: 'destructive' });
+        console.error('Erro ao criar cupom:', error);
+        toast({ title: 'Erro ao criar cupom', description: error.message, variant: 'destructive' });
       } else {
         toast({ title: 'Cupom criado!' });
         setShowForm(false);
