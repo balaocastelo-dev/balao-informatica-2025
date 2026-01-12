@@ -157,13 +157,13 @@ export function ProductCard({ product, onClick, viewMode = 'grid' }: ProductCard
   // Default grid view
   return (
     <article 
-      className="product-card cursor-pointer group"
+      className="product-card cursor-pointer group relative overflow-hidden bg-card rounded-xl border border-border shadow-sm transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:-translate-y-1 hover:border-primary/20"
       onClick={handleClick}
     >
-      <div className="relative aspect-square">
+      <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
         <ImageComponent 
           containerClass="absolute inset-0"
-          className="w-full h-full object-contain p-3 transition-transform duration-300 group-hover:scale-105"
+          className="w-full h-full object-contain p-4 transition-transform duration-500 group-hover:scale-110 will-change-transform"
         />
         {/* Custom Badges */}
         {Array.isArray(product.tags) && product.tags.filter(t => t.startsWith('badge:')).map((tag, i) => (
@@ -203,10 +203,11 @@ export function ProductCard({ product, onClick, viewMode = 'grid' }: ProductCard
           
           <button
             onClick={handleAddToCart}
-            className="btn-cart w-full flex items-center justify-center gap-2 text-sm py-2"
+            className="btn-cart w-full flex items-center justify-center gap-2 text-sm py-2.5 shadow-sm group/btn relative overflow-hidden"
           >
-            <ShoppingCart className="w-4 h-4" />
-            Adicionar
+            <ShoppingCart className="w-4 h-4 transition-all duration-300 group-hover/btn:scale-110 group-hover/btn:-rotate-12" />
+            <span className="font-semibold relative z-10">Adicionar</span>
+            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300" />
           </button>
         </div>
       </div>
