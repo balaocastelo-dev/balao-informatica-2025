@@ -51,20 +51,29 @@ export const BlingService = {
         }
       };
 
-      // 4. Send to Bling API
-      const response = await fetch("https://www.bling.com.br/Api/v3/pedidos/vendas", {
+      // 4. Send to Bling API via Proxy (to avoid CORS)
+      // We send the constructed order + token to our Vercel function
+      const response = await fetch("/api/bling-order", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${settings.access_token}`
+          "Content-Type": "application/json"
         },
-        body: JSON.stringify(blingOrder)
+        body: JSON.stringify({
+          order: blingOrder,
+          access_token: settings.access_token
+        })
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Bling API Error:", errorText);
-        return { success: false, error: errorText };
+        // Check for 404 (localhost)
+        if (response.status === 404) {
+           console.warn("API Proxy not found (localhost). Skipping Bling sync.");
+           return { success: false, error: "Localhost: API Proxy not found" };
+        }
+
+        const errorData = await response.json().catch(() => ({ details: response.statusText }));
+        console.error("Bling API Error (Proxy):", errorData);
+        return { success: false, error: errorData.details || "Unknown proxy error" };
       }
 
       const responseData = await response.json();
