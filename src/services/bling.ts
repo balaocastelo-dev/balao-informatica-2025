@@ -21,6 +21,7 @@ export const BlingService = {
 
       // 3. Map Order to Bling JSON
       const blingOrder = {
+        loja: { id: 205896905 }, // ID from user screenshot (sitebalao2025)
         numero: order.id.slice(0, 10), // Bling uses numeric/string ID
         data: new Date(order.created_at).toISOString().split('T')[0],
         contato: {
