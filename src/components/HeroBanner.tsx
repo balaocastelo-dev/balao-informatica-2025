@@ -45,10 +45,27 @@ interface HeroBannerProps {
 export function HeroBanner({ singleBanner = false }: HeroBannerProps) {
   const [banners, setBanners] = useState<Banner[]>([]);
   const [api, setApi] = useState<CarouselApi>();
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
     fetchBanners();
   }, [singleBanner]);
+
+  useEffect(() => {
+    if (!api) return;
+
+    const onSelect = () => {
+      setCurrentIndex(api.selectedScrollSnap());
+    };
+
+    api.on("select", onSelect);
+    api.on("reInit", onSelect);
+
+    return () => {
+      api.off("select", onSelect);
+      api.off("reInit", onSelect);
+    };
+  }, [api]);
 
   // Autoplay Manual
   useEffect(() => {
@@ -89,17 +106,35 @@ export function HeroBanner({ singleBanner = false }: HeroBannerProps) {
     );
   }
 
+  const currentBanner = banners[currentIndex];
+  const currentImage = currentBanner
+    ? getResolvedImageUrl(currentBanner.image_url)
+    : "";
+
   return (
-    <div className="relative w-full overflow-hidden shadow-sm rounded-2xl">
-      <Carousel
-        setApi={setApi}
-        className="w-full"
-        opts={{
-          loop: true,
-          align: "start",
-        }}
-      >
-        <CarouselContent>
+    <div className="relative w-full">
+      {/* Ambilight Effect */}
+      {currentImage && (
+        <div
+          className="absolute -inset-2 md:-inset-4 z-[-1] blur-2xl md:blur-3xl opacity-50 transition-all duration-1000 rounded-[2rem]"
+          style={{
+            backgroundImage: `url(${currentImage})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+        />
+      )}
+
+      <div className="relative w-full overflow-hidden shadow-sm rounded-2xl bg-background">
+        <Carousel
+          setApi={setApi}
+          className="w-full"
+          opts={{
+            loop: true,
+            align: "start",
+          }}
+        >
+          <CarouselContent>
           {banners.map((banner) => (
             <CarouselItem key={banner.id} className="pl-0">
               <div className="relative w-full h-32 sm:h-40 md:h-auto overflow-hidden group rounded-2xl">
@@ -150,6 +185,7 @@ export function HeroBanner({ singleBanner = false }: HeroBannerProps) {
           </>
         )}
       </Carousel>
+      </div>
     </div>
   );
 }
