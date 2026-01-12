@@ -27,7 +27,7 @@ export const BlingService = {
         contato: {
           nome: order.customer_name || "Cliente Balão",
           tipoPessoa: "F", // Assume PF default
-          // cpf_cnpj: order.customer_document // Need this if available
+          cpf_cnpj: order.customer_document // Added CPF mapping
         },
         itens: order.items.map((item: any) => ({
           produto: {
