@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Send, User, Loader2, ShoppingCart, Trash2 } from 'lucide-react';
+import { X, Send, User, Loader2, ShoppingCart, Trash2, Mic, MicOff, Phone, Volume2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -31,12 +31,15 @@ const ChatBot = () => {
   const { addToCart } = useCart();
   const navigate = useNavigate();
   const [hasGreeted, setHasGreeted] = useState(false);
-  const [askedUsage, setAskedUsage] = useState(false);
-  const [askedBudget, setAskedBudget] = useState(false);
-  const [chatContext, setChatContext] = useState<{ category?: string; usage?: string; budget?: number }>({});
+  const [isVoiceMode, setIsVoiceMode] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
+
   const formatPrice = (price: number) =>
     price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  const clarifyText = 'Me diz rapidinho: é para jogos, trabalho ou estudo? E qual faixa de preço?';
+  
+  const clarifyText = 'Como posso ajudar você hoje? Posso sugerir produtos, tirar dúvidas ou ajudar com seu pedido.';
+  
   const clearHistory = () => {
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(STORAGE_SESSION);
@@ -45,6 +48,57 @@ const ChatBot = () => {
     ]);
     setHasGreeted(true);
     localStorage.setItem(STORAGE_SESSION, crypto.randomUUID());
+  };
+
+  useEffect(() => {
+    if ('webkitSpeechRecognition' in window) {
+      const recognition = new (window as any).webkitSpeechRecognition();
+      recognition.continuous = false;
+      recognition.lang = 'pt-BR';
+      recognition.interimResults = false;
+
+      recognition.onstart = () => setIsListening(true);
+      recognition.onend = () => setIsListening(false);
+      recognition.onresult = (event: any) => {
+        const text = event.results[0][0].transcript;
+        setInput(text);
+        sendMessage(text);
+      };
+      recognitionRef.current = recognition;
+    }
+  }, []);
+
+  const toggleVoiceMode = () => {
+    const newMode = !isVoiceMode;
+    setIsVoiceMode(newMode);
+    if (newMode) {
+      speak('Modo de voz ativado. Pode falar comigo!');
+      startListening();
+    } else {
+      window.speechSynthesis.cancel();
+      if (recognitionRef.current) recognitionRef.current.stop();
+    }
+  };
+
+  const startListening = () => {
+    if (recognitionRef.current && !isListening) {
+      try {
+        recognitionRef.current.start();
+      } catch (e) {
+        console.error("Error starting speech recognition:", e);
+      }
+    }
+  };
+
+  const speak = (text: string) => {
+    if (!isVoiceMode) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'pt-BR';
+    utterance.onend = () => {
+      if (isVoiceMode) startListening();
+    };
+    window.speechSynthesis.speak(utterance);
   };
 
   const inferIntent = (text: string): { category?: string; budget?: number; query: string; usage?: string } => {
@@ -164,9 +218,11 @@ const ChatBot = () => {
     } catch {}
   };
 
-  const sendMessage = async () => {
-    if (!input.trim() || isLoading) return;
-    const userMessage: Message = { role: 'user', content: input.trim() };
+  const sendMessage = async (textOverride?: string) => {
+    const textToSend = typeof textOverride === 'string' ? textOverride : input;
+    if (!textToSend.trim() || isLoading) return;
+
+    const userMessage: Message = { role: 'user', content: textToSend.trim() };
     setMessages(prev => [...prev, userMessage]);
     setInput('');
 
@@ -186,32 +242,22 @@ const ChatBot = () => {
       const derivedCategory =
         nextContext.category ||
         (nextContext.usage ? usageCategoryMap[nextContext.usage] : undefined);
-      const needsUsage = !nextContext.usage && !derivedCategory;
-      const needsBudget = !nextContext.budget;
-      if (needsUsage && !askedUsage) {
-        setAskedUsage(true);
-        setMessages(prev => [...prev, { role: 'assistant', content: 'É para jogos, trabalho ou estudo?' }]);
-        return;
-      }
-      if (needsBudget && !askedBudget) {
-        setAskedBudget(true);
-        setMessages(prev => [...prev, { role: 'assistant', content: 'Qual sua faixa de preço aproximada?' }]);
-        return;
-      }
+
       let suggestions = searchLocalProducts(intent.query, derivedCategory);
       if (suggestions.length === 0 && derivedCategory) {
         suggestions = products
           .filter(p => (p.stock ?? 0) > 0 && p.category === derivedCategory)
           .slice(0, 10);
       }
-      if (suggestions.length === 0) {
-        suggestions = products.filter(p => (p.stock ?? 0) > 0).slice(0, 10);
-      }
+      
       if (suggestions.length > 0) {
+        const replyText = `Encontrei algumas opções de ${derivedCategory || 'produtos'} para você:`;
         setMessages(prev => [
           ...prev,
+          { role: 'assistant', content: replyText },
           { role: 'assistant', content: 'cards', products: suggestions }
         ]);
+        speak(replyText);
         return;
       }
     } catch {}
@@ -223,16 +269,26 @@ const ChatBot = () => {
         { role: 'assistant', content: clarifyText }
       ]);
       setHasGreeted(true);
+      speak(clarifyText);
     }
 
     if (ASSISTANT_ENABLED) {
       setIsLoading(true);
     }
+    
+    // Fallback if not enabled or no results
+    if (!ASSISTANT_ENABLED) {
+       const replyText = "Desculpe, não encontrei produtos específicos com essa descrição. Tente buscar por categorias como 'PC Gamer', 'Notebooks' ou 'Impressoras'.";
+       setMessages(prev => [
+        ...prev,
+        { role: 'assistant', content: replyText }
+      ]);
+      speak(replyText);
+      return;
+    }
+
     let assistantContent = '';
     try {
-      if (!ASSISTANT_ENABLED) {
-        return;
-      }
       const response = await fetch(CHAT_URL, {
         method: 'POST',
         headers: {
@@ -255,13 +311,15 @@ const ChatBot = () => {
       });
 
       if (!response.ok || !response.body) {
+        const replyText = 'Vou verificar no estoque e te retorno com as melhores opções.';
         setMessages(prev => [
           ...prev,
           {
             role: 'assistant',
-            content: 'Vou verificar no estoque e te retorno com as melhores opções.'
+            content: replyText
           }
         ]);
+        speak(replyText);
         return;
       }
 
@@ -310,11 +368,14 @@ const ChatBot = () => {
         }
       }
       assistantContent = assistantText || assistantContent;
+      speak(assistantContent);
     } catch {
+      const replyText = 'Não encontrei exatamente isso. Vou buscar alternativas próximas.';
       setMessages(prev => [
         ...prev,
-        { role: 'assistant', content: 'Não encontrei exatamente isso. Vou buscar alternativas próximas.' }
+        { role: 'assistant', content: replyText }
       ]);
+      speak(replyText);
     } finally {
       setIsLoading(false);
       tryHandleActionFromAssistant(assistantContent);
@@ -471,6 +532,15 @@ const ChatBot = () => {
           {/* Input */}
           <div className="p-4 border-t border-border">
             <div className="flex gap-2">
+              <Button
+                variant={isVoiceMode ? "destructive" : "outline"}
+                size="icon"
+                onClick={toggleVoiceMode}
+                title={isVoiceMode ? "Desativar voz" : "Ativar voz"}
+                className={isVoiceMode ? "animate-pulse" : ""}
+              >
+                {isVoiceMode ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+              </Button>
               <Input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
@@ -480,11 +550,11 @@ const ChatBot = () => {
                     sendMessage();
                   }
                 }}
-                placeholder="Descreva o que você precisa..."
+                placeholder={isVoiceMode ? "Pode falar..." : "Descreva o que você precisa..."}
                 disabled={isLoading}
                 className="flex-1"
               />
-              <Button onClick={sendMessage} disabled={!input.trim() || isLoading} size="icon">
+              <Button onClick={() => sendMessage()} disabled={!input.trim() || isLoading} size="icon">
                 {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </Button>
             </div>
