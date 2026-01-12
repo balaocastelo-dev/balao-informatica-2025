@@ -14,6 +14,7 @@ import { BatchOperationsProvider } from "@/contexts/BatchOperationsContext";
 import { LandingPageConfigProvider } from "@/contexts/LandingPageConfigContext";
 import { BatchProgressIndicator } from "@/components/BatchProgressIndicator";
 import { MenuItemsProvider } from "./contexts/MenuItemsContext";
+import { AuroraBackground } from "@/components/AuroraBackground";
 import { lazy, Suspense, useEffect } from 'react';
 import { Loader2 } from "lucide-react";
 
