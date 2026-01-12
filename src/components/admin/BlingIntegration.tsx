@@ -108,6 +108,14 @@ export function BlingIntegration() {
           />
         </div>
 
+        <div className="p-3 bg-muted rounded-md text-sm text-muted-foreground">
+          <p className="font-medium text-foreground mb-1">Configuração no Bling:</p>
+          <p>Certifique-se que o <strong>Link de redirecionamento</strong> no seu aplicativo Bling seja exatamente:</p>
+          <code className="block mt-2 p-2 bg-background rounded border select-all">
+            https://www.balao.info/admin/bling/callback
+          </code>
+        </div>
+
         <div className="flex gap-4 pt-4">
           <Button onClick={handleSave} disabled={loading}>
             {loading ? <RefreshCw className="w-4 h-4 animate-spin mr-2" /> : null}
