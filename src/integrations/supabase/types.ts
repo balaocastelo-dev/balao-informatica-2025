@@ -124,6 +124,54 @@ export type Database = {
           },
         ]
       }
+      coupons: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          description: string | null
+          discount_type: "percentage" | "fixed"
+          discount_value: number
+          ends_at: string | null
+          id: string
+          max_discount_value: number | null
+          min_order_value: number | null
+          starts_at: string | null
+          usage_count: number
+          usage_limit: number | null
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          description?: string | null
+          discount_type: "percentage" | "fixed"
+          discount_value: number
+          ends_at?: string | null
+          id?: string
+          max_discount_value?: number | null
+          min_order_value?: number | null
+          starts_at?: string | null
+          usage_count?: number
+          usage_limit?: number | null
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          description?: string | null
+          discount_type?: "percentage" | "fixed"
+          discount_value?: number
+          ends_at?: string | null
+          id?: string
+          max_discount_value?: number | null
+          min_order_value?: number | null
+          starts_at?: string | null
+          usage_count?: number
+          usage_limit?: number | null
+        }
+        Relationships: []
+      }
       landing_page_configs: {
         Row: {
           created_at: string

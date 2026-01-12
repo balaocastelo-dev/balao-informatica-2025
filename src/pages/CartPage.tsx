@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { CouponInput } from '@/components/CouponInput';
+import type { CouponValidationResult, CouponValidationSuccess } from '@/types/coupon';
 import { Separator } from '@/components/ui/separator';
 import confetti from 'canvas-confetti';
 
@@ -610,8 +611,15 @@ export default function CartPage() {
                   <Separator />
                   
                   <CouponInput 
-                    onValidCoupon={(discount) => setCouponDiscount(discount)}
-                    total={total}
+                    onDiscountChange={(discount, data) => {
+                      setCouponDiscount(discount);
+                      if (data?.success) {
+                        setCouponData(data as CouponValidationSuccess);
+                      } else {
+                        setCouponData(null);
+                      }
+                    }}
+                    orderValue={total}
                   />
 
                   <div className="space-y-2 pt-4">
