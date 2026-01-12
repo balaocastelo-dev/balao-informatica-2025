@@ -58,6 +58,16 @@ const Index = () => {
   }, [blocks]);
 
   const getCategoryProducts = (slug: string) => {
+    // Special handling for Apple block to include all Apple subcategories
+    if (slug === 'apple') {
+      const appleTerms = ['iphone', 'ipad', 'macbook', 'imac', 'apple', 'airpods', 'watch'];
+      const prods = products.filter(p => 
+        appleTerms.some(term => p.category.toLowerCase().includes(term)) || 
+        p.name.toLowerCase().includes('apple')
+      );
+      return [...prods].slice(0, 12);
+    }
+
     const prods = getProductsByCategory(slug);
     return [...prods].slice(0, 12);
   };
