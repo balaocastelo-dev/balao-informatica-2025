@@ -38,7 +38,7 @@ import { Dashboard } from '@/components/admin/Dashboard';
 import { EmailMarketing } from '@/components/admin/EmailMarketing';
 import { OrdersManagement } from '@/components/admin/OrdersManagement';
 import { BannerManagement } from '@/components/admin/BannerManagement';
-import { CouponsManagement } from '../../components/admin/CouponsManagement';
+import { CouponsManagement } from '@/components/admin/CouponsManagement';
 import { CategoryProductManager } from '@/components/admin/CategoryProductManager';
 import { BrandManagement } from '@/components/admin/BrandManagement';
 import { BlingIntegration } from "@/components/admin/BlingIntegration";
