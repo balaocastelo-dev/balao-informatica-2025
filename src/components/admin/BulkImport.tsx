@@ -102,17 +102,41 @@ export const BulkImport = () => {
     const tagsList = defaultTags ? defaultTags.split(',').map(t => t.trim()).filter(Boolean) : [];
     
     // Determinar a categoria padrão a ser usada
-    let categoryToUse = selectedCategory === 'auto' ? undefined : selectedCategory;
-    if (selectedCategory === 'new_category') {
-      if (!newCategoryName.trim()) {
-        toast({
-          title: "Nome da categoria obrigatório",
-          description: "Por favor, informe o nome da nova categoria.",
-          variant: "destructive"
-        });
-        return;
-      }
-      categoryToUse = newCategoryName.trim();
+    let categoryToUse: string | undefined = undefined;
+    
+    if (selectedParentId === 'auto') {
+        categoryToUse = undefined;
+    } else if (selectedParentId === 'new_parent') {
+        if (!newParentCategoryName.trim()) {
+            toast({
+                title: "Nome da categoria obrigatório",
+                description: "Por favor, informe o nome da nova categoria principal.",
+                variant: "destructive"
+            });
+            return;
+        }
+        categoryToUse = newParentCategoryName.trim();
+    } else {
+        // Categoria existente selecionada
+        const parent = categories.find(c => c.id === selectedParentId);
+        if (parent) {
+            if (selectedSubCategoryId === 'new_sub') {
+                if (!newSubCategoryName.trim()) {
+                    toast({
+                        title: "Nome da subcategoria obrigatório",
+                        description: "Por favor, informe o nome da nova subcategoria.",
+                        variant: "destructive"
+                    });
+                    return;
+                }
+                categoryToUse = newSubCategoryName.trim();
+            } else if (selectedSubCategoryId !== 'none') {
+                 const sub = categories.find(c => c.id === selectedSubCategoryId);
+                 categoryToUse = sub ? sub.name : parent.name;
+            } else {
+                categoryToUse = parent.name;
+            }
+        }
     }
     
     // Configurar Ribbon
@@ -125,7 +149,7 @@ export const BulkImport = () => {
 
     const results = parseBulkImport(inputText, {
       defaultCategory: categoryToUse,
-      autoDetectCategory: selectedCategory === 'auto',
+      autoDetectCategory: selectedParentId === 'auto',
       profitMargin: margin,
       defaultTags: tagsList,
       ribbonLabel: ribbonLabel
@@ -177,64 +201,82 @@ export const BulkImport = () => {
   };
 
   const handleImport = async () => {
-    // 1. Verificar se precisamos criar a categoria "manual" selecionada
-    if (selectedCategory === 'new_category' && newCategoryName.trim()) {
+    // 1. Garantir que as categorias necessárias existem (Principal e Sub)
+    let parentIdToUse = selectedParentId;
+    let subIdToUse = selectedSubCategoryId;
+
+    // Criar Nova Categoria Principal
+    if (selectedParentId === 'new_parent' && newParentCategoryName.trim()) {
       try {
-        const slug = newCategoryName.trim().toLowerCase()
+        const slug = newParentCategoryName.trim().toLowerCase()
           .replace(/[^\w\s-]/g, '')
           .replace(/\s+/g, '-');
         
-        // Verifica se já existe para evitar erro
+        // Verifica se já existe
         const exists = categories.find(c => c.slug === slug);
         if (!exists) {
-            await addCategory(newCategoryName.trim(), slug);
+            const newCat = await addCategory(newParentCategoryName.trim(), slug);
+            if (newCat) parentIdToUse = newCat.id;
+        } else {
+            parentIdToUse = exists.id;
         }
       } catch (error) {
-        console.error("Erro ao criar categoria:", error);
+        console.error("Erro ao criar categoria pai:", error);
         toast({
-            title: "Erro ao criar categoria manual",
-            description: "Houve um problema ao criar a categoria especificada.",
+            title: "Erro ao criar categoria",
+            description: "Falha ao criar a categoria principal.",
             variant: "destructive"
         });
-        return; // Interrompe se falhar
+        return;
       }
     }
 
-    // 2. Identificar categorias novas vindas da detecção automática
-    const categoriesToCreate = new Map<string, string>(); // Name -> Slug
-
-    parsedProducts.forEach((p, index) => {
-        if (!selectedIndices.has(index)) return;
-
-        // Lógica de determinação da categoria para este produto
-        let targetCategoryName = p.category;
-        
-        // Se o usuário forçou uma categoria (diferente de auto), usamos ela
-        if (selectedCategory !== 'auto' && selectedCategory !== 'new_category') {
-             // Se selecionou uma existente, não precisamos criar nada, o nome já é conhecido
-             return; 
-        }
-        if (selectedCategory === 'new_category') {
-            // Já tratamos acima
+    // Criar Nova Subcategoria
+    if (parentIdToUse && parentIdToUse !== 'auto' && selectedSubCategoryId === 'new_sub' && newSubCategoryName.trim()) {
+        try {
+            const slug = newSubCategoryName.trim().toLowerCase()
+              .replace(/[^\w\s-]/g, '')
+              .replace(/\s+/g, '-');
+            
+            const exists = categories.find(c => c.slug === slug);
+            if (!exists) {
+                const newSub = await addCategory(newSubCategoryName.trim(), slug, parentIdToUse);
+                if (newSub) subIdToUse = newSub.id;
+            } else {
+                subIdToUse = exists.id;
+            }
+        } catch (error) {
+            console.error("Erro ao criar subcategoria:", error);
+            toast({
+                title: "Erro ao criar subcategoria",
+                description: "Falha ao criar a subcategoria.",
+                variant: "destructive"
+            });
             return;
         }
+    }
 
-        // Se estamos no modo AUTO, verificamos se a categoria detectada existe
-        const existingCategory = categories.find(c => c.name.toLowerCase() === targetCategoryName.toLowerCase());
-        
-        if (!existingCategory) {
-            // Se não existe, vamos planejar criar
-            // Normalizar nome (Title Case) para ficar bonito no banco
-            const formattedName = targetCategoryName.charAt(0).toUpperCase() + targetCategoryName.slice(1);
-            const slug = formattedName.toLowerCase()
-                .replace(/[^\w\s-]/g, '')
-                .replace(/\s+/g, '-');
+    // 2. Identificar categorias novas vindas da detecção automática (se mode AUTO)
+    const categoriesToCreate = new Map<string, string>(); // Name -> Slug
+
+    if (selectedParentId === 'auto') {
+        parsedProducts.forEach((p, index) => {
+            if (!selectedIndices.has(index)) return;
             
-            categoriesToCreate.set(formattedName, slug);
-        }
-    });
+            const targetCategoryName = p.category;
+            const existingCategory = categories.find(c => c.name.toLowerCase() === targetCategoryName.toLowerCase());
+            
+            if (!existingCategory) {
+                const formattedName = targetCategoryName.charAt(0).toUpperCase() + targetCategoryName.slice(1);
+                const slug = formattedName.toLowerCase()
+                    .replace(/[^\w\s-]/g, '')
+                    .replace(/\s+/g, '-');
+                categoriesToCreate.set(formattedName, slug);
+            }
+        });
+    }
 
-    // 3. Criar as categorias novas detectadas em lote (sequencialmente)
+    // 3. Criar as categorias automáticas
     if (categoriesToCreate.size > 0) {
         toast({
             title: "Criando novas categorias...",
@@ -243,58 +285,38 @@ export const BulkImport = () => {
 
         for (const [name, slug] of categoriesToCreate) {
             try {
-                // Verificação dupla se não existe no contexto atual (pode ter sido criada no passo 1)
                 const exists = categories.find(c => c.slug === slug);
                 if (!exists) {
                     await addCategory(name, slug);
                 }
             } catch (error) {
                 console.error(`Erro ao criar categoria automática ${name}:`, error);
-                // Não interrompemos tudo, mas o produto pode ficar sem categoria visível
             }
         }
-        // Pequeno delay para garantir que o contexto atualize se necessário (embora addCategory já atualize state local)
     }
 
     // 4. Prosseguir com a importação dos produtos
     const productsToImport = parsedProducts
       .filter((_, index) => selectedIndices.has(index))
       .map(p => {
-        // Encontrar o slug da categoria final
         let categorySlug = p.category.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
         
-        // Se o usuário selecionou uma categoria específica, use-a
-        if (selectedCategory !== 'auto' && selectedCategory !== 'new_category') {
-            const selected = categories.find(c => c.name === selectedCategory);
-            if (selected) categorySlug = selected.slug;
-        }
-        else if (selectedCategory === 'new_category') {
-             categorySlug = newCategoryName.trim().toLowerCase()
-            .replace(/[^\w\s-]/g, '')
-            .replace(/\s+/g, '-');
-        }
-        else {
-            // Modo AUTO: Tentar casar com a lista atualizada de categorias
-            // Nota: Como acabamos de chamar addCategory, o state 'categories' do hook pode ainda não ter refletido 
-            // se o hook não tiver um mecanismo de optimistic update imediato ou re-fetch rápido.
-            // Mas o addCategory do context atualiza o state local: setCategories(current => [...current, data]);
-            // Então 'categories' aqui DENTRO DA FUNÇÃO pode estar desatualizado por ser closure?
-            // Sim, 'categories' é const do render. 
-            // Porém, podemos confiar na lógica de slug determinística ou buscar no map created.
-            
-            const catName = p.category;
-            // Tenta achar na lista antiga
-            const existing = categories.find(c => c.name.toLowerCase() === catName.toLowerCase());
-            
-            if (existing) {
-                categorySlug = existing.slug;
-            } else {
-                // Se não estava na lista antiga, deve ser uma das novas que acabamos de criar
-                // Recalcula o slug da mesma forma que fizemos para criar
-                categorySlug = catName.trim().toLowerCase()
+        if (selectedParentId !== 'auto') {
+            // Recalcula slug baseado no nome que está no produto (que veio do handleParse corretamente)
+            categorySlug = p.category.toLowerCase()
+                .replace(/[^\w\s-]/g, '')
+                .replace(/\s+/g, '-');
+        } else {
+            // Auto mode: check existing or just-created
+             const catName = p.category;
+             const existing = categories.find(c => c.name.toLowerCase() === catName.toLowerCase());
+             if (existing) {
+                 categorySlug = existing.slug;
+             } else {
+                 categorySlug = catName.trim().toLowerCase()
                     .replace(/[^\w\s-]/g, '')
                     .replace(/\s+/g, '-');
-            }
+             }
         }
 
         return {
