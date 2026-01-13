@@ -6,6 +6,7 @@ import { ProductGrid } from "@/components/ProductGrid";
 import { LocalBusinessSchema, SEOHead } from "@/components/SEOHead";
 import { useProducts } from "@/contexts/ProductContext";
 import { usePageBlocks } from "@/contexts/PageBlocksContext";
+import { useCategories } from "@/contexts/CategoryContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,6 +17,7 @@ import {
   SearchX,
   MapPin,
   CheckCircle2,
+  Cpu,
 } from "lucide-react";
 
 import { bannerImageMap } from "@/config/banners";
