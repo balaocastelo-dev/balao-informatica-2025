@@ -56,7 +56,7 @@ export function CategoryProvider({ children }: { children: ReactNode }) {
   const addCategory = async (name: string, slug: string, parentId?: string, emoji?: string) => {
     try {
       const maxOrder = categories.length > 0 
-        ? Math.max(...categories.map(c => c.order_index)) + 1 
+        ? Math.max(...categories.map(c => c.order_index ?? 0)) + 1 
         : 1;
 
       const { data, error } = await supabase
@@ -75,10 +75,11 @@ export function CategoryProvider({ children }: { children: ReactNode }) {
       setCategories(current => [...current, data]);
       toast({ title: "Categoria adicionada!" });
       return data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding category:', error);
       toast({
         title: "Erro ao adicionar categoria",
+        description: error.message || "Verifique se o slug já existe ou tente novamente.",
         variant: "destructive",
       });
       throw error;
