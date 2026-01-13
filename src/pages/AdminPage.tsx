@@ -773,17 +773,7 @@ const AdminPage = () => {
             <ShoppingBag className="w-4 h-4" />
             Pedidos
           </button>
-          <button
-            onClick={() => setActiveTab('integrations')}
-            className={`px-3 py-2 font-medium transition-colors border-b-2 -mb-px flex items-center gap-2 whitespace-nowrap ${
-              activeTab === 'integrations' 
-                ? 'text-primary border-primary' 
-                : 'text-muted-foreground border-transparent hover:text-foreground'
-            }`}
-          >
-            <Settings className="w-4 h-4" />
-            Integrações
-          </button>
+
           <button
             onClick={() => {}}
             className="hidden"
@@ -806,12 +796,7 @@ const AdminPage = () => {
  
  
 
-        {/* Integrations Tab */}
-        {activeTab === 'integrations' && (
-          <div className="space-y-6">
-            <BlingIntegration />
-          </div>
-        )}
+
 
         {/* Bulk Import Tab */}
         {activeTab === 'bulk-import' && (
@@ -1688,6 +1673,18 @@ const AdminPage = () => {
                   <p className="text-xs text-muted-foreground mt-1">
                     Selecione uma categoria pai para criar uma subcategoria
                   </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">Emoji (opcional)</label>
+                  <input
+                    type="text"
+                    value={categoryForm.emoji}
+                    onChange={e => setCategoryForm({ ...categoryForm, emoji: e.target.value })}
+                    className="input-field"
+                    placeholder="Ex: 🖥️"
+                    maxLength={2}
+                  />
                 </div>
 
                 <div className="flex gap-3 pt-4">
