@@ -268,9 +268,7 @@ export const BulkImport = () => {
             
             if (!existingCategory) {
                 const formattedName = targetCategoryName.charAt(0).toUpperCase() + targetCategoryName.slice(1);
-                const slug = formattedName.toLowerCase()
-                    .replace(/[^\w\s-]/g, '')
-                    .replace(/\s+/g, '-');
+                const slug = generateSlug(formattedName);
                 categoriesToCreate.set(formattedName, slug);
             }
         });
@@ -285,7 +283,8 @@ export const BulkImport = () => {
 
         for (const [name, slug] of categoriesToCreate) {
             try {
-                const exists = categories.find(c => c.slug === slug);
+                // Check again to be safe
+                const exists = categories.find(c => c.slug === slug || c.name.toLowerCase() === name.toLowerCase());
                 if (!exists) {
                     await addCategory(name, slug);
                 }
@@ -299,13 +298,10 @@ export const BulkImport = () => {
     const productsToImport = parsedProducts
       .filter((_, index) => selectedIndices.has(index))
       .map(p => {
-        let categorySlug = p.category.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
+        let categorySlug = generateSlug(p.category);
         
         if (selectedParentId !== 'auto') {
-            // Recalcula slug baseado no nome que está no produto (que veio do handleParse corretamente)
-            categorySlug = p.category.toLowerCase()
-                .replace(/[^\w\s-]/g, '')
-                .replace(/\s+/g, '-');
+            categorySlug = generateSlug(p.category);
         } else {
             // Auto mode: check existing or just-created
              const catName = p.category;
@@ -313,9 +309,7 @@ export const BulkImport = () => {
              if (existing) {
                  categorySlug = existing.slug;
              } else {
-                 categorySlug = catName.trim().toLowerCase()
-                    .replace(/[^\w\s-]/g, '')
-                    .replace(/\s+/g, '-');
+                 categorySlug = generateSlug(catName);
              }
         }
 
