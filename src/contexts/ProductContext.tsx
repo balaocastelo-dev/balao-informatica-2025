@@ -14,7 +14,7 @@ interface ProductContextType {
   getProductsByCategory: (category: Category) => Product[];
   searchProducts: (query: string) => Product[];
   importProducts: (products: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>[], profitMargin: number) => Promise<void>;
-  bulkImportProducts: (products: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>[]) => Promise<void>;
+  bulkImportProducts: (products: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>[], onProgress?: (current: number, total: number) => void) => Promise<void>;
   refreshProducts: () => Promise<void>;
   isImporting: boolean;
   importProgress: number;
@@ -472,6 +472,7 @@ export function ProductProvider({ children }: { children: ReactNode }) {
 
   const bulkImportProducts = async (
     newProducts: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>[],
+    onProgress?: (current: number, total: number) => void,
   ) => {
     if (isImporting) {
       toast({ title: "Importação já em andamento", description: "Aguarde o término da importação atual." });
@@ -506,9 +507,41 @@ export function ProductProvider({ children }: { children: ReactNode }) {
 
       // Processamento item a item para feedback granular
       for (let i = 0; i < total; i++) {
-        const item = payload[i];
-        
-        // Tenta inserir individualmente
+        let item = payload[i];
+
+        if (item.source_url) {
+          try {
+            type ScrapeExtractResult = {
+              produto?: {
+                ficha_tecnica?: string;
+                sobre_produto?: string;
+              };
+            };
+            const asScrapeResult = (value: unknown): ScrapeExtractResult | null => {
+              if (!value || typeof value !== 'object') return null;
+              if (!('produto' in value)) return null;
+              const produto = (value as { produto?: unknown }).produto;
+              if (!produto || typeof produto !== 'object') return { produto: undefined };
+              const p = produto as Record<string, unknown>;
+              return {
+                produto: {
+                  ficha_tecnica: typeof p.ficha_tecnica === 'string' ? p.ficha_tecnica : undefined,
+                  sobre_produto: typeof p.sobre_produto === 'string' ? p.sobre_produto : undefined,
+                },
+              };
+            };
+            const { data: scrapeData } = await supabase.functions.invoke('scrape-extract-product', {
+              body: { url: item.source_url, name: item.name },
+            });
+            const parsed = asScrapeResult(scrapeData);
+            const sobre = parsed?.produto?.sobre_produto;
+            if (sobre && !item.description) {
+              item = { ...item, description: sobre.trim() };
+            }
+          } catch {
+          }
+        }
+
         const { data: singleData, error: singleError } = await supabase
           .from('products')
           .insert(item)
@@ -578,9 +611,11 @@ export function ProductProvider({ children }: { children: ReactNode }) {
             }
         }
 
-        // Atualiza progresso
-        setImportProgress(Math.round(((i + 1) / total) * 100));
-        // Pequeno delay para não travar a UI em loops muito grandes
+        const current = i + 1;
+        setImportProgress(Math.round((current / total) * 100));
+        if (onProgress) {
+          onProgress(current, total);
+        }
         if (i % 5 === 0) await new Promise(resolve => setTimeout(resolve, 0));
       }
 

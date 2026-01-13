@@ -15,10 +15,12 @@ import { Progress } from '@/components/ui/progress';
 import { toast } from '@/hooks/use-toast';
 import { AlertCircle, CheckCircle2, Upload, FileText, LayoutGrid, X, Loader2, Trash2, ImageOff } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useBatchOperations } from '@/contexts/BatchOperationsContext';
 
 export const BulkImport = () => {
   const { bulkImportProducts, loading: productsLoading, isImporting, importProgress } = useProducts();
   const { categories, addCategory, refreshCategories } = useCategories();
+  const { startExternalOperation, updateExternalOperation, finishExternalOperation } = useBatchOperations();
   
   const [inputText, setInputText] = useState('');
   const [profitMargin, setProfitMargin] = useState('25');
@@ -382,13 +384,19 @@ export const BulkImport = () => {
       return;
     }
 
-    // Inicia a importação em background via Context
-    bulkImportProducts(productsToImport);
-    
-    toast({
-      title: "Importação iniciada",
-      description: "O processo continuará em segundo plano. Você pode navegar para outras páginas.",
-    });
+    startExternalOperation("Importando produtos em massa...", productsToImport.length);
+
+    try {
+      await bulkImportProducts(productsToImport, (current) => {
+        updateExternalOperation(current);
+      });
+      toast({
+        title: "Importação iniciada",
+        description: "O processo continuará em segundo plano. Você pode navegar para outras páginas.",
+      });
+    } finally {
+      finishExternalOperation();
+    }
   };
 
   const validCount = parsedProducts.filter(p => p.isValid).length;

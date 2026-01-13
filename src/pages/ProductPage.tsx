@@ -18,6 +18,7 @@ export default function ProductPage() {
   const product = products.find((p) => p.id === productId);
   const [techHtml, setTechHtml] = useState<string>("");
   const [aboutText, setAboutText] = useState<string>("");
+  const [galleryImages, setGalleryImages] = useState<string[]>([]);
 
   const formatPrice = (price: number) => {
     return price.toLocaleString("pt-BR", {
@@ -45,6 +46,7 @@ export default function ProductPage() {
           produto?: {
             ficha_tecnica?: string;
             sobre_produto?: string;
+            imagens?: string[];
           };
         };
         const asScrapeResult = (value: unknown): ScrapeExtractResult | null => {
@@ -53,11 +55,15 @@ export default function ProductPage() {
           const produto = (value as { produto?: unknown }).produto;
           if (!produto || typeof produto !== "object") return { produto: undefined };
           const p = produto as Record<string, unknown>;
+          const imagens = Array.isArray(p.imagens)
+            ? p.imagens.filter((u) => typeof u === "string" && u.trim().length > 0) as string[]
+            : undefined;
           return {
             produto: {
               ficha_tecnica: typeof p.ficha_tecnica === "string" ? p.ficha_tecnica : undefined,
               sobre_produto: typeof p.sobre_produto === "string" ? p.sobre_produto : undefined,
-            }
+              imagens,
+            },
           };
         };
         const postApi = async (): Promise<unknown | null> => {
@@ -81,8 +87,10 @@ export default function ProductPage() {
         const parsed = asScrapeResult(raw) || asScrapeResult(await postApi());
         const ficha = parsed?.produto?.ficha_tecnica || "";
         const sobre = parsed?.produto?.sobre_produto || "";
+        const imagens = parsed?.produto?.imagens || [];
         if (ficha) setTechHtml(sanitizeHtml(ficha));
         if (sobre) setAboutText(sobre.trim());
+        if (imagens.length > 0) setGalleryImages(imagens);
       } catch (err) {
         console.error(err);
       }
@@ -213,7 +221,7 @@ export default function ProductPage() {
       />
       
       {/* Layout padrão com scroll natural no mobile */}
-      <div className="container mx-auto px-4 pb-4 md:h-auto flex flex-col md:block">
+        <div className="container mx-auto px-4 pb-4 md:h-auto flex flex-col md:block">
         
         {/* Botão de voltar */}
         <div className="shrink-0 py-2">
@@ -225,19 +233,15 @@ export default function ProductPage() {
 
         <div className="flex flex-col md:grid md:grid-cols-2 md:gap-8 md:items-start">
           
-          {/* ÁREA DA IMAGEM */}
           <div className="bg-card rounded-lg p-4 flex items-center justify-center mb-4 md:mb-0 relative aspect-square md:aspect-auto md:h-[500px]">
-            <img 
-              src={product.image} 
-              alt={product.name} 
-              className="w-full h-full object-contain" 
+            <img
+              src={product.image}
+              alt={product.name}
+              className="w-full h-full object-contain"
             />
           </div>
 
-          {/* ÁREA DE TEXTO E BOTÕES */}
           <div className="flex flex-col md:block space-y-4 md:space-y-6">
-            
-            {/* Bloco de Informações */}
             <div className="px-1">
               <div>
                 <h1 className="text-lg md:text-3xl font-bold text-foreground leading-tight">{product.name}</h1>
@@ -249,23 +253,8 @@ export default function ProductPage() {
                   {product.description}
                 </p>
               )}
-              {aboutText && (
-                <p className="text-muted-foreground text-xs md:text-base mt-3">
-                  {aboutText}
-                </p>
-              )}
-              {techHtml && (
-                <div className="mt-4 text-xs md:text-sm text-foreground">
-                  <h2 className="text-sm md:text-lg font-semibold mb-2">Ficha Técnica</h2>
-                  <div
-                    className="prose prose-sm max-w-none"
-                    dangerouslySetInnerHTML={{ __html: techHtml }}
-                  />
-                </div>
-              )}
             </div>
 
-            {/* Bloco de Preço e Ação */}
             <div className="space-y-3 pt-4 border-t border-zinc-100 bg-background md:bg-transparent">
               <div className="space-y-1">
                 <p className="text-2xl md:text-4xl font-bold text-primary">{formatPrice(product.price)}</p>
@@ -295,6 +284,45 @@ export default function ProductPage() {
             </div>
           </div>
         </div>
+
+        {(aboutText || techHtml || galleryImages.length > 0) && (
+          <div className="mt-8 space-y-6">
+            {galleryImages.length > 0 && (
+              <div className="bg-card rounded-lg p-4 md:p-6">
+                <h2 className="text-base md:text-lg font-semibold mb-3">Mais imagens do produto</h2>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {galleryImages.map((src, index) => (
+                    <div key={index} className="bg-background rounded-md border border-border p-2 flex items-center justify-center">
+                      <img src={src} alt={`${product.name} ${index + 1}`} className="w-full h-32 md:h-40 object-contain" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {(aboutText || techHtml) && (
+              <div className="bg-card rounded-lg p-4 md:p-6 space-y-4">
+                {aboutText && (
+                  <div>
+                    <h2 className="text-base md:text-lg font-semibold mb-2">Sobre o produto</h2>
+                    <p className="text-sm md:text-base text-muted-foreground">
+                      {aboutText}
+                    </p>
+                  </div>
+                )}
+                {techHtml && (
+                  <div>
+                    <h2 className="text-base md:text-lg font-semibold mb-2">Especificações técnicas</h2>
+                    <div
+                      className="prose prose-sm max-w-none"
+                      dangerouslySetInnerHTML={{ __html: techHtml }}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </Layout>
   );

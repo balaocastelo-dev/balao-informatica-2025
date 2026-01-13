@@ -13,6 +13,9 @@ interface BatchOperationsContextType {
   batchProgress: BatchProgress | null;
   isRunning: boolean;
   toggleMinimized: () => void;
+  startExternalOperation: (label: string, total: number) => void;
+  updateExternalOperation: (current: number) => void;
+  finishExternalOperation: () => void;
   runBatchPriceIncrease: (productIds: string[], products: { id: string; price: number }[], percent: number) => Promise<void>;
   runBatchPriceDiscount: (productIds: string[], products: { id: string; price: number }[], percent: number) => Promise<void>;
   runBatchDelete: (productIds: string[], onDeleteProduct: (id: string) => Promise<void>) => Promise<void>;
@@ -27,6 +30,21 @@ export function BatchOperationsProvider({ children }: { children: ReactNode }) {
 
   const toggleMinimized = useCallback(() => {
     setBatchProgress(prev => prev ? { ...prev, isMinimized: !prev.isMinimized } : null);
+  }, []);
+
+  const startExternalOperation = useCallback((label: string, total: number) => {
+    if (total <= 0) return;
+    setIsRunning(true);
+    setBatchProgress({ current: 0, total, label, isMinimized: false });
+  }, []);
+
+  const updateExternalOperation = useCallback((current: number) => {
+    setBatchProgress(prev => (prev ? { ...prev, current } : prev));
+  }, []);
+
+  const finishExternalOperation = useCallback(() => {
+    setBatchProgress(null);
+    setIsRunning(false);
   }, []);
 
   const runBatchPriceIncrease = useCallback(async (
@@ -149,6 +167,9 @@ export function BatchOperationsProvider({ children }: { children: ReactNode }) {
       batchProgress,
       isRunning,
       toggleMinimized,
+      startExternalOperation,
+      updateExternalOperation,
+      finishExternalOperation,
       runBatchPriceIncrease,
       runBatchPriceDiscount,
       runBatchDelete,

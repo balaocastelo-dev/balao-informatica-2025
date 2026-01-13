@@ -72,29 +72,39 @@ export const parseBulkImport = (text: string, options: ImportOptions): ParsedPro
     let costPriceRaw = '';
     let sourceUrl = '';
     
-    // 1. Extrair URL de imagem
-    // Primeiro tenta encontrar URL com extensão de imagem explícita
-    const urlRegex = /(https?:\/\/[^\s]+(?:\.jpg|\.png|\.webp|\.jpeg|\.gif|\.bmp|\.tiff)[^\s]*)/i;
-    let imgMatch = trimmedLine.match(urlRegex);
-    
-    // Se não encontrar com extensão, tenta qualquer URL HTTP/HTTPS
-    if (!imgMatch) {
-      const anyUrlRegex = /(https?:\/\/[^\s]+)/i;
-      imgMatch = trimmedLine.match(anyUrlRegex);
+    const allUrlRegex = /(https?:\/\/[^\s]+)/gi;
+    const allUrls = [];
+    let m: RegExpExecArray | null;
+    while ((m = allUrlRegex.exec(trimmedLine)) !== null) {
+      if (m[0]) allUrls.push(m[0]);
     }
-    
-    if (imgMatch) {
-      image = imgMatch[0];
+
+    const looksLikeImage = (url: string) =>
+      /\.(jpg|jpeg|png|webp|gif|bmp|tiff)(\?|$)/i.test(url);
+
+    if (allUrls.length > 0) {
+      const imageCandidate = allUrls.find(u => looksLikeImage(u));
+      const nonImageCandidate = allUrls.find(u => !looksLikeImage(u));
+      if (imageCandidate) {
+        image = imageCandidate;
+      } else {
+        image = allUrls[0];
+      }
+      if (nonImageCandidate && nonImageCandidate !== imageCandidate) {
+        sourceUrl = nonImageCandidate;
+      } else if (allUrls.length > 1) {
+        const second = allUrls[1];
+        if (!looksLikeImage(second)) {
+          sourceUrl = second;
+        }
+      }
     } else {
-      // Procura nas partes por algo que pareça URL
       const imgPartIndex = parts.findIndex(p => p.match(/^https?:\/\//i));
       if (imgPartIndex >= 0) {
         image = parts[imgPartIndex];
       }
     }
 
-    // 2. Extrair Preço (R$ 1.234,56 ou 1234.56)
-    // Procura o último valor monetário na linha, assumindo que seja o preço
     const priceRegex = /(?:R\$\s*)?(\d{1,3}(?:\.\d{3})*,\d{2})|(\d+\.\d{2})/g;
     const priceMatches = trimmedLine.match(priceRegex);
     
@@ -109,10 +119,9 @@ export const parseBulkImport = (text: string, options: ImportOptions): ParsedPro
       }
     }
 
-    // 3. Extrair Nome
-    // O nome é o que sobra removendo a imagem e o preço
     let nameTemp = trimmedLine;
     if (image) nameTemp = nameTemp.replace(image, '');
+    if (sourceUrl) nameTemp = nameTemp.replace(sourceUrl, '');
     if (priceMatches) {
       priceMatches.forEach(p => {
         nameTemp = nameTemp.replace(p, '');
@@ -122,20 +131,16 @@ export const parseBulkImport = (text: string, options: ImportOptions): ParsedPro
     // Limpar caracteres extras e espaços
     name = nameTemp.replace(/[|;\t]/g, ' ').replace(/\s+/g, ' ').trim();
     
-    // Se o nome ficou vazio, tenta pegar das partes divididas
     if (!name && parts.length > 0) {
-      // Assume que a parte mais longa que não é URL é o nome
       const potentialName = parts
         .filter(p => !p.match(/^https?:\/\//))
         .sort((a, b) => b.length - a.length)[0];
       if (potentialName) name = potentialName.trim();
     }
 
-    // Processamento dos valores
     const costPrice = parsePrice(costPriceRaw || priceRaw); // Se só tem um preço, assume como base para custo se margem for aplicada
     let finalPrice = 0;
 
-    // Aplicar margem de lucro se configurada
     if (options.profitMargin && options.profitMargin > 0) {
       finalPrice = costPrice * (1 + (options.profitMargin / 100));
     } else {
@@ -143,33 +148,27 @@ export const parseBulkImport = (text: string, options: ImportOptions): ParsedPro
       finalPrice = parsePrice(priceRaw);
     }
 
-    // Processar imagem (alta resolução)
     const enhancedImage = enhanceImageUrl(image);
     const isLowRes = isLowResolution(enhancedImage);
     
-    // Se a imagem for baixa resolução, ignorar o item completamente (conforme solicitado)
     if (isLowRes) {
       continue;
     }
 
-    // Detectar Categoria
     let category = options.defaultCategory || 'Outros';
     if (options.autoDetectCategory) {
       category = detectCategory(name) || category;
     }
 
-    // Detectar Tags/Marcas
     const detectedTags = detectBrands(name);
     const allTags = [...(options.defaultTags || []), ...detectedTags];
     
-    // Adicionar Fita (Ribbon) se configurada
     if (options.ribbonLabel) {
       allTags.push(`badge:${options.ribbonLabel}`);
     }
 
     const uniqueTags = Array.from(new Set(allTags));
 
-    // Validação básica
     const isValid = name.length > 2 && finalPrice > 0;
     let validationError = !isValid 
       ? (name.length <= 2 ? 'Nome inválido' : 'Preço inválido') 
@@ -182,7 +181,7 @@ export const parseBulkImport = (text: string, options: ImportOptions): ParsedPro
       image: enhancedImage,
       category,
       tags: uniqueTags,
-      sourceUrl: image || undefined, // Usa a imagem como sourceUrl se não tiver outra
+      sourceUrl: sourceUrl || undefined,
       originalLine: line,
       isValid,
       validationError
