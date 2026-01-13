@@ -36,6 +36,10 @@ import {
   Lock,
   Info,
   Plus,
+  MessageCircle,
+  Printer,
+  Mail,
+  RefreshCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -215,6 +219,8 @@ export default function PCBuilderPage() {
   const [minPrice, setMinPrice] = useState<number | null>(null);
   const [maxPrice, setMaxPrice] = useState<number | null>(null);
   const [promptProduct, setPromptProduct] = useState<string | null>(null);
+  const [budgetInput, setBudgetInput] = useState<string>("");
+  const [isSuggesting, setIsSuggesting] = useState(false);
 
   // Inicialização segura
   const [selectedParts, setSelectedParts] = useState<Record<string, Product[]>>(() => {
@@ -395,10 +401,40 @@ export default function PCBuilderPage() {
     setPromptProduct(null);
   };
 
+  const hasStepSelection = (stepId: string) => {
+    return (selectedParts[stepId] || []).length > 0;
+  };
+
+  const canAccessStepIndex = (targetIndex: number) => {
+    if (targetIndex <= currentStep) return true;
+    for (let i = 0; i < targetIndex; i++) {
+      const step = BUILD_STEPS[i];
+      if (step.required && !hasStepSelection(step.id)) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const handleChangeStep = (targetIndex: number) => {
+    if (!canAccessStepIndex(targetIndex)) {
+      toast.error("Conclua as etapas obrigatórias anteriores antes de avançar.");
+      return;
+    }
+    setPromptProduct(null);
+    setCurrentStep(targetIndex);
+    setShowSummary(false);
+  };
+
   const advanceStep = () => {
     setPromptProduct(null);
     if (currentStep < BUILD_STEPS.length - 1) {
-      setCurrentStep(currentStep + 1);
+      const nextIndex = currentStep + 1;
+      if (!canAccessStepIndex(nextIndex)) {
+        toast.error("Conclua as etapas obrigatórias anteriores antes de avançar.");
+        return;
+      }
+      setCurrentStep(nextIndex);
     } else {
       setShowSummary(true);
     }
@@ -427,6 +463,102 @@ export default function PCBuilderPage() {
   const { partsTotal, labor, grandTotal } = calculateTotal();
   const requiredMet = BUILD_STEPS.filter((s) => s.required).every((s) => (selectedParts[s.id] || []).length > 0);
   const formatPrice = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+  const buildConfigurationSummary = () => {
+    const lines: string[] = [];
+    lines.push("Monte seu PC - Balão da Informática");
+    lines.push("");
+    BUILD_STEPS.forEach((step) => {
+      const parts = selectedParts[step.id] || [];
+      if (!parts.length) return;
+      lines.push(`${step.name}:`);
+      parts.forEach((p) => {
+        lines.push(`• ${p.name} - ${formatPrice(p.price || 0)}`);
+      });
+      lines.push("");
+    });
+    lines.push(`Subtotal (peças): ${formatPrice(partsTotal)}`);
+    lines.push(`Montagem: ${formatPrice(labor)}`);
+    lines.push(`Total estimado: ${formatPrice(grandTotal)}`);
+    const today = new Date();
+    const validUntil = new Date();
+    validUntil.setDate(today.getDate() + 3);
+    lines.push(`Orçamento válido até: ${validUntil.toLocaleDateString("pt-BR")}`);
+    return lines.join("\n");
+  };
+
+  const handleShareWhatsApp = () => {
+    const allParts = Object.values(selectedParts).flat().filter(Boolean);
+    if (allParts.length === 0) {
+      toast.error("Selecione pelo menos uma peça antes de enviar.");
+      return;
+    }
+    const message = `*Monte seu PC - Balão da Informática*\n\n${buildConfigurationSummary()}`;
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/5519987510267?text=${encodedMessage}`;
+    window.open(whatsappUrl, "_blank");
+  };
+
+  const handleShareEmail = () => {
+    const allParts = Object.values(selectedParts).flat().filter(Boolean);
+    if (allParts.length === 0) {
+      toast.error("Selecione pelo menos uma peça antes de enviar.");
+      return;
+    }
+    const subject = encodeURIComponent("Orçamento de PC - Balão da Informática");
+    const body = encodeURIComponent(buildConfigurationSummary());
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  };
+
+  const handlePrintQuote = () => {
+    const allParts = Object.values(selectedParts).flat().filter(Boolean);
+    if (allParts.length === 0) {
+      toast.error("Selecione pelo menos uma peça antes de gerar o orçamento.");
+      return;
+    }
+    const summary = buildConfigurationSummary();
+    const today = new Date();
+    const validUntil = new Date();
+    validUntil.setDate(today.getDate() + 3);
+    const formatDate = (d: Date) => d.toLocaleDateString("pt-BR");
+    const win = window.open("", "_blank", "width=900,height=700");
+    if (!win) {
+      toast.error("Não foi possível abrir a janela de impressão.");
+      return;
+    }
+    const html = `
+      <!DOCTYPE html>
+      <html lang="pt-BR">
+        <head>
+          <meta charSet="utf-8" />
+          <title>Orçamento - Monte seu PC</title>
+          <style>
+            body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; padding: 24px; color: #111827; }
+            h1 { font-size: 24px; margin-bottom: 4px; }
+            h2 { font-size: 18px; margin-top: 24px; margin-bottom: 8px; }
+            p { margin: 4px 0; }
+            pre { background: #f3f4f6; padding: 16px; border-radius: 8px; white-space: pre-wrap; }
+            .meta { font-size: 12px; color: #6b7280; margin-top: 8px; }
+          </style>
+        </head>
+        <body>
+          <h1>Orçamento - Monte seu PC</h1>
+          <p>Balão da Informática</p>
+          <div class="meta">
+            <p>Data de emissão: ${formatDate(today)}</p>
+            <p>Validade: ${formatDate(validUntil)} (3 dias corridos)</p>
+          </div>
+          <h2>Detalhes da configuração</h2>
+          <pre>${summary}</pre>
+        </body>
+      </html>
+    `;
+    win.document.open();
+    win.document.write(html);
+    win.document.close();
+    win.focus();
+    win.print();
+  };
 
   const handleFinalizeBuild = () => {
     try {
@@ -480,10 +612,7 @@ export default function PCBuilderPage() {
               return (
                 <button
                   key={step.id}
-                  onClick={() => {
-                    setCurrentStep(idx);
-                    setShowSummary(false);
-                  }}
+                  onClick={() => handleChangeStep(idx)}
                   className={cn(
                     "flex flex-col items-center justify-center w-20 py-2 rounded-lg transition-all relative",
                     isCurrent ? "bg-zinc-900 text-white shadow-md scale-105" : "bg-white text-zinc-500 border border-zinc-100",
@@ -541,10 +670,7 @@ export default function PCBuilderPage() {
                   return (
                     <button
                       key={step.id}
-                      onClick={() => {
-                        setCurrentStep(idx);
-                        setShowSummary(false);
-                      }}
+                      onClick={() => handleChangeStep(idx)}
                       className={cn(
                         "w-full flex items-center gap-3 p-2.5 rounded-xl transition-all text-left group border relative overflow-hidden",
                         isCurrent 
@@ -725,19 +851,48 @@ export default function PCBuilderPage() {
                           <p className="text-[10px] text-zinc-400 text-right">ou em até 12x no cartão</p>
                         </div>
 
-                        <Button 
-                          className="w-full h-12 text-base font-bold bg-[#E30613] hover:bg-[#c90511] shadow-lg shadow-red-100"
-                          onClick={handleFinalizeBuild}
-                          disabled={!requiredMet}
-                        >
-                          FINALIZAR PEDIDO
-                        </Button>
-                        
-                        {!requiredMet && (
-                           <p className="text-xs text-red-500 text-center mt-3 bg-red-50 p-2 rounded-lg border border-red-100">
-                             Você precisa selecionar todas as peças obrigatórias.
-                           </p>
-                        )}
+                        <div className="space-y-3">
+                          <Button
+                            className="w-full h-12 text-base font-bold bg-[#E30613] hover:bg-[#c90511] shadow-lg shadow-red-100"
+                            onClick={handleFinalizeBuild}
+                            disabled={!requiredMet}
+                          >
+                            FINALIZAR PEDIDO
+                          </Button>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+                            <Button
+                              variant="outline"
+                              className="w-full text-xs sm:text-sm flex items-center justify-center gap-2"
+                              onClick={handleShareWhatsApp}
+                            >
+                              <MessageCircle className="w-4 h-4" />
+                              Enviar por WhatsApp
+                            </Button>
+                            <Button
+                              variant="outline"
+                              className="w-full text-xs sm:text-sm flex items-center justify-center gap-2"
+                              onClick={handlePrintQuote}
+                            >
+                              <Printer className="w-4 h-4" />
+                              Imprimir orçamento (PDF)
+                            </Button>
+                            <Button
+                              variant="outline"
+                              className="w-full text-xs sm:text-sm flex items-center justify-center gap-2 sm:col-span-2"
+                              onClick={handleShareEmail}
+                            >
+                              <Mail className="w-4 h-4" />
+                              Enviar por email
+                            </Button>
+                          </div>
+
+                          {!requiredMet && (
+                            <p className="text-xs text-red-500 text-center mt-3 bg-red-50 p-2 rounded-lg border border-red-100">
+                              Você precisa selecionar todas as peças obrigatórias antes de finalizar.
+                            </p>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -745,6 +900,14 @@ export default function PCBuilderPage() {
               ) : (
                 /* === PRODUCT SELECTION VIEW === */
                 <div className="animate-in fade-in duration-300">
+                  <div className="md:hidden mb-4">
+                    <h1 className="text-xl font-black tracking-tight text-zinc-900 leading-none">
+                      Monte seu <span className="text-[#E30613]">PC</span>
+                    </h1>
+                    <p className="text-xs text-zinc-500 mt-1">
+                      Siga as etapas na ordem para garantir compatibilidade.
+                    </p>
+                  </div>
                   {/* Step Header */}
                   <div className="bg-gradient-to-br from-white to-zinc-50 rounded-2xl border border-zinc-100 p-6 mb-6 shadow-sm relative overflow-hidden group">
                     <div className="absolute -right-6 -bottom-6 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity duration-500 transform rotate-12">
@@ -805,6 +968,333 @@ export default function PCBuilderPage() {
                       </div>
                     </div>
                   </div>
+
+                  <Card className="mb-6 border-dashed border-zinc-200 bg-white/80">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        <RefreshCw className="w-4 h-4 text-[#E30613]" />
+                        Sugestão rápida por orçamento
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center">
+                        <div className="flex-1">
+                          <div className="text-[11px] font-medium text-zinc-500 mb-1">
+                            Quanto você quer investir nas peças? (R$)
+                          </div>
+                          <Input
+                            type="text"
+                            inputMode="numeric"
+                            placeholder="Ex: 5000"
+                            value={budgetInput}
+                            onChange={(e) => setBudgetInput(e.target.value)}
+                            className="h-9 text-sm"
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            className="text-xs md:text-sm whitespace-nowrap"
+                            disabled={isSuggesting || !products || products.length === 0}
+                            onClick={() => {
+                              const raw = budgetInput.replace(/\./g, "").replace(",", ".");
+                              const value = Number(raw);
+                              if (!value || value <= 0) {
+                                toast.error("Informe um orçamento válido em reais.");
+                                return;
+                              }
+                              if (!products || products.length === 0) {
+                                toast.error("Aguarde carregar os produtos antes de gerar a sugestão.");
+                                return;
+                              }
+                              setIsSuggesting(true);
+                              try {
+                                const generateSuggestion = (budget: number) => {
+                                  if (!products) return null;
+                                  const config: Record<string, Product[]> = {};
+                                  const getProductsForStep = (stepId: string) => {
+                                    const step = BUILD_STEPS.find((s) => s.id === stepId);
+                                    if (!step) return [] as Product[];
+                                    const slugs = (resolvedStepSlugs[step.id] || step.categorySlugs).map((s) =>
+                                      s.toLowerCase(),
+                                    );
+                                    const list = products
+                                      .filter(
+                                        (p) =>
+                                          p.category &&
+                                          slugs.some((slug) =>
+                                            (p.category as string).toLowerCase().includes(slug),
+                                          ),
+                                      )
+                                      .filter((p) => (p.price || 0) > 0)
+                                      .sort((a, b) => (a.price || 0) - (b.price || 0));
+                                    return list;
+                                  };
+
+                                  const essentialSteps = ["processador", "placa-mae", "memoria", "ssd", "fonte", "gabinete"];
+
+                                  for (let attempt = 0; attempt < 60; attempt++) {
+                                    let totalParts = 0;
+                                    const tempConfig: Record<string, Product[]> = {};
+
+                                    const cpuList = getProductsForStep("processador");
+                                    if (!cpuList.length) continue;
+                                    const cpu = cpuList[Math.floor(Math.random() * cpuList.length)];
+                                    tempConfig["processador"] = [cpu];
+                                    totalParts += cpu.price || 0;
+                                    const cpuSpecs = parseProductSpecs(cpu.name, cpu.description);
+
+                                    const moboListAll = getProductsForStep("placa-mae");
+                                    const moboCandidates = moboListAll.filter((product) => {
+                                      const specs = parseProductSpecs(product.name, product.description);
+                                      if (cpuSpecs.isAMD && specs.isIntel) return false;
+                                      if (cpuSpecs.isIntel && specs.isAMD) return false;
+                                      if (
+                                        cpuSpecs.socket !== "unknown" &&
+                                        specs.socket !== "unknown" &&
+                                        cpuSpecs.socket !== specs.socket
+                                      ) {
+                                        return false;
+                                      }
+                                      return true;
+                                    });
+                                    if (!moboCandidates.length) continue;
+                                    const mobo = moboCandidates[Math.floor(Math.random() * moboCandidates.length)];
+                                    tempConfig["placa-mae"] = [mobo];
+                                    totalParts += mobo.price || 0;
+                                    const moboSpecs = parseProductSpecs(mobo.name, mobo.description);
+
+                                    const ramListAll = getProductsForStep("memoria");
+                                    const ramCandidates = ramListAll.filter((product) => {
+                                      const specs = parseProductSpecs(product.name, product.description);
+                                      if (specs.isNotebook) return false;
+                                      if (moboSpecs.isDDR4 && !specs.isDDR4) return false;
+                                      if (moboSpecs.isDDR5 && !specs.isDDR5) return false;
+                                      return true;
+                                    });
+                                    if (!ramCandidates.length) continue;
+                                    const ram = ramCandidates[Math.floor(Math.random() * ramCandidates.length)];
+                                    tempConfig["memoria"] = [ram];
+                                    totalParts += ram.price || 0;
+
+                                    const ssdList = getProductsForStep("ssd");
+                                    if (!ssdList.length) continue;
+                                    const ssd = ssdList[Math.floor(Math.random() * Math.min(ssdList.length, 6))];
+                                    tempConfig["ssd"] = [ssd];
+                                    totalParts += ssd.price || 0;
+
+                                    const fonteList = getProductsForStep("fonte");
+                                    if (!fonteList.length) continue;
+                                    const fonte = fonteList[Math.floor(Math.random() * Math.min(fonteList.length, 6))];
+                                    tempConfig["fonte"] = [fonte];
+                                    totalParts += fonte.price || 0;
+
+                                    const gabineteList = getProductsForStep("gabinete");
+                                    if (!gabineteList.length) continue;
+                                    const gabinete =
+                                      gabineteList[Math.floor(Math.random() * Math.min(gabineteList.length, 6))];
+                                    tempConfig["gabinete"] = [gabinete];
+                                    totalParts += gabinete.price || 0;
+
+                                    const gpuList = getProductsForStep("gpu");
+                                    if (gpuList.length && totalParts < budget * 0.9) {
+                                      const affordableGpus = gpuList.filter((g) => (g.price || 0) + totalParts <= budget);
+                                      if (affordableGpus.length) {
+                                        const gpu =
+                                          affordableGpus[Math.floor(Math.random() * Math.min(affordableGpus.length, 6))];
+                                        tempConfig["gpu"] = [gpu];
+                                        totalParts += gpu.price || 0;
+                                      }
+                                    }
+
+                                    const laborEstimate = totalParts > 0 ? Math.max(150, Math.min(500, totalParts * 0.1)) : 0;
+                                    const grandEstimate = totalParts + laborEstimate;
+
+                                    const allRequiredPresent = essentialSteps.every(
+                                      (id) => (tempConfig[id] || []).length > 0,
+                                    );
+                                    if (!allRequiredPresent) continue;
+                                    if (grandEstimate > budget) continue;
+
+                                    Object.assign(config, tempConfig);
+                                    return config;
+                                  }
+
+                                  return null;
+                                };
+
+                                const suggestion = generateSuggestion(value);
+                                if (!suggestion) {
+                                  toast.error(
+                                    "Não consegui montar uma sugestão dentro desse valor. Tente ajustar o orçamento.",
+                                  );
+                                  return;
+                                }
+                                setSelectedParts(suggestion);
+                                setCurrentStep(BUILD_STEPS.length - 1);
+                                setShowSummary(true);
+                              } finally {
+                                setIsSuggesting(false);
+                              }
+                            }}
+                          >
+                            {isSuggesting ? "Gerando..." : "Gerar sugestão"}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            className="text-xs md:text-sm whitespace-nowrap"
+                            disabled={isSuggesting || !budgetInput}
+                            onClick={() => {
+                              const raw = budgetInput.replace(/\./g, "").replace(",", ".");
+                              const value = Number(raw);
+                              if (!value || value <= 0) {
+                                toast.error("Informe um orçamento válido em reais.");
+                                return;
+                              }
+                              if (!products || products.length === 0) {
+                                toast.error("Aguarde carregar os produtos antes de atualizar a sugestão.");
+                                return;
+                              }
+                              const randomBump = (Math.random() - 0.5) * (value * 0.05);
+                              const adjusted = Math.max(0, value + randomBump);
+                              setIsSuggesting(true);
+                              try {
+                                const rawValue = adjusted;
+                                const generateSuggestion = (budget: number) => {
+                                  if (!products) return null;
+                                  const config: Record<string, Product[]> = {};
+                                  const getProductsForStep = (stepId: string) => {
+                                    const step = BUILD_STEPS.find((s) => s.id === stepId);
+                                    if (!step) return [] as Product[];
+                                    const slugs = (resolvedStepSlugs[step.id] || step.categorySlugs).map((s) =>
+                                      s.toLowerCase(),
+                                    );
+                                    const list = products
+                                      .filter(
+                                        (p) =>
+                                          p.category &&
+                                          slugs.some((slug) =>
+                                            (p.category as string).toLowerCase().includes(slug),
+                                          ),
+                                      )
+                                      .filter((p) => (p.price || 0) > 0)
+                                      .sort((a, b) => (a.price || 0) - (b.price || 0));
+                                    return list;
+                                  };
+
+                                  const essentialSteps = ["processador", "placa-mae", "memoria", "ssd", "fonte", "gabinete"];
+
+                                  for (let attempt = 0; attempt < 60; attempt++) {
+                                    let totalParts = 0;
+                                    const tempConfig: Record<string, Product[]> = {};
+
+                                    const cpuList = getProductsForStep("processador");
+                                    if (!cpuList.length) continue;
+                                    const cpu = cpuList[Math.floor(Math.random() * cpuList.length)];
+                                    tempConfig["processador"] = [cpu];
+                                    totalParts += cpu.price || 0;
+                                    const cpuSpecs = parseProductSpecs(cpu.name, cpu.description);
+
+                                    const moboListAll = getProductsForStep("placa-mae");
+                                    const moboCandidates = moboListAll.filter((product) => {
+                                      const specs = parseProductSpecs(product.name, product.description);
+                                      if (cpuSpecs.isAMD && specs.isIntel) return false;
+                                      if (cpuSpecs.isIntel && specs.isAMD) return false;
+                                      if (
+                                        cpuSpecs.socket !== "unknown" &&
+                                        specs.socket !== "unknown" &&
+                                        cpuSpecs.socket !== specs.socket
+                                      ) {
+                                        return false;
+                                      }
+                                      return true;
+                                    });
+                                    if (!moboCandidates.length) continue;
+                                    const mobo = moboCandidates[Math.floor(Math.random() * moboCandidates.length)];
+                                    tempConfig["placa-mae"] = [mobo];
+                                    totalParts += mobo.price || 0;
+                                    const moboSpecs = parseProductSpecs(mobo.name, mobo.description);
+
+                                    const ramListAll = getProductsForStep("memoria");
+                                    const ramCandidates = ramListAll.filter((product) => {
+                                      const specs = parseProductSpecs(product.name, product.description);
+                                      if (specs.isNotebook) return false;
+                                      if (moboSpecs.isDDR4 && !specs.isDDR4) return false;
+                                      if (moboSpecs.isDDR5 && !specs.isDDR5) return false;
+                                      return true;
+                                    });
+                                    if (!ramCandidates.length) continue;
+                                    const ram = ramCandidates[Math.floor(Math.random() * ramCandidates.length)];
+                                    tempConfig["memoria"] = [ram];
+                                    totalParts += ram.price || 0;
+
+                                    const ssdList = getProductsForStep("ssd");
+                                    if (!ssdList.length) continue;
+                                    const ssd = ssdList[Math.floor(Math.random() * Math.min(ssdList.length, 6))];
+                                    tempConfig["ssd"] = [ssd];
+                                    totalParts += ssd.price || 0;
+
+                                    const fonteList = getProductsForStep("fonte");
+                                    if (!fonteList.length) continue;
+                                    const fonte = fonteList[Math.floor(Math.random() * Math.min(fonteList.length, 6))];
+                                    tempConfig["fonte"] = [fonte];
+                                    totalParts += fonte.price || 0;
+
+                                    const gabineteList = getProductsForStep("gabinete");
+                                    if (!gabineteList.length) continue;
+                                    const gabinete =
+                                      gabineteList[Math.floor(Math.random() * Math.min(gabineteList.length, 6))];
+                                    tempConfig["gabinete"] = [gabinete];
+                                    totalParts += gabinete.price || 0;
+
+                                    const gpuList = getProductsForStep("gpu");
+                                    if (gpuList.length && totalParts < budget * 0.9) {
+                                      const affordableGpus = gpuList.filter((g) => (g.price || 0) + totalParts <= budget);
+                                      if (affordableGpus.length) {
+                                        const gpu =
+                                          affordableGpus[Math.floor(Math.random() * Math.min(affordableGpus.length, 6))];
+                                        tempConfig["gpu"] = [gpu];
+                                        totalParts += gpu.price || 0;
+                                      }
+                                    }
+
+                                    const laborEstimate = totalParts > 0 ? Math.max(150, Math.min(500, totalParts * 0.1)) : 0;
+                                    const grandEstimate = totalParts + laborEstimate;
+
+                                    const allRequiredPresent = essentialSteps.every(
+                                      (id) => (tempConfig[id] || []).length > 0,
+                                    );
+                                    if (!allRequiredPresent) continue;
+                                    if (grandEstimate > budget) continue;
+
+                                    Object.assign(config, tempConfig);
+                                    return config;
+                                  }
+
+                                  return null;
+                                };
+
+                                const suggestion = generateSuggestion(rawValue);
+                                if (!suggestion) {
+                                  toast.error(
+                                    "Não consegui montar uma sugestão dentro desse valor. Tente ajustar o orçamento.",
+                                  );
+                                  return;
+                                }
+                                setSelectedParts(suggestion);
+                                setCurrentStep(BUILD_STEPS.length - 1);
+                                setShowSummary(true);
+                              } finally {
+                                setIsSuggesting(false);
+                              }
+                            }}
+                          >
+                            Ver outra sugestão
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
 
                   {/* Products Grid */}
                   <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
