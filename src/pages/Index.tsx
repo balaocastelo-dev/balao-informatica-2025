@@ -61,28 +61,7 @@ const Index = () => {
   }, [blocks]);
 
   // Sincronização da Home com o Banco de Dados
-  const homeCategories = useMemo(() => {
-    // Pegamos apenas categorias principais (sem pai) para exibir na barra
-    // Se não houver categorias carregadas ainda, usa o fallback estático DEPARTMENTS para não quebrar layout
-    if (categories.length === 0) return DEPARTMENTS;
-
-    const parentCats = categories
-      .filter(c => !c.parent_id)
-      .sort((a, b) => a.order_index - b.order_index);
-    
-    // Se por acaso não tiver categorias pai cadastradas, volta pro fallback
-    if (parentCats.length === 0) return DEPARTMENTS;
-
-    return parentCats.map(cat => {
-      // Tenta encontrar ícone correspondente na config estática, ou usa genérico
-      const staticMatch = DEPARTMENTS.find(d => d.slug === cat.slug);
-      return {
-        name: cat.name,
-        slug: cat.slug,
-        icon: staticMatch?.icon || Cpu 
-      };
-    });
-  }, [categories]);
+  const homeCategories = DEPARTMENTS;
 
   const getCategoryProducts = (slug: string) => {
     // Special handling for Apple block to include all Apple subcategories

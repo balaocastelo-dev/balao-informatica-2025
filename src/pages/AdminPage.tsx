@@ -39,8 +39,7 @@ import { EmailMarketing } from '@/components/admin/EmailMarketing';
 import { OrdersManagement } from '@/components/admin/OrdersManagement';
 import { BannerManagement } from '@/components/admin/BannerManagement';
 import { CategoryProductManager } from '@/components/admin/CategoryProductManager';
-import { BrandManagement } from '@/components/admin/BrandManagement';
-import { BlingIntegration } from "@/components/admin/BlingIntegration";
+import { getCategoryEmoji } from '@/utils/categoryEmojis';
 
 // ... inside the component tabs ...
 import { BulkImport } from '@/components/admin/BulkImport';
@@ -59,7 +58,7 @@ const AdminPage = () => {
   
   const [isAdmin, setIsAdmin] = useState(false);
 
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'bulk-import' | 'banners' | 'categories' | 'brands' | 'layout' | 'email' | 'orders' | 'integrations'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'bulk-import' | 'banners' | 'categories' | 'layout' | 'email' | 'orders'>('dashboard');
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showBannerModal, setShowBannerModal] = useState(false);
@@ -85,7 +84,7 @@ const AdminPage = () => {
   const [uploadingBanner, setUploadingBanner] = useState(false);
 
   // Category form state
-  const [categoryForm, setCategoryForm] = useState({ name: '', slug: '', parentId: '' });
+  const [categoryForm, setCategoryForm] = useState({ name: '', slug: '', parentId: '', emoji: '' });
   const [editingCategory, setEditingCategory] = useState<string | null>(null);
 
   // Product Edit Category State
@@ -533,12 +532,12 @@ const AdminPage = () => {
     if (!categoryForm.name || !categoryForm.slug) return;
     
     if (editingCategory) {
-      await updateCategory(editingCategory, categoryForm.name, categoryForm.slug, categoryForm.parentId || null);
+      await updateCategory(editingCategory, categoryForm.name, categoryForm.slug, categoryForm.parentId || null, categoryForm.emoji);
       setEditingCategory(null);
     } else {
-      await addCategory(categoryForm.name, categoryForm.slug, categoryForm.parentId || undefined);
+      await addCategory(categoryForm.name, categoryForm.slug, categoryForm.parentId || undefined, categoryForm.emoji);
     }
-    setCategoryForm({ name: '', slug: '', parentId: '' });
+    setCategoryForm({ name: '', slug: '', parentId: '', emoji: '' });
     setShowCategoryModal(false);
   };
 
@@ -546,7 +545,8 @@ const AdminPage = () => {
     setCategoryForm({ 
       name: category.name, 
       slug: category.slug, 
-      parentId: category.parent_id || '' 
+      parentId: category.parent_id || '',
+      emoji: category.emoji || ''
     });
     setEditingCategory(category.id);
     setShowCategoryModal(true);
@@ -739,17 +739,7 @@ const AdminPage = () => {
             <Grid className="w-4 h-4" />
             Categorias
           </button>
-          <button
-            onClick={() => setActiveTab('brands')}
-            className={`px-3 py-2 font-medium transition-colors border-b-2 -mb-px flex items-center gap-2 whitespace-nowrap ${
-              activeTab === 'brands' 
-                ? 'text-primary border-primary' 
-                : 'text-muted-foreground border-transparent hover:text-foreground'
-            }`}
-          >
-            <Package className="w-4 h-4" />
-            Marcas
-          </button>
+
           <button
             onClick={() => setActiveTab('layout')}
             className={`px-3 py-2 font-medium transition-colors border-b-2 -mb-px flex items-center gap-2 whitespace-nowrap ${
@@ -1172,7 +1162,7 @@ const AdminPage = () => {
                 <h2 className="text-xl font-bold text-foreground">Gerenciar Categorias</h2>
                 <button
                   onClick={() => {
-                    setCategoryForm({ name: '', slug: '', parentId: '' });
+                    setCategoryForm({ name: '', slug: '', parentId: '', emoji: '' });
                     setEditingCategory(null);
                     setShowCategoryModal(true);
                   }}
@@ -1254,11 +1244,7 @@ const AdminPage = () => {
         )}
 
         {/* Brands Tab */}
-        {activeTab === 'brands' && (
-          <div className="admin-card">
-            <BrandManagement />
-          </div>
-        )}
+
 
         {/* Layout Tab */}
         {activeTab === 'layout' && (

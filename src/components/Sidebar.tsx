@@ -4,68 +4,7 @@ import { useCategories, CategoryData } from '@/contexts/CategoryContext';
 import { ChevronRight, Home, Cpu, X, Info, Handshake, Wrench, BatteryCharging, Printer, BadgeCheck, Gamepad2, Globe, Laptop, Smartphone } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useMenuItems } from '@/contexts/MenuItemsContext';
-
-// Auto-generate emoji based on category name
-const getCategoryEmoji = (name: string, slug: string): string => {
-  const nameLower = name.toLowerCase();
-  const slugLower = slug.toLowerCase();
-  
-  if (nameLower.includes('processador') || nameLower.includes('cpu')) return '⚙️';
-  if (nameLower.includes('memória') || nameLower.includes('memoria') || nameLower.includes('ram')) return '🧠';
-  if (nameLower.includes('ssd') || nameLower.includes('hd') || nameLower.includes('armazenamento')) return '💾';
-  if (nameLower.includes('fonte') || nameLower.includes('power')) return '🔌';
-  if (nameLower.includes('placa-mae') || nameLower.includes('placas-mae') || nameLower.includes('motherboard')) return '🔲';
-  if (nameLower.includes('cooler') || nameLower.includes('refrigeração')) return '❄️';
-  if (nameLower.includes('gabinete') || nameLower.includes('case')) return '🖥️';
-  if (nameLower.includes('hardware') || slugLower.includes('hardware')) return '🔧';
-  if (nameLower.includes('monitor')) return '🖥️';
-  if (nameLower.includes('licen')) return '📜';
-  if (nameLower.includes('placa') || nameLower.includes('video') || nameLower.includes('gpu')) return '🎮';
-  if (nameLower.includes('notebook') || nameLower.includes('laptop')) return '💻';
-  if (nameLower.includes('console') || nameLower.includes('playstation') || nameLower.includes('xbox')) return '🎯';
-  if (nameLower.includes('office') || nameLower.includes('escritório')) return '🏢';
-  if (nameLower.includes('gamer') || nameLower.includes('gaming')) return '⚡';
-  if (nameLower.includes('câmera') || nameLower.includes('camera') || nameLower.includes('foto')) return '📷';
-  if (nameLower.includes('acessório') || nameLower.includes('acessorio')) return '🎧';
-  if (nameLower.includes('teclado') || nameLower.includes('keyboard')) return '⌨️';
-  if (slugLower === 'mouse' || (nameLower === 'mouse')) return '🖱️';
-  if (nameLower.includes('mousepad') || nameLower.includes('mouse pad')) return '🖱️';
-  if (nameLower.includes('fone') || nameLower.includes('headset') || nameLower.includes('audio')) return '🎧';
-  if (nameLower.includes('rede') || nameLower.includes('network') || nameLower.includes('wifi') || nameLower.includes('roteador')) return '📡';
-  if (nameLower.includes('cabo') || nameLower.includes('adaptador') || nameLower.includes('cable')) return '🔗';
-  if (nameLower.includes('impressora') || nameLower.includes('printer')) return '🖨️';
-  if (nameLower.includes('iphone')) return '📱';
-  if (nameLower.includes('ipad')) return '📱';
-  if (nameLower.includes('macbook') || nameLower.includes('imac')) return '💻';
-  if (nameLower.includes('airpod')) return '🎧';
-  if (nameLower.includes('apple')) return '🍎';
-  if (nameLower.includes('celular') || nameLower.includes('smartphone') || nameLower.includes('phone')) return '📱';
-  if (nameLower.includes('tablet')) return '📱';
-  if (nameLower.includes('tv') || nameLower.includes('televisão') || nameLower.includes('smart tv')) return '📺';
-  if (nameLower.includes('workstation')) return '🖥️';
-  if (nameLower.includes('all in one') || nameLower.includes('all-in-one')) return '🖥️';
-  if (nameLower.includes('kit upgrade')) return '🔧';
-  if (nameLower.includes('promoção') || nameLower.includes('promocao')) return '🏷️';
-  if (nameLower.includes('casa inteligente') || nameLower.includes('smart home')) return '🏠';
-  if (nameLower.includes('automação') || nameLower.includes('pdv')) return '🤖';
-  if (nameLower.includes('gift') || nameLower.includes('card')) return '🎁';
-  if (nameLower.includes('simulador')) return '🎮';
-  if (nameLower.includes('projetor')) return '📽️';
-  if (nameLower.includes('webcam')) return '📹';
-  if (nameLower.includes('smartwatch') || nameLower.includes('watch')) return '⌚';
-  if (nameLower.includes('software') || nameLower.includes('programa')) return '💿';
-  if (nameLower.includes('cadeira') || nameLower.includes('chair')) return '🪑';
-  if (nameLower.includes('mesa') || nameLower.includes('desk')) return '🪑';
-  if (nameLower.includes('n8n') || nameLower.includes('fluxo')) return '🔄';
-  if (nameLower.includes('entrega') || nameLower.includes('flash')) return '🚀';
-  if (nameLower.includes('segurança') || nameLower.includes('seguranca') || nameLower.includes('security')) return '🛡️';
-  if (nameLower.includes('energia')) return '🔋';
-  if (nameLower.includes('ventilação') || nameLower.includes('ventilacao')) return '🌬️';
-  if (nameLower.includes('outros')) return '🧩';
-  if (nameLower.includes('todos')) return '🛒';
-  
-  return '📦';
-};
+import { getCategoryEmoji } from '@/utils/categoryEmojis';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -155,7 +94,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                           active ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
                         )}
                       >
-                        <span className="text-base">{getCategoryEmoji(category.name, category.slug)}</span>
+                        <span className="text-base">{getCategoryEmoji(category.name, category.slug, category.emoji)}</span>
                         <span className="flex-1 truncate">{category.name}</span>
                       </Link>
                       {hasSubmenu && (
@@ -187,7 +126,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                               isCategoryActive(sub.slug) ? "bg-primary/10 text-primary font-medium" : "hover:bg-secondary text-muted-foreground"
                             )}
                           >
-                            <span className="text-sm">{getCategoryEmoji(sub.name, sub.slug)}</span>
+                            <span className="text-sm">{getCategoryEmoji(sub.name, sub.slug, sub.emoji)}</span>
                             <span className="truncate">{sub.name}</span>
                           </Link>
                         ))}

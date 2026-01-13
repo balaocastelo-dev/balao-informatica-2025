@@ -589,6 +589,9 @@ export function ProductProvider({ children }: { children: ReactNode }) {
         description: `Sucesso: ${successCount}. Falhas: ${errorCount}.`,
         variant: errorCount > 0 ? "destructive" : "default"
       });
+      
+      // Força atualização completa para garantir consistência
+      await refreshProducts();
 
     } catch (error) {
       console.error('Error bulk importing products:', error);

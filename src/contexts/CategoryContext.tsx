@@ -8,13 +8,14 @@ export interface CategoryData {
   slug: string;
   order_index: number;
   parent_id: string | null;
+  emoji?: string | null;
 }
 
 interface CategoryContextType {
   categories: CategoryData[];
   loading: boolean;
-  addCategory: (name: string, slug: string, parentId?: string) => Promise<void>;
-  updateCategory: (id: string, name: string, slug: string, parentId?: string | null) => Promise<void>;
+  addCategory: (name: string, slug: string, parentId?: string, emoji?: string) => Promise<CategoryData>;
+  updateCategory: (id: string, name: string, slug: string, parentId?: string | null, emoji?: string) => Promise<void>;
   deleteCategory: (id: string) => Promise<void>;
   reorderCategories: (reordered: CategoryData[]) => Promise<void>;
   refreshCategories: () => Promise<void>;
@@ -52,7 +53,7 @@ export function CategoryProvider({ children }: { children: ReactNode }) {
     fetchCategories();
   }, []);
 
-  const addCategory = async (name: string, slug: string, parentId?: string) => {
+  const addCategory = async (name: string, slug: string, parentId?: string, emoji?: string) => {
     try {
       const maxOrder = categories.length > 0 
         ? Math.max(...categories.map(c => c.order_index)) + 1 
@@ -64,7 +65,8 @@ export function CategoryProvider({ children }: { children: ReactNode }) {
           name, 
           slug, 
           order_index: maxOrder,
-          parent_id: parentId || null
+          parent_id: parentId || null,
+          emoji: emoji || null
         })
         .select()
         .single();
@@ -72,6 +74,7 @@ export function CategoryProvider({ children }: { children: ReactNode }) {
       if (error) throw error;
       setCategories(current => [...current, data]);
       toast({ title: "Categoria adicionada!" });
+      return data;
     } catch (error) {
       console.error('Error adding category:', error);
       toast({
@@ -82,16 +85,27 @@ export function CategoryProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const updateCategory = async (id: string, name: string, slug: string, parentId?: string | null) => {
+  const updateCategory = async (id: string, name: string, slug: string, parentId?: string | null, emoji?: string) => {
     try {
       const { error } = await supabase
         .from('categories')
-        .update({ name, slug, parent_id: parentId === '' ? null : parentId })
+        .update({ 
+          name, 
+          slug, 
+          parent_id: parentId === '' ? null : parentId,
+          emoji: emoji || null
+        })
         .eq('id', id);
 
       if (error) throw error;
       setCategories(current =>
-        current.map(cat => cat.id === id ? { ...cat, name, slug, parent_id: parentId === '' ? null : parentId ?? cat.parent_id } : cat)
+        current.map(cat => cat.id === id ? { 
+          ...cat, 
+          name, 
+          slug, 
+          parent_id: parentId === '' ? null : parentId ?? cat.parent_id,
+          emoji: emoji || null
+        } : cat)
       );
       toast({ title: "Categoria atualizada!" });
     } catch (error) {
