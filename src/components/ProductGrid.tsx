@@ -143,8 +143,6 @@ export function ProductGrid({
         {visibleProducts.map((product, index) => (
           <div 
             key={product.id}
-            className="animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-backwards"
-            style={{ animationDelay: `${index * 50}ms` }}
           >
             <ProductCard
               product={product}

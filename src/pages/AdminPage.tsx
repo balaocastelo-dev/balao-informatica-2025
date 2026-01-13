@@ -88,6 +88,13 @@ const AdminPage = () => {
   const [categoryForm, setCategoryForm] = useState({ name: '', slug: '', parentId: '' });
   const [editingCategory, setEditingCategory] = useState<string | null>(null);
 
+  // Product Edit Category State
+  const [selectedParentId, setSelectedParentId] = useState<string>('');
+  const [selectedSubId, setSelectedSubId] = useState<string>('');
+  const [isCreatingCategory, setIsCreatingCategory] = useState(false);
+  const [newCatName, setNewCatName] = useState('');
+  const [newCatParentId, setNewCatParentId] = useState<string>('none');
+
   // Duplicates state
   const [showDuplicatesModal, setShowDuplicatesModal] = useState(false);
   const [duplicateGroups, setDuplicateGroups] = useState<{ name: string; products: typeof products }[]>([]);
@@ -1345,30 +1352,87 @@ const AdminPage = () => {
                   <p className="text-xs text-muted-foreground mt-1">Separe por vírgulas</p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">Categoria</label>
-                    <select
-                      value={formData.category}
-                      onChange={e => setFormData({ ...formData, category: e.target.value })}
-                      className="input-field"
-                      required
-                    >
-                      <option value="">Selecione...</option>
-                      {categories.map(cat => (
-                        <option key={cat.id} value={cat.slug}>{cat.name}</option>
-                      ))}
-                    </select>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border p-3 rounded-md bg-muted/20">
+                  <div className="md:col-span-2 flex items-center justify-between mb-2">
+                     <label className="block text-sm font-medium text-foreground">Categoria</label>
+                     <button 
+                        type="button"
+                        onClick={() => setIsCreatingCategory(!isCreatingCategory)}
+                        className="text-xs text-primary hover:underline flex items-center gap-1"
+                     >
+                        {isCreatingCategory ? 'Selecionar existente' : '+ Criar nova categoria'}
+                     </button>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">Estoque</label>
-                    <input
-                      type="number"
-                      value={formData.stock}
-                      onChange={e => setFormData({ ...formData, stock: e.target.value })}
-                      className="input-field"
-                    />
-                  </div>
+                  
+                  {isCreatingCategory ? (
+                      <>
+                        <div>
+                            <label className="block text-xs text-muted-foreground mb-1">Nome da Nova Categoria</label>
+                            <input
+                                type="text"
+                                value={newCatName}
+                                onChange={e => setNewCatName(e.target.value)}
+                                className="input-field"
+                                placeholder="Ex: Placas de Vídeo"
+                                required={isCreatingCategory}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs text-muted-foreground mb-1">Pertence a (Pai)</label>
+                            <select
+                                value={newCatParentId}
+                                onChange={e => setNewCatParentId(e.target.value)}
+                                className="input-field"
+                            >
+                                <option value="none">Nenhuma (Categoria Principal)</option>
+                                {categories.filter(c => !c.parent_id).map(cat => (
+                                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                      </>
+                  ) : (
+                      <>
+                        <div>
+                            <label className="block text-xs text-muted-foreground mb-1">Categoria Principal</label>
+                            <select
+                            value={selectedParentId}
+                            onChange={e => {
+                                setSelectedParentId(e.target.value);
+                                setSelectedSubId('');
+                                // Update formData slug for validation/preview immediately
+                                const parent = categories.find(c => c.id === e.target.value);
+                                if (parent) setFormData({ ...formData, category: parent.slug });
+                            }}
+                            className="input-field"
+                            required={!isCreatingCategory}
+                            >
+                            <option value="">Selecione...</option>
+                            {categories.filter(c => !c.parent_id).map(cat => (
+                                <option key={cat.id} value={cat.id}>{cat.name}</option>
+                            ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-xs text-muted-foreground mb-1">Subcategoria (Opcional)</label>
+                            <select
+                            value={selectedSubId}
+                            onChange={e => {
+                                setSelectedSubId(e.target.value);
+                                const sub = categories.find(c => c.id === e.target.value);
+                                if (sub) setFormData({ ...formData, category: sub.slug });
+                            }}
+                            className="input-field"
+                            disabled={!selectedParentId}
+                            >
+                            <option value="">Nenhuma</option>
+                            {categories.filter(c => c.parent_id === selectedParentId).map(cat => (
+                                <option key={cat.id} value={cat.id}>{cat.name}</option>
+                            ))}
+                            </select>
+                        </div>
+                      </>
+                  )}
                 </div>
 
                 <div>

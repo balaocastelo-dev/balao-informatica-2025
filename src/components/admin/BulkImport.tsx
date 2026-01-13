@@ -22,8 +22,13 @@ export const BulkImport = () => {
   
   const [inputText, setInputText] = useState('');
   const [profitMargin, setProfitMargin] = useState('25');
-  const [selectedCategory, setSelectedCategory] = useState<string>('auto');
-  const [newCategoryName, setNewCategoryName] = useState('');
+  
+  // New Category State Logic
+  const [selectedParentId, setSelectedParentId] = useState<string>('auto');
+  const [selectedSubCategoryId, setSelectedSubCategoryId] = useState<string>('none');
+  const [newParentCategoryName, setNewParentCategoryName] = useState('');
+  const [newSubCategoryName, setNewSubCategoryName] = useState('');
+
   const [defaultTags, setDefaultTags] = useState('');
   const [highlightTag, setHighlightTag] = useState('');
   const [stockQuantity, setStockQuantity] = useState('10');
@@ -34,6 +39,10 @@ export const BulkImport = () => {
   const [activeTab, setActiveTab] = useState('input');
   // Local state removed in favor of Context state
   const [generateDescriptions, setGenerateDescriptions] = useState(false);
+
+  // Filter categories
+  const parentCategories = categories.filter(c => !c.parent_id);
+  const subCategories = categories.filter(c => c.parent_id === selectedParentId);
 
   // Monitora o fim da importação para limpar a tela
   React.useEffect(() => {
@@ -357,27 +366,58 @@ export const BulkImport = () => {
           <Card>
             <CardContent className="pt-6 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label>Categoria Padrão</Label>
-                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="auto">✨ Auto-detectar (Recomendado)</SelectItem>
-                      <SelectItem value="new_category">➕ Nova Categoria...</SelectItem>
-                      {categories.map(cat => (
-                        <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {selectedCategory === 'new_category' && (
-                    <Input 
-                      className="mt-2"
-                      placeholder="Nome da nova categoria"
-                      value={newCategoryName}
-                      onChange={e => setNewCategoryName(e.target.value)}
-                    />
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Categoria Principal</Label>
+                    <Select value={selectedParentId} onValueChange={val => {
+                        setSelectedParentId(val);
+                        setSelectedSubCategoryId('none'); // Reset sub when parent changes
+                    }}>
+                        <SelectTrigger>
+                        <SelectValue placeholder="Selecione..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                        <SelectItem value="auto">✨ Auto-detectar (Recomendado)</SelectItem>
+                        <SelectItem value="new_parent">➕ Nova Categoria Principal...</SelectItem>
+                        {parentCategories.map(cat => (
+                            <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                    {selectedParentId === 'new_parent' && (
+                        <Input 
+                        className="mt-2"
+                        placeholder="Nome da nova categoria principal"
+                        value={newParentCategoryName}
+                        onChange={e => setNewParentCategoryName(e.target.value)}
+                        />
+                    )}
+                  </div>
+
+                  {selectedParentId !== 'auto' && selectedParentId !== 'new_parent' && (
+                       <div className="space-y-2 pl-4 border-l-2 border-primary/20">
+                            <Label>Subcategoria (Opcional)</Label>
+                            <Select value={selectedSubCategoryId} onValueChange={setSelectedSubCategoryId}>
+                                <SelectTrigger>
+                                <SelectValue placeholder="Selecione..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                <SelectItem value="none">Nenhuma (Usar Principal)</SelectItem>
+                                <SelectItem value="new_sub">➕ Nova Subcategoria...</SelectItem>
+                                {subCategories.map(cat => (
+                                    <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                                ))}
+                                </SelectContent>
+                            </Select>
+                            {selectedSubCategoryId === 'new_sub' && (
+                                <Input 
+                                className="mt-2"
+                                placeholder="Nome da nova subcategoria"
+                                value={newSubCategoryName}
+                                onChange={e => setNewSubCategoryName(e.target.value)}
+                                />
+                            )}
+                       </div>
                   )}
                 </div>
                 
