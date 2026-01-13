@@ -76,10 +76,21 @@ export function ProductCard({ product, onClick, viewMode = 'grid' }: ProductCard
         className="flex items-center gap-4 p-4 bg-card rounded-lg border border-border cursor-pointer hover:shadow-md transition-shadow"
         onClick={handleClick}
       >
-        <ImageComponent 
-          containerClass="w-20 h-20 flex-shrink-0 rounded overflow-hidden"
-          className="w-full h-full object-contain p-1"
-        />
+        <div className="relative">
+          <ImageComponent 
+            containerClass="w-20 h-20 flex-shrink-0 rounded overflow-hidden"
+            className="w-full h-full object-contain p-1"
+          />
+          {Array.isArray(product.tags) && product.tags.filter(t => t.startsWith('badge:')).map((tag, i) => (
+            <span 
+              key={`badge-${i}`} 
+              className="absolute left-1 bg-[#E30613] text-white text-[10px] font-bold px-1.5 py-0.5 rounded z-10 shadow-md uppercase tracking-wide"
+              style={{ top: `${4 + i * 22}px` }}
+            >
+              {tag.replace('badge:', '')}
+            </span>
+          ))}
+        </div>
         
         <div className="flex-1 min-w-0">
           <h3 className="font-medium text-sm text-foreground line-clamp-2">{product.name}</h3>
