@@ -168,34 +168,124 @@ export const BulkImport = () => {
   };
 
   const handleImport = async () => {
+    // 1. Verificar se precisamos criar a categoria "manual" selecionada
     if (selectedCategory === 'new_category' && newCategoryName.trim()) {
       try {
         const slug = newCategoryName.trim().toLowerCase()
           .replace(/[^\w\s-]/g, '')
           .replace(/\s+/g, '-');
         
-        await addCategory(newCategoryName.trim(), slug);
+        // Verifica se já existe para evitar erro
+        const exists = categories.find(c => c.slug === slug);
+        if (!exists) {
+            await addCategory(newCategoryName.trim(), slug);
+        }
       } catch (error) {
         console.error("Erro ao criar categoria:", error);
+        toast({
+            title: "Erro ao criar categoria manual",
+            description: "Houve um problema ao criar a categoria especificada.",
+            variant: "destructive"
+        });
+        return; // Interrompe se falhar
       }
     }
 
+    // 2. Identificar categorias novas vindas da detecção automática
+    const categoriesToCreate = new Map<string, string>(); // Name -> Slug
+
+    parsedProducts.forEach((p, index) => {
+        if (!selectedIndices.has(index)) return;
+
+        // Lógica de determinação da categoria para este produto
+        let targetCategoryName = p.category;
+        
+        // Se o usuário forçou uma categoria (diferente de auto), usamos ela
+        if (selectedCategory !== 'auto' && selectedCategory !== 'new_category') {
+             // Se selecionou uma existente, não precisamos criar nada, o nome já é conhecido
+             return; 
+        }
+        if (selectedCategory === 'new_category') {
+            // Já tratamos acima
+            return;
+        }
+
+        // Se estamos no modo AUTO, verificamos se a categoria detectada existe
+        const existingCategory = categories.find(c => c.name.toLowerCase() === targetCategoryName.toLowerCase());
+        
+        if (!existingCategory) {
+            // Se não existe, vamos planejar criar
+            // Normalizar nome (Title Case) para ficar bonito no banco
+            const formattedName = targetCategoryName.charAt(0).toUpperCase() + targetCategoryName.slice(1);
+            const slug = formattedName.toLowerCase()
+                .replace(/[^\w\s-]/g, '')
+                .replace(/\s+/g, '-');
+            
+            categoriesToCreate.set(formattedName, slug);
+        }
+    });
+
+    // 3. Criar as categorias novas detectadas em lote (sequencialmente)
+    if (categoriesToCreate.size > 0) {
+        toast({
+            title: "Criando novas categorias...",
+            description: `Detectamos ${categoriesToCreate.size} novas categorias necessárias.`
+        });
+
+        for (const [name, slug] of categoriesToCreate) {
+            try {
+                // Verificação dupla se não existe no contexto atual (pode ter sido criada no passo 1)
+                const exists = categories.find(c => c.slug === slug);
+                if (!exists) {
+                    await addCategory(name, slug);
+                }
+            } catch (error) {
+                console.error(`Erro ao criar categoria automática ${name}:`, error);
+                // Não interrompemos tudo, mas o produto pode ficar sem categoria visível
+            }
+        }
+        // Pequeno delay para garantir que o contexto atualize se necessário (embora addCategory já atualize state local)
+    }
+
+    // 4. Prosseguir com a importação dos produtos
     const productsToImport = parsedProducts
       .filter((_, index) => selectedIndices.has(index))
       .map(p => {
-        // Encontrar o slug da categoria
+        // Encontrar o slug da categoria final
         let categorySlug = p.category.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
         
-        // 1. Tentar encontrar na lista de categorias existentes
-        const existingCategory = categories.find(c => c.name.toLowerCase() === p.category.toLowerCase());
-        if (existingCategory) {
-          categorySlug = existingCategory.slug;
-        } 
-        // 2. Se for a nova categoria sendo criada
-        else if (selectedCategory === 'new_category' && p.category === newCategoryName.trim()) {
-          categorySlug = newCategoryName.trim().toLowerCase()
+        // Se o usuário selecionou uma categoria específica, use-a
+        if (selectedCategory !== 'auto' && selectedCategory !== 'new_category') {
+            const selected = categories.find(c => c.name === selectedCategory);
+            if (selected) categorySlug = selected.slug;
+        }
+        else if (selectedCategory === 'new_category') {
+             categorySlug = newCategoryName.trim().toLowerCase()
             .replace(/[^\w\s-]/g, '')
             .replace(/\s+/g, '-');
+        }
+        else {
+            // Modo AUTO: Tentar casar com a lista atualizada de categorias
+            // Nota: Como acabamos de chamar addCategory, o state 'categories' do hook pode ainda não ter refletido 
+            // se o hook não tiver um mecanismo de optimistic update imediato ou re-fetch rápido.
+            // Mas o addCategory do context atualiza o state local: setCategories(current => [...current, data]);
+            // Então 'categories' aqui DENTRO DA FUNÇÃO pode estar desatualizado por ser closure?
+            // Sim, 'categories' é const do render. 
+            // Porém, podemos confiar na lógica de slug determinística ou buscar no map created.
+            
+            const catName = p.category;
+            // Tenta achar na lista antiga
+            const existing = categories.find(c => c.name.toLowerCase() === catName.toLowerCase());
+            
+            if (existing) {
+                categorySlug = existing.slug;
+            } else {
+                // Se não estava na lista antiga, deve ser uma das novas que acabamos de criar
+                // Recalcula o slug da mesma forma que fizemos para criar
+                categorySlug = catName.trim().toLowerCase()
+                    .replace(/[^\w\s-]/g, '')
+                    .replace(/\s+/g, '-');
+            }
         }
 
         return {

@@ -251,7 +251,7 @@ const Index = () => {
                 <div className="container-balao mt-8 relative z-20">
                   <h3 className="text-lg font-bold text-zinc-800 mb-6">Navegue por Departamento</h3>
                   <div className="flex gap-4 overflow-x-auto p-4 no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-4">
-                    {DEPARTMENTS.map((dept) => (
+                    {homeCategories.map((dept) => (
                       <Link
                         key={dept.slug}
                         to={`/categoria/${dept.slug}`}
