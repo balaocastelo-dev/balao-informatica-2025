@@ -156,10 +156,10 @@ const Index = () => {
     return (
       <Layout>
         <div className="container-balao py-8 space-y-12">
-          <div className="h-[400px] bg-zinc-100 rounded-2xl animate-pulse" />
+          <div className="h-[400px] bg-zinc-100 rounded-2xl" />
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-20 bg-zinc-100 rounded-lg animate-pulse" />
+              <div key={i} className="h-20 bg-zinc-100 rounded-lg" />
             ))}
           </div>
         </div>
@@ -261,7 +261,7 @@ const Index = () => {
                         </div>
                       </div>
                       <div className="flex items-center justify-center sm:justify-start gap-3 group">
-                        <div className="p-2 bg-red-50 rounded-full text-[#E30613] group-hover:bg-[#E30613] group-hover:text-white transition-colors">
+                        <div className="p-2 bg-red-50 rounded-full text-[#E30613] group-hover:bg-[#E30613] group-hover:text-white">
                           <MapPin className="w-6 h-6" />
                         </div>
                         <div>
@@ -284,8 +284,8 @@ const Index = () => {
                         to={`/categoria/${dept.slug}`}
                         className="flex flex-col items-center gap-3 min-w-[100px] group cursor-pointer"
                       >
-                        <div className="w-20 h-20 bg-white border border-zinc-200 rounded-2xl flex items-center justify-center shadow-sm group-hover:border-[#E30613] group-hover:shadow-md transition-all group-hover:-translate-y-1">
-                          <dept.icon className="w-8 h-8 text-zinc-600 group-hover:text-[#E30613] transition-colors" />
+                        <div className="w-20 h-20 bg-white border border-zinc-200 rounded-2xl flex items-center justify-center shadow-sm group-hover:border-[#E30613] group-hover:shadow-md">
+                          <dept.icon className="w-8 h-8 text-zinc-600 group-hover:text-[#E30613]" />
                         </div>
                         <span className="text-xs font-medium text-zinc-600 group-hover:text-[#E30613] text-center">
                           {dept.name}
@@ -324,7 +324,7 @@ const Index = () => {
             const betweenBanner = betweenCategoryBanners[bannerIndex];
 
             return (
-              <div key={block.id} className="animate-in fade-in slide-in-from-bottom-8 duration-700">
+              <div key={block.id} className="">
                 <section className="container-balao mt-12">
                   <div className="flex items-center gap-3 mb-6 border-b border-zinc-200 pb-4">
                     <div className="w-1.5 h-8 bg-[#E30613] rounded-full"></div>
@@ -353,7 +353,7 @@ const Index = () => {
                     {betweenBanner.link ? (
                       <Link
                         to={betweenBanner.link}
-                        className="block overflow-hidden rounded-2xl shadow-lg hover:shadow-xl transition-all duration-500 hover:-translate-y-1"
+                        className="block overflow-hidden rounded-2xl shadow-lg hover:shadow-xl"
                       >
                         <img
                           src={getResolvedImageUrl(betweenBanner.image_mobile_url || betweenBanner.image_url)}

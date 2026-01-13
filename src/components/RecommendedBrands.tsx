@@ -96,7 +96,7 @@ export function RecommendedBrands() {
                     <img 
                       src={imageToUse} 
                       alt={brand.name} 
-                      className="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" 
+                      className="w-full h-full object-contain p-3" 
                     />
                   ) : (
                     <>
@@ -116,7 +116,7 @@ export function RecommendedBrands() {
                   )}
 
                   {/* Hover overlay */}
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20" />
                 </div>
                 
                 {/* Brand Name & CTA */}

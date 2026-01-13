@@ -61,8 +61,7 @@ export function CategorySection() {
           <Link
             key={category.id}
             to={`/categoria/${category.slug}`}
-            className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-secondary to-muted p-4 sm:p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 animate-slide-up"
-            style={{ animationDelay: `${index * 50}ms` }}
+            className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-secondary to-muted p-4 sm:p-6 hover:shadow-lg"
           >
             <span className="text-3xl sm:text-4xl mb-3 block">
               {getCategoryEmoji(category.name, category.slug)}
@@ -70,7 +69,7 @@ export function CategorySection() {
             <h3 className="font-semibold text-foreground text-sm sm:text-base">
               {category.name}
             </h3>
-            <ChevronRight className="absolute bottom-4 right-4 w-5 h-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+            <ChevronRight className="absolute bottom-4 right-4 w-5 h-5 text-muted-foreground opacity-0 group-hover:opacity-100" />
           </Link>
         ))}
       </div>

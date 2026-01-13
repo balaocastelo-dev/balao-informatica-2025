@@ -216,7 +216,7 @@
     @apply w-full bg-background border border-border rounded-lg px-4 py-3 
            text-foreground placeholder:text-muted-foreground 
            focus:ring-2 focus:ring-primary focus:border-transparent 
-           focus:outline-none transition-all;
+           focus:outline-none;
   }
 }
 
@@ -249,86 +249,7 @@
   }
 }
 
-/* Animations */
-@keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes blob {
-  0% {
-    transform: translate(0px, 0px) scale(1);
-  }
-  33% {
-    transform: translate(30px, -50px) scale(1.1);
-  }
-  66% {
-    transform: translate(-20px, 20px) scale(0.9);
-  }
-  100% {
-    transform: translate(0px, 0px) scale(1);
-  }
-}
-
-.animate-blob {
-  animation: blob 7s infinite;
-}
-
-.animation-delay-2000 {
-  animation-delay: 2s;
-}
-
-.animation-delay-4000 {
-  animation-delay: 4s;
-}
-
-@keyframes slide-up {
-  from { 
-    opacity: 0; 
-    transform: translateY(20px); 
-  }
-  to { 
-    opacity: 1; 
-    transform: translateY(0); 
-  }
-}
-
-@keyframes scale-in {
-  from { 
-    opacity: 0; 
-    transform: scale(0.95); 
-  }
-  to { 
-    opacity: 1; 
-    transform: scale(1); 
-  }
-}
-
-.animate-fade-in {
-  animation: fade-in 0.3s ease-out;
-}
-
-.animate-slide-up {
-  animation: slide-up 0.4s ease-out;
-}
-
-.animate-scale-in {
-  animation: scale-in 0.2s ease-out;
-}
-
-/* Staggered animations for product grid */
-.product-grid > * {
-  animation: slide-up 0.4s ease-out backwards;
-}
-
-.product-grid > *:nth-child(1) { animation-delay: 0ms; }
-.product-grid > *:nth-child(2) { animation-delay: 50ms; }
-.product-grid > *:nth-child(3) { animation-delay: 100ms; }
-.product-grid > *:nth-child(4) { animation-delay: 150ms; }
-.product-grid > *:nth-child(5) { animation-delay: 200ms; }
-.product-grid > *:nth-child(6) { animation-delay: 250ms; }
-.product-grid > *:nth-child(7) { animation-delay: 300ms; }
-.product-grid > *:nth-child(8) { animation-delay: 350ms; }
+/* Animations removed for performance */
 
 /* Custom scrollbar for filters */
 .scrollbar-thin {

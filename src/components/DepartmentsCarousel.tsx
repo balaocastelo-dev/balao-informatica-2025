@@ -118,13 +118,13 @@ export function DepartmentsCarousel() {
               to={`/categoria/${dept.slug}`}
               className="flex-shrink-0 group/item"
             >
-              <div className="w-32 md:w-40 text-center">
-                {/* Image */}
-                <div className="bg-secondary/30 rounded-xl p-4 mb-3 aspect-square flex items-center justify-center overflow-hidden group-hover/item:bg-secondary/50 transition-colors">
+              <div className="flex flex-col items-center justify-center group/item cursor-pointer">
+                {/* Image Container */}
+                <div className="bg-secondary/30 rounded-xl p-4 mb-3 aspect-square flex items-center justify-center overflow-hidden group-hover/item:bg-secondary/50">
                   <img
                     src={getCategoryImage(dept.slug)}
                     alt={dept.name}
-                    className="w-full h-full object-contain group-hover/item:scale-110 transition-transform duration-300"
+                    className="w-full h-full object-contain"
                     loading="lazy"
                   />
                 </div>
@@ -141,7 +141,7 @@ export function DepartmentsCarousel() {
         <Button
           variant="outline"
           size="icon"
-          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-background/90 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity translate-x-1/2"
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-background/90 shadow-lg opacity-0 group-hover:opacity-100 translate-x-1/2"
           onClick={() => scroll('right')}
         >
           <ChevronRight className="w-5 h-5" />

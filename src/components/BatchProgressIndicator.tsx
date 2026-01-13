@@ -13,13 +13,13 @@ export function BatchProgressIndicator() {
   // Minimized floating indicator
   if (batchProgress.isMinimized) {
     return (
-      <div className="fixed bottom-4 right-4 z-50 animate-fade-in">
+      <div className="fixed bottom-4 right-4 z-50">
         <button
           onClick={toggleMinimized}
-          className="flex items-center gap-3 bg-card border border-border shadow-lg rounded-full px-4 py-3 hover:bg-accent transition-colors"
+          className="flex items-center gap-3 bg-card border border-border shadow-lg rounded-full px-4 py-3 hover:bg-accent"
         >
           <div className="relative">
-            <Loader2 className="w-5 h-5 animate-spin text-primary" />
+            <Loader2 className="w-5 h-5 text-primary" />
             <svg className="absolute inset-0 w-5 h-5 -rotate-90">
               <circle
                 cx="10"
@@ -38,7 +38,7 @@ export function BatchProgressIndicator() {
                 strokeWidth="2"
                 fill="none"
                 strokeDasharray={`${percentage * 0.5} 50`}
-                className="text-primary transition-all duration-300"
+                className="text-primary"
               />
             </svg>
           </div>
