@@ -160,6 +160,7 @@ export function ProductProvider({ children }: { children: ReactNode }) {
             category: product.category,
             stock: product.stock,
             source_url: product.sourceUrl || null,
+            tags: product.tags || null,
           })
           .select()
           .single();
@@ -383,6 +384,7 @@ export function ProductProvider({ children }: { children: ReactNode }) {
           ram_gb: attrs.ramGb ?? null,
           storage_gb: attrs.storageGb ?? null,
           screen_inches: attrs.screenInches ?? null,
+          tags: product.tags || null,
         };
       });
 
@@ -401,6 +403,7 @@ export function ProductProvider({ children }: { children: ReactNode }) {
           category: product.category,
           stock: product.stock,
           source_url: product.sourceUrl || null,
+          tags: product.tags || null,
         }));
         const { data: fallbackData, error: fallbackError } = await supabase
           .from('products')
