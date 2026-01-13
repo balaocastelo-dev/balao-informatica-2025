@@ -38,7 +38,6 @@ import { Dashboard } from '@/components/admin/Dashboard';
 import { EmailMarketing } from '@/components/admin/EmailMarketing';
 import { OrdersManagement } from '@/components/admin/OrdersManagement';
 import { BannerManagement } from '@/components/admin/BannerManagement';
-import { CouponsManagement } from '@/components/admin/CouponsManagement';
 import { CategoryProductManager } from '@/components/admin/CategoryProductManager';
 import { BrandManagement } from '@/components/admin/BrandManagement';
 import { BlingIntegration } from "@/components/admin/BlingIntegration";
@@ -60,7 +59,7 @@ const AdminPage = () => {
   
   const [isAdmin, setIsAdmin] = useState(false);
 
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'bulk-import' | 'banners' | 'categories' | 'brands' | 'layout' | 'email' | 'orders' | 'coupons' | 'integrations'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'bulk-import' | 'banners' | 'categories' | 'brands' | 'layout' | 'email' | 'orders' | 'integrations'>('dashboard');
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showBannerModal, setShowBannerModal] = useState(false);
@@ -776,17 +775,6 @@ const AdminPage = () => {
           >
             <ShoppingBag className="w-4 h-4" />
             Pedidos
-          </button>
-          <button
-            onClick={() => setActiveTab('coupons')}
-            className={`px-3 py-2 font-medium transition-colors border-b-2 -mb-px flex items-center gap-2 whitespace-nowrap ${
-              activeTab === 'coupons' 
-                ? 'text-primary border-primary' 
-                : 'text-muted-foreground border-transparent hover:text-foreground'
-            }`}
-          >
-            <Tag className="w-4 h-4" />
-            Cupons
           </button>
           <button
             onClick={() => setActiveTab('integrations')}

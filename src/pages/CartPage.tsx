@@ -20,8 +20,6 @@ import {
   CreditCard
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { CouponInput } from '@/components/CouponInput';
-import type { CouponValidationResult, CouponValidationSuccess } from '@/types/coupon';
 import { Separator } from '@/components/ui/separator';
 import confetti from 'canvas-confetti';
 
@@ -58,8 +56,6 @@ export default function CartPage() {
   
   const [step, setStep] = useState(0);
   const [isLoadingCep, setIsLoadingCep] = useState(false);
-  const [couponDiscount, setCouponDiscount] = useState<number>(0);
-  const [couponData, setCouponData] = useState<CouponValidationSuccess | null>(null);
   
   const [customerData, setCustomerData] = useState<CustomerData>({
     name: '',
@@ -203,16 +199,7 @@ export default function CartPage() {
     setIsProcessing(true);
 
     try {
-      const finalTotal = Math.max(0, total - couponDiscount);
-
-      // Increment coupon usage if applicable
-      if (couponData) {
-        try {
-          await supabase.rpc('increment_coupon_usage', { coupon_id: couponData.coupon_id });
-        } catch (err) {
-          console.error('Failed to increment coupon usage:', err);
-        }
-      }
+      const finalTotal = total;
 
       // 1. Create Order
       const orderPayload = {
@@ -300,7 +287,6 @@ export default function CartPage() {
       ).join('\n');
 
       const subtotal = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-      const discount = couponDiscount > 0 ? `\nDesconto: - ${couponDiscount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}` : '';
       const finalTotalStr = finalTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
       const message = `*Novo Pedido - Balão da Informática*\n\n` +
@@ -620,33 +606,15 @@ export default function CartPage() {
                   
                   <Separator />
                   
-                  <CouponInput 
-                    onDiscountChange={(discount, data) => {
-                      setCouponDiscount(discount);
-                      if (data?.success) {
-                        setCouponData(data as CouponValidationSuccess);
-                      } else {
-                        setCouponData(null);
-                      }
-                    }}
-                    orderValue={total}
-                  />
-
                   <div className="space-y-2 pt-4">
                     <div className="flex justify-between text-sm">
                       <span>Subtotal</span>
                       <span>{total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                     </div>
-                    {couponDiscount > 0 && (
-                       <div className="flex justify-between text-sm text-green-600">
-                        <span>Desconto</span>
-                        <span>- {couponDiscount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
-                      </div>
-                    )}
                     <Separator className="my-2" />
                     <div className="flex justify-between font-bold text-lg">
                       <span>Total</span>
-                      <span>{Math.max(0, total - couponDiscount).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                      <span>{total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                     </div>
                   </div>
                 </CardContent>
