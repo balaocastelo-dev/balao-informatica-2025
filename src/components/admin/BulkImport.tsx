@@ -18,7 +18,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export const BulkImport = () => {
   const { bulkImportProducts, loading: productsLoading, isImporting, importProgress } = useProducts();
-  const { categories, addCategory } = useCategories();
+  const { categories, addCategory, refreshCategories } = useCategories();
   
   const [inputText, setInputText] = useState('');
   const [profitMargin, setProfitMargin] = useState('25');
@@ -207,53 +207,96 @@ export const BulkImport = () => {
 
     // Criar Nova Categoria Principal
     if (selectedParentId === 'new_parent' && newParentCategoryName.trim()) {
+      const name = newParentCategoryName.trim();
+      const slug = generateSlug(name);
+
       try {
-        const slug = newParentCategoryName.trim().toLowerCase()
-          .replace(/[^\w\s-]/g, '')
-          .replace(/\s+/g, '-');
-        
-        // Verifica se já existe
-        const exists = categories.find(c => c.slug === slug);
+        const exists = categories.find(
+          c => c.slug === slug || c.name.toLowerCase() === name.toLowerCase()
+        );
+
         if (!exists) {
-            const newCat = await addCategory(newParentCategoryName.trim(), slug);
-            if (newCat) parentIdToUse = newCat.id;
+          const newCat = await addCategory(name, slug);
+          if (newCat) parentIdToUse = newCat.id;
         } else {
-            parentIdToUse = exists.id;
+          parentIdToUse = exists.id;
         }
       } catch (error) {
         console.error("Erro ao criar categoria pai:", error);
-        toast({
+        try {
+          const { data: existing } = await supabase
+            .from('categories')
+            .select('*')
+            .eq('slug', slug)
+            .maybeSingle();
+
+          if (existing) {
+            parentIdToUse = existing.id;
+          } else {
+            toast({
+              title: "Erro ao criar categoria",
+              description: "Falha ao criar a categoria principal.",
+              variant: "destructive"
+            });
+            return;
+          }
+        } catch (innerError) {
+          console.error("Erro ao buscar categoria existente:", innerError);
+          toast({
             title: "Erro ao criar categoria",
             description: "Falha ao criar a categoria principal.",
             variant: "destructive"
-        });
-        return;
+          });
+          return;
+        }
       }
     }
 
     // Criar Nova Subcategoria
     if (parentIdToUse && parentIdToUse !== 'auto' && selectedSubCategoryId === 'new_sub' && newSubCategoryName.trim()) {
+      const name = newSubCategoryName.trim();
+      const slug = generateSlug(name);
+
+      try {
+        const exists = categories.find(
+          c => c.slug === slug || c.name.toLowerCase() === name.toLowerCase()
+        );
+
+        if (!exists) {
+          const newSub = await addCategory(name, slug, parentIdToUse);
+          if (newSub) subIdToUse = newSub.id;
+        } else {
+          subIdToUse = exists.id;
+        }
+      } catch (error) {
+        console.error("Erro ao criar subcategoria:", error);
         try {
-            const slug = newSubCategoryName.trim().toLowerCase()
-              .replace(/[^\w\s-]/g, '')
-              .replace(/\s+/g, '-');
-            
-            const exists = categories.find(c => c.slug === slug);
-            if (!exists) {
-                const newSub = await addCategory(newSubCategoryName.trim(), slug, parentIdToUse);
-                if (newSub) subIdToUse = newSub.id;
-            } else {
-                subIdToUse = exists.id;
-            }
-        } catch (error) {
-            console.error("Erro ao criar subcategoria:", error);
+          const { data: existing } = await supabase
+            .from('categories')
+            .select('*')
+            .eq('slug', slug)
+            .maybeSingle();
+
+          if (existing) {
+            subIdToUse = existing.id;
+          } else {
             toast({
-                title: "Erro ao criar subcategoria",
-                description: "Falha ao criar a subcategoria.",
-                variant: "destructive"
+              title: "Erro ao criar subcategoria",
+              description: "Falha ao criar a subcategoria.",
+              variant: "destructive"
             });
             return;
+          }
+        } catch (innerError) {
+          console.error("Erro ao buscar subcategoria existente:", innerError);
+          toast({
+            title: "Erro ao criar subcategoria",
+            description: "Falha ao criar a subcategoria.",
+            variant: "destructive"
+          });
+          return;
         }
+      }
     }
 
     // 2. Identificar categorias novas vindas da detecção automática (se mode AUTO)
@@ -292,6 +335,12 @@ export const BulkImport = () => {
                 console.error(`Erro ao criar categoria automática ${name}:`, error);
             }
         }
+    }
+
+    try {
+      await refreshCategories();
+    } catch (error) {
+      console.error("Erro ao atualizar categorias após criação:", error);
     }
 
     // 4. Prosseguir com a importação dos produtos
@@ -658,4 +707,15 @@ export const BulkImport = () => {
       </Tabs>
     </div>
   );
+};
+
+const generateSlug = (value: string) => {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
 };
