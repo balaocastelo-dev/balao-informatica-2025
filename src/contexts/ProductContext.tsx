@@ -93,6 +93,10 @@ export function ProductProvider({ children }: { children: ReactNode }) {
             ramGb: typeof p.ram_gb === 'number' ? p.ram_gb : undefined,
             storageGb: typeof p.storage_gb === 'number' ? p.storage_gb : undefined,
             screenInches: typeof p.screen_inches === 'number' ? p.screen_inches : undefined,
+            status: p.status || undefined,
+            tags: Array.isArray(p.tags) ? p.tags : undefined,
+            aiGenerated: typeof p.ai_generated === 'boolean' ? p.ai_generated : undefined,
+            aiConfidence: p.ai_confidence || undefined,
             additionalCategories: p.additional_categories || [],
           }));
           allProducts.push(...mappedProducts);
