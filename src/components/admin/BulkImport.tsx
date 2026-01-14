@@ -13,9 +13,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { toast } from '@/hooks/use-toast';
-import { AlertCircle, CheckCircle2, Upload, FileText, LayoutGrid, X, Loader2, Trash2, ImageOff } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Upload, FileText, LayoutGrid, X, Loader2, Trash2, ImageOff, Info } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useBatchOperations } from '@/contexts/BatchOperationsContext';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 export const BulkImport = () => {
   const { bulkImportProducts, loading: productsLoading, isImporting, importProgress } = useProducts();
@@ -34,7 +35,7 @@ export const BulkImport = () => {
   const [defaultTags, setDefaultTags] = useState('');
   const [highlightTag, setHighlightTag] = useState('');
   const [stockQuantity, setStockQuantity] = useState('10');
-  const [ribbonType, setRibbonType] = useState('none');
+  const [ribbonType, setRibbonType] = useState('promocao');
   const [customRibbonText, setCustomRibbonText] = useState('');
   const [parsedProducts, setParsedProducts] = useState<ParsedProduct[]>([]);
   const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set());
@@ -141,15 +142,23 @@ export const BulkImport = () => {
         }
     }
     
-    // Configurar Ribbon
+    // Configurar Ribbon (obrigatório)
     let ribbonLabel: string | undefined = undefined;
-    if (ribbonType === 'custom' && customRibbonText.trim()) {
+    if (ribbonType === 'custom') {
+      if (!customRibbonText.trim()) {
+        toast({
+          title: "Ribbon obrigatória",
+          description: "Informe o texto da ribbon personalizada.",
+          variant: "destructive"
+        });
+        return;
+      }
       ribbonLabel = customRibbonText.trim();
-    } else if (ribbonType !== 'none' && ribbonType !== 'custom') {
+    } else {
       const labels: Record<string, string> = {
-        'novidade': 'Novidade',
         'promocao': 'Promoção',
-        'usado': 'Usado'
+        'usado': 'Usado',
+        'ultima-peca': 'Última Peça'
       };
       ribbonLabel = labels[ribbonType] || ribbonType;
     }
@@ -511,16 +520,25 @@ export const BulkImport = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Fita / Ribbon (Opcional)</Label>
+                  <div className="flex items-center gap-2">
+                    <Label>Ribbon (Obrigatória)</Label>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="w-4 h-4 text-muted-foreground" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Selecione a faixa de destaque visual que será exibida no card do produto (ex.: Promoção, Usado, Última Peça). Você pode criar uma personalizada.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
                   <Select value={ribbonType} onValueChange={setRibbonType}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Sem fita" />
+                      <SelectValue placeholder="Selecione a ribbon" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">Nenhuma</SelectItem>
-                      <SelectItem value="novidade">Novidade</SelectItem>
                       <SelectItem value="promocao">Promoção</SelectItem>
                       <SelectItem value="usado">Usado</SelectItem>
+                      <SelectItem value="ultima-peca">Última Peça</SelectItem>
                       <SelectItem value="custom">Personalizada...</SelectItem>
                     </SelectContent>
                   </Select>
@@ -533,7 +551,7 @@ export const BulkImport = () => {
                       maxLength={15}
                     />
                   )}
-                  <p className="text-xs text-muted-foreground">Aparecerá como uma faixa no card do produto.</p>
+                  <p className="text-xs text-muted-foreground">Aparecerá como uma faixa de destaque no card e será persistida no banco.</p>
                 </div>
 
                 <div className="space-y-2">

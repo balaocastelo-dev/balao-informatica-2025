@@ -53,3 +53,14 @@ O projeto está configurado para deploy na Vercel. Basta conectar este repositó
 - shadcn-ui
 - Tailwind CSS
 - Supabase (Auth, Database, Edge Functions)
+
+## Manual do Administrador: Ribbons na Importação em Massa
+
+- Acesse Administração > Importação em Massa.
+- Informe os produtos em texto (URL da imagem + Nome + Preço) e configure:
+  - Categoria (auto ou seleção/criação).
+  - Etiquetas padrão (tags) para todos os itens.
+  - Ribbon (obrigatória): selecione “Promoção”, “Usado”, “Última Peça” ou “Personalizada…” e informe o texto.
+- Clique em “Analisar Produtos” e depois “Confirmar Importação”.
+- As ribbons são persistidas em `product_ribbons` e exibidas como faixas de destaque nos cards da homepage.
+- Em caso de erro de dados, o sistema sinaliza itens inválidos com mensagem e não os importa.

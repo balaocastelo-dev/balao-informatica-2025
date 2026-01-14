@@ -556,6 +556,29 @@ export function ProductProvider({ children }: { children: ReactNode }) {
           .single();
 
         if (singleData) {
+          // Persist ribbons (badges) associated to this product
+          try {
+            const ribbons =
+              Array.isArray(item.tags)
+                ? item.tags
+                    .filter((t: any) => typeof t === 'string' && t.startsWith('badge:'))
+                    .map((t: string) => t.replace(/^badge:/, '').trim())
+                    .filter((t: string) => t.length > 0)
+                : [];
+            if (ribbons.length > 0) {
+              await supabase
+                .from('product_ribbons')
+                .upsert(
+                  ribbons.map((r) => ({
+                    product_id: singleData.id,
+                    ribbon_type: r,
+                    is_active: true,
+                  })),
+                  { onConflict: 'product_id,ribbon_type' }
+                );
+            }
+          } catch {
+          }
           successCount++;
           const newProduct: Product = {
             id: singleData.id,
@@ -622,14 +645,37 @@ export function ProductProvider({ children }: { children: ReactNode }) {
                  .eq('id', existingProduct.id);
 
                if (!updateError) {
+                 // Also upsert ribbons for existing product
+                 try {
+                   const ribbons =
+                     Array.isArray(item.tags)
+                       ? item.tags
+                           .filter((t: any) => typeof t === 'string' && t.startsWith('badge:'))
+                           .map((t: string) => t.replace(/^badge:/, '').trim())
+                           .filter((t: string) => t.length > 0)
+                       : [];
+                   if (ribbons.length > 0) {
+                     await supabase
+                       .from('product_ribbons')
+                       .upsert(
+                         ribbons.map((r) => ({
+                           product_id: existingProduct.id,
+                           ribbon_type: r,
+                           is_active: true,
+                         })),
+                         { onConflict: 'product_id,ribbon_type' }
+                       );
+                   }
+                 } catch {
+                 }
                  successCount++; // Count update as success
                  continue; // Skip fallback
                } else {
                  console.error('Error updating existing product:', item.name, updateError);
                }
-             } else {
-               console.error('Duplicate error but could not find existing product to update:', item.name);
-             }
+              } else {
+                console.error('Duplicate error but could not find existing product to update:', item.name);
+              }
           }
 
           console.error('Error importing item:', item.name, singleError);
@@ -655,7 +701,30 @@ export function ProductProvider({ children }: { children: ReactNode }) {
               console.error('Error importing item (fallback):', item.name, fallbackError);
             }
 
-            if (fallbackData) {
+           if (fallbackData) {
+              // Persist ribbons for fallback insertion
+              try {
+                const ribbons =
+                  Array.isArray(item.tags)
+                    ? item.tags
+                        .filter((t: any) => typeof t === 'string' && t.startsWith('badge:'))
+                        .map((t: string) => t.replace(/^badge:/, '').trim())
+                        .filter((t: string) => t.length > 0)
+                    : [];
+                if (ribbons.length > 0) {
+                  await supabase
+                    .from('product_ribbons')
+                    .upsert(
+                      ribbons.map((r) => ({
+                        product_id: fallbackData.id,
+                        ribbon_type: r,
+                        is_active: true,
+                      })),
+                      { onConflict: 'product_id,ribbon_type' }
+                    );
+                }
+              } catch {
+              }
               successCount++;
               setProducts(current => [{
                 id: fallbackData.id,
