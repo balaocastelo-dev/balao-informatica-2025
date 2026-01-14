@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { Product, Category } from '@/types/product';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { describeSupabaseError } from '@/lib/errors';
 
 interface ProductContextType {
   products: Product[];
@@ -640,7 +641,7 @@ export function ProductProvider({ children }: { children: ReactNode }) {
           description: `${rejected.length} itens foram descartados`,
         });
       }
-
+    try {
       const payload = accepted;
       let successCount = 0;
       let errorCount = 0;
@@ -792,18 +793,22 @@ export function ProductProvider({ children }: { children: ReactNode }) {
                   }
                 } catch (err) {
                   console.error("[BulkImport] Erro ao persistir ribbons (update):", err);
+                  toast({ title: "Erro ao salvar ribbons (update)", description: describeSupabaseError(err), variant: "destructive" });
                 }
                 successCount++;
                 continue;
               } else {
                 console.error('Error updating existing product:', item.name, updateError);
+                toast({ title: "Erro ao atualizar produto", description: describeSupabaseError(updateError), variant: "destructive" });
               }
             } else {
               console.error('Duplicate error but could not find existing product to update:', item.name);
+              toast({ title: "Produto duplicado não localizado", description: `Nome: ${item.name}`, variant: "destructive" });
             }
           }
 
           console.error('Error importing item:', item.name, singleError);
+          toast({ title: "Erro ao importar item", description: describeSupabaseError(singleError), variant: "destructive" });
           const simpleItem = {
             name: item.name,
             description: item.description,
@@ -823,6 +828,7 @@ export function ProductProvider({ children }: { children: ReactNode }) {
 
           if (fallbackError) {
             console.error('Error importing item (fallback):', item.name, fallbackError);
+            toast({ title: "Erro ao importar item (fallback)", description: describeSupabaseError(fallbackError), variant: "destructive" });
           }
 
           if (fallbackData) {
@@ -842,6 +848,7 @@ export function ProductProvider({ children }: { children: ReactNode }) {
               }
             } catch (err) {
               console.error("[BulkImport] Erro ao persistir ribbons (fallback):", err);
+              toast({ title: "Erro ao salvar ribbons (fallback)", description: describeSupabaseError(err), variant: "destructive" });
             }
             successCount++;
             setProducts(current => [{
@@ -881,7 +888,7 @@ export function ProductProvider({ children }: { children: ReactNode }) {
 
     } catch (error) {
       console.error('Error bulk importing products:', error);
-      toast({ title: "Erro crítico na importação", variant: "destructive" });
+      toast({ title: "Erro crítico na importação", description: describeSupabaseError(error), variant: "destructive" });
     } finally {
       setIsImporting(false);
     }
