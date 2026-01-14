@@ -64,3 +64,34 @@ O projeto está configurado para deploy na Vercel. Basta conectar este repositó
 - Clique em “Analisar Produtos” e depois “Confirmar Importação”.
 - As ribbons são persistidas em `product_ribbons` e exibidas como faixas de destaque nos cards da homepage.
 - Em caso de erro de dados, o sistema sinaliza itens inválidos com mensagem e não os importa.
+
+## Função de Importação em Massa (bulkImportProducts)
+
+Parâmetros:
+- products: lista de produtos a serem importados (name, price, category obrigatórios)
+- onProgress?: callback de progresso (current, total)
+
+Retorno:
+- Promise<void> com toasts de feedback e logs no console
+
+Validações:
+- Nome não vazio
+- Preço numérico > 0
+- Categoria não vazia
+- Remoção de duplicados no lote (por nome sem source_url e por source_url)
+
+Ribbons:
+- Derivadas de tags que começam com `badge:` (ex.: `badge:Promoção`)
+- Persistência em `product_ribbons` com `upsert` e unicidade por produto/tipo
+
+Códigos de erro e logs:
+- Erros de inserção/atualização registrados via `console.error`
+- Sumário no final com contagem de sucesso/falhas
+
+Exemplo de uso:
+```ts
+const { bulkImportProducts } = useProducts();
+await bulkImportProducts(lista, (current, total) => {
+  // atualizar UI de progresso
+});
+```

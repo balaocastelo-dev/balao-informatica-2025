@@ -490,30 +490,82 @@ export function ProductProvider({ children }: { children: ReactNode }) {
     setImportProgress(0);
 
     try {
-      const payload = newProducts.map(p => ({
-        name: p.name,
-        description: p.description || null,
-        price: p.price,
-        cost_price: p.costPrice || null,
-        image: p.image || null,
-        category: p.category,
-        stock: p.stock,
-        source_url: p.sourceUrl || null,
-        ram_gb: typeof p.ramGb === 'number' ? p.ramGb : null,
-        storage_gb: typeof p.storageGb === 'number' ? p.storageGb : null,
-        screen_inches: typeof p.screenInches === 'number' ? p.screenInches : null,
-        status: p.status || null,
-        tags: p.tags || null,
-        ai_generated: typeof p.aiGenerated === 'boolean' ? p.aiGenerated : null,
-        ai_confidence: p.aiConfidence || null,
-      }));
+      const total = newProducts.length;
+      const accepted: any[] = [];
+      const rejected: { index: number; reason: string }[] = [];
+      const seenNames = new Set<string>();
+      const seenUrls = new Set<string>();
 
+      for (let i = 0; i < total; i++) {
+        const p = newProducts[i];
+        const name = String(p.name || "").trim();
+        const priceOk = typeof p.price === "number" && !Number.isNaN(p.price) && p.price > 0;
+        const category = String(p.category || "").trim();
+        if (!name) {
+          rejected.push({ index: i, reason: "Nome vazio" });
+          continue;
+        }
+        if (!priceOk) {
+          rejected.push({ index: i, reason: "Preço inválido" });
+          continue;
+        }
+        if (!category) {
+          rejected.push({ index: i, reason: "Categoria vazia" });
+          continue;
+        }
+        if (seenNames.has(name) && (!p.sourceUrl || !p.sourceUrl.trim())) {
+          rejected.push({ index: i, reason: "Duplicado pelo nome no lote" });
+          continue;
+        }
+        if (p.sourceUrl && seenUrls.has(p.sourceUrl)) {
+          rejected.push({ index: i, reason: "Duplicado pela URL no lote" });
+          continue;
+        }
+        seenNames.add(name);
+        if (p.sourceUrl) seenUrls.add(p.sourceUrl);
+        const safeTags = Array.isArray(p.tags)
+          ? p.tags.filter((t) => typeof t === "string" && t.trim().length > 0)
+          : [];
+        accepted.push({
+          name,
+          description: p.description || null,
+          price: p.price,
+          cost_price: p.costPrice || null,
+          image: p.image || null,
+          category,
+          stock: typeof p.stock === "number" ? p.stock : 0,
+          source_url: p.sourceUrl || null,
+          ram_gb: typeof p.ramGb === 'number' ? p.ramGb : null,
+          storage_gb: typeof p.storageGb === 'number' ? p.storageGb : null,
+          screen_inches: typeof p.screenInches === 'number' ? p.screenInches : null,
+          status: p.status || null,
+          tags: safeTags.length > 0 ? safeTags : null,
+          ai_generated: typeof p.aiGenerated === 'boolean' ? p.aiGenerated : null,
+          ai_confidence: p.aiConfidence || null,
+        });
+      }
+
+      if (rejected.length > 0) {
+        console.info("[BulkImport] Rejeitados:", rejected);
+        toast({
+          title: "Itens rejeitados na validação",
+          description: `${rejected.length} itens foram descartados`,
+        });
+      }
+
+      const payload = accepted;
       let successCount = 0;
       let errorCount = 0;
-      const total = payload.length;
 
-      // Processamento item a item para feedback granular
-      for (let i = 0; i < total; i++) {
+      const ribbonsFromTags = (tags: string[] | null): string[] => {
+        if (!Array.isArray(tags)) return [];
+        return tags
+          .filter((t) => typeof t === "string" && t.startsWith("badge:"))
+          .map((t) => t.replace(/^badge:/, "").trim())
+          .filter((s) => s.length > 0);
+      };
+
+      for (let i = 0; i < payload.length; i++) {
         let item = payload[i];
 
         if (item.source_url) {
@@ -545,7 +597,8 @@ export function ProductProvider({ children }: { children: ReactNode }) {
             if (sobre && !item.description) {
               item = { ...item, description: sobre.trim() };
             }
-          } catch {
+          } catch (err) {
+            console.error("[BulkImport] Erro ao enriquecer descrição:", err);
           }
         }
 
@@ -556,15 +609,8 @@ export function ProductProvider({ children }: { children: ReactNode }) {
           .single();
 
         if (singleData) {
-          // Persist ribbons (badges) associated to this product
           try {
-            const ribbons =
-              Array.isArray(item.tags)
-                ? item.tags
-                    .filter((t: any) => typeof t === 'string' && t.startsWith('badge:'))
-                    .map((t: string) => t.replace(/^badge:/, '').trim())
-                    .filter((t: string) => t.length > 0)
-                : [];
+            const ribbons = ribbonsFromTags(item.tags as any);
             if (ribbons.length > 0) {
               await supabase
                 .from('product_ribbons')
@@ -577,7 +623,8 @@ export function ProductProvider({ children }: { children: ReactNode }) {
                   { onConflict: 'product_id,ribbon_type' }
                 );
             }
-          } catch {
+          } catch (err) {
+            console.error("[BulkImport] Erro ao persistir ribbons (insert):", err);
           }
           successCount++;
           const newProduct: Product = {
@@ -603,153 +650,136 @@ export function ProductProvider({ children }: { children: ReactNode }) {
           
           setProducts(current => [newProduct, ...current]);
         } else {
-          // Check if error is duplicate key
-          const isDuplicate = singleError?.code === '23505'; // PostgreSQL unique_violation code
+          const isDuplicate = singleError?.code === '23505';
           
           if (isDuplicate) {
-             let existingProduct = null;
+            let existingProduct = null;
 
-             // Try to find by source_url
-             if (item.source_url) {
-               const { data } = await supabase
-                 .from('products')
-                 .select('id')
-                 .eq('source_url', item.source_url)
-                 .maybeSingle();
-               existingProduct = data;
-             }
+            if (item.source_url) {
+              const { data } = await supabase
+                .from('products')
+                .select('id')
+                .eq('source_url', item.source_url)
+                .maybeSingle();
+              existingProduct = data;
+            }
 
-             // If not found by URL, try by name
-             if (!existingProduct && item.name) {
-               const { data } = await supabase
-                 .from('products')
-                 .select('id')
-                 .eq('name', item.name)
-                 .maybeSingle();
-               existingProduct = data;
-             }
+            if (!existingProduct && item.name) {
+              const { data } = await supabase
+                .from('products')
+                .select('id')
+                .eq('name', item.name)
+                .maybeSingle();
+              existingProduct = data;
+            }
 
-             if (existingProduct) {
-               const updatePayload = {
-                 name: item.name,
-                 price: item.price,
-                 category: item.category,
-                 tags: item.tags,
-                 // Only update fields that might have improved
-                 image: item.image || undefined, 
-               };
+            if (existingProduct) {
+              const updatePayload = {
+                name: item.name,
+                price: item.price,
+                category: item.category,
+                tags: item.tags,
+                image: item.image || undefined, 
+              };
 
-               const { error: updateError } = await supabase
-                 .from('products')
-                 .update(updatePayload)
-                 .eq('id', existingProduct.id);
+              const { error: updateError } = await supabase
+                .from('products')
+                .update(updatePayload)
+                .eq('id', existingProduct.id);
 
-               if (!updateError) {
-                 // Also upsert ribbons for existing product
-                 try {
-                   const ribbons =
-                     Array.isArray(item.tags)
-                       ? item.tags
-                           .filter((t: any) => typeof t === 'string' && t.startsWith('badge:'))
-                           .map((t: string) => t.replace(/^badge:/, '').trim())
-                           .filter((t: string) => t.length > 0)
-                       : [];
-                   if (ribbons.length > 0) {
-                     await supabase
-                       .from('product_ribbons')
-                       .upsert(
-                         ribbons.map((r) => ({
-                           product_id: existingProduct.id,
-                           ribbon_type: r,
-                           is_active: true,
-                         })),
-                         { onConflict: 'product_id,ribbon_type' }
-                       );
-                   }
-                 } catch {
-                 }
-                 successCount++; // Count update as success
-                 continue; // Skip fallback
-               } else {
-                 console.error('Error updating existing product:', item.name, updateError);
-               }
+              if (!updateError) {
+                try {
+                  const ribbons = ribbonsFromTags(item.tags as any);
+                  if (ribbons.length > 0) {
+                    await supabase
+                      .from('product_ribbons')
+                      .upsert(
+                        ribbons.map((r) => ({
+                          product_id: existingProduct.id,
+                          ribbon_type: r,
+                          is_active: true,
+                        })),
+                        { onConflict: 'product_id,ribbon_type' }
+                      );
+                  }
+                } catch (err) {
+                  console.error("[BulkImport] Erro ao persistir ribbons (update):", err);
+                }
+                successCount++;
+                continue;
               } else {
-                console.error('Duplicate error but could not find existing product to update:', item.name);
+                console.error('Error updating existing product:', item.name, updateError);
               }
+            } else {
+              console.error('Duplicate error but could not find existing product to update:', item.name);
+            }
           }
 
           console.error('Error importing item:', item.name, singleError);
-          // Tenta fallback simples se falhar
           const simpleItem = {
-             name: item.name,
-             description: item.description,
-             price: item.price,
-             cost_price: item.cost_price,
-             image: item.image,
-             category: item.category,
-             stock: item.stock,
-             source_url: item.source_url,
-             tags: Array.isArray(item.tags) && item.tags.length > 0 ? item.tags : null
-           };
-           const { data: fallbackData, error: fallbackError } = await supabase
+            name: item.name,
+            description: item.description,
+            price: item.price,
+            cost_price: item.cost_price,
+            image: item.image,
+            category: item.category,
+            stock: item.stock,
+            source_url: item.source_url,
+            tags: Array.isArray(item.tags) && item.tags.length > 0 ? item.tags : null
+          };
+          const { data: fallbackData, error: fallbackError } = await supabase
             .from('products')
             .insert(simpleItem)
             .select()
             .single();
 
-            if (fallbackError) {
-              console.error('Error importing item (fallback):', item.name, fallbackError);
-            }
+          if (fallbackError) {
+            console.error('Error importing item (fallback):', item.name, fallbackError);
+          }
 
-           if (fallbackData) {
-              // Persist ribbons for fallback insertion
-              try {
-                const ribbons =
-                  Array.isArray(item.tags)
-                    ? item.tags
-                        .filter((t: any) => typeof t === 'string' && t.startsWith('badge:'))
-                        .map((t: string) => t.replace(/^badge:/, '').trim())
-                        .filter((t: string) => t.length > 0)
-                    : [];
-                if (ribbons.length > 0) {
-                  await supabase
-                    .from('product_ribbons')
-                    .upsert(
-                      ribbons.map((r) => ({
-                        product_id: fallbackData.id,
-                        ribbon_type: r,
-                        is_active: true,
-                      })),
-                      { onConflict: 'product_id,ribbon_type' }
-                    );
-                }
-              } catch {
+          if (fallbackData) {
+            try {
+              const ribbons = ribbonsFromTags(item.tags as any);
+              if (ribbons.length > 0) {
+                await supabase
+                  .from('product_ribbons')
+                  .upsert(
+                    ribbons.map((r) => ({
+                      product_id: fallbackData.id,
+                      ribbon_type: r,
+                      is_active: true,
+                    })),
+                    { onConflict: 'product_id,ribbon_type' }
+                  );
               }
-              successCount++;
-              setProducts(current => [{
-                id: fallbackData.id,
-                name: fallbackData.name,
-                description: fallbackData.description || undefined,
-                price: Number(fallbackData.price),
-                costPrice: fallbackData.cost_price ? Number(fallbackData.cost_price) : undefined,
-                image: fallbackData.image || '/placeholder.svg',
-                category: fallbackData.category as Category,
-                stock: fallbackData.stock,
-                sourceUrl: fallbackData.source_url || undefined,
-                createdAt: new Date(fallbackData.created_at),
-                updatedAt: new Date(fallbackData.updated_at),
-              }, ...current]);
-            } else {
-              errorCount++;
+            } catch (err) {
+              console.error("[BulkImport] Erro ao persistir ribbons (fallback):", err);
             }
+            successCount++;
+            setProducts(current => [{
+              id: fallbackData.id,
+              name: fallbackData.name,
+              description: fallbackData.description || undefined,
+              price: Number(fallbackData.price),
+              costPrice: fallbackData.cost_price ? Number(fallbackData.cost_price) : undefined,
+              image: fallbackData.image || '/placeholder.svg',
+              category: fallbackData.category as Category,
+              stock: fallbackData.stock,
+              sourceUrl: fallbackData.source_url || undefined,
+              createdAt: new Date(fallbackData.created_at),
+              updatedAt: new Date(fallbackData.updated_at),
+            }, ...current]);
+          } else {
+            errorCount++;
+          }
         }
 
         const current = i + 1;
-        setImportProgress(Math.round((current / total) * 100));
+        setImportProgress(Math.round((current / payload.length) * 100));
         if (onProgress) {
-          onProgress(current, total);
+          onProgress(current, payload.length);
         }
-        if (i % 5 === 0) await new Promise(resolve => setTimeout(resolve, 0));
+        if (i % 10 === 0) await new Promise(resolve => setTimeout(resolve, 0));
       }
 
       toast({ 
@@ -757,8 +787,8 @@ export function ProductProvider({ children }: { children: ReactNode }) {
         description: `Sucesso: ${successCount}. Falhas: ${errorCount}.`,
         variant: errorCount > 0 ? "destructive" : "default"
       });
+      console.info("[BulkImport] Finalizado:", { successCount, errorCount, totalAccepted: payload.length, totalRejected: rejected.length });
       
-      // Força atualização completa para garantir consistência
       await refreshProducts();
 
     } catch (error) {
@@ -766,8 +796,6 @@ export function ProductProvider({ children }: { children: ReactNode }) {
       toast({ title: "Erro crítico na importação", variant: "destructive" });
     } finally {
       setIsImporting(false);
-      // Mantemos o progresso em 100% ou onde parou para a UI exibir o estado final
-      // setImportProgress(0); 
     }
   };
 
