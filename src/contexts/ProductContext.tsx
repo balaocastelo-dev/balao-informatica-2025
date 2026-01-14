@@ -590,7 +590,8 @@ export function ProductProvider({ children }: { children: ReactNode }) {
              image: item.image,
              category: item.category,
              stock: item.stock,
-             source_url: item.source_url
+             source_url: item.source_url,
+             tags: item.tags
            };
            const { data: fallbackData } = await supabase
             .from('products')
