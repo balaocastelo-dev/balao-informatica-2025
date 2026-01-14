@@ -591,13 +591,17 @@ export function ProductProvider({ children }: { children: ReactNode }) {
              category: item.category,
              stock: item.stock,
              source_url: item.source_url,
-             tags: item.tags
+             tags: Array.isArray(item.tags) && item.tags.length > 0 ? item.tags : null
            };
-           const { data: fallbackData } = await supabase
+           const { data: fallbackData, error: fallbackError } = await supabase
             .from('products')
             .insert(simpleItem)
             .select()
             .single();
+
+            if (fallbackError) {
+              console.error('Error importing item (fallback):', item.name, fallbackError);
+            }
 
             if (fallbackData) {
               successCount++;
