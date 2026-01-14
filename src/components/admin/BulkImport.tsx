@@ -146,7 +146,12 @@ export const BulkImport = () => {
     if (ribbonType === 'custom' && customRibbonText.trim()) {
       ribbonLabel = customRibbonText.trim();
     } else if (ribbonType !== 'none' && ribbonType !== 'custom') {
-      ribbonLabel = ribbonType === 'novidade' ? 'Novidade' : 'Usado';
+      const labels: Record<string, string> = {
+        'novidade': 'Novidade',
+        'promocao': 'Promoção',
+        'usado': 'Usado'
+      };
+      ribbonLabel = labels[ribbonType] || ribbonType;
     }
 
     const results = parseBulkImport(inputText, {
@@ -514,6 +519,7 @@ export const BulkImport = () => {
                     <SelectContent>
                       <SelectItem value="none">Nenhuma</SelectItem>
                       <SelectItem value="novidade">Novidade</SelectItem>
+                      <SelectItem value="promocao">Promoção</SelectItem>
                       <SelectItem value="usado">Usado</SelectItem>
                       <SelectItem value="custom">Personalizada...</SelectItem>
                     </SelectContent>
@@ -678,6 +684,16 @@ export const BulkImport = () => {
                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[8px] p-0.5 text-center cursor-pointer" onClick={() => window.open(product.image, '_blank')}>
                       Ver
                     </div>
+                    {/* Badge Preview */}
+                    {Array.isArray(product.tags) && product.tags.filter(t => t.startsWith('badge:')).map((tag, i) => (
+                      <span 
+                        key={`badge-${i}`} 
+                        className="absolute left-1 bg-[#0033C6] text-white text-[8px] font-extrabold px-1.5 py-0.5 rounded-full z-10 shadow-sm uppercase tracking-wider"
+                        style={{ top: `${4 + i * 20}px` }}
+                      >
+                        {tag.replace('badge:', '')}
+                      </span>
+                    ))}
                   </div>
 
                   <div className="space-y-0.5">
