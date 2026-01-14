@@ -180,6 +180,27 @@ export function ProductProvider({ children }: { children: ReactNode }) {
           ...attrs,
         };
         setProducts(current => [newProduct, ...current]);
+        try {
+          const ribbons = Array.isArray(product.tags)
+            ? product.tags
+                .filter((t) => typeof t === 'string' && t.startsWith('badge:'))
+                .map((t) => t.replace(/^badge:/, '').trim())
+                .filter((t) => t.length > 0)
+            : [];
+          if (ribbons.length > 0) {
+            await supabase
+              .from('product_ribbons')
+              .upsert(
+                ribbons.map((r) => ({
+                  product_id: fallbackData.id,
+                  ribbon_type: r,
+                  is_active: true,
+                })),
+                { onConflict: 'product_id,ribbon_type' }
+              );
+          }
+        } catch {
+        }
         return;
       }
 
@@ -206,6 +227,27 @@ export function ProductProvider({ children }: { children: ReactNode }) {
       };
 
       setProducts(current => [newProduct, ...current]);
+      try {
+        const ribbons = Array.isArray(product.tags)
+          ? product.tags
+              .filter((t) => typeof t === 'string' && t.startsWith('badge:'))
+              .map((t) => t.replace(/^badge:/, '').trim())
+              .filter((t) => t.length > 0)
+          : [];
+        if (ribbons.length > 0) {
+          await supabase
+            .from('product_ribbons')
+            .upsert(
+              ribbons.map((r) => ({
+                product_id: data.id,
+                ribbon_type: r,
+                is_active: true,
+              })),
+              { onConflict: 'product_id,ribbon_type' }
+            );
+        }
+      } catch {
+      }
     } catch (error) {
       console.error('Error adding product:', error);
       toast({
@@ -428,6 +470,29 @@ export function ProductProvider({ children }: { children: ReactNode }) {
           };
         });
         setProducts(current => [...mappedProducts, ...current]);
+        try {
+          for (const row of fallbackData || []) {
+            const ribbons = Array.isArray(row.tags)
+              ? row.tags
+                  .filter((t: any) => typeof t === 'string' && t.startsWith('badge:'))
+                  .map((t: string) => t.replace(/^badge:/, '').trim())
+                  .filter((t: string) => t.length > 0)
+              : [];
+            if (ribbons.length > 0) {
+              await supabase
+                .from('product_ribbons')
+                .upsert(
+                  ribbons.map((r) => ({
+                    product_id: row.id,
+                    ribbon_type: r,
+                    is_active: true,
+                  })),
+                  { onConflict: 'product_id,ribbon_type' }
+                );
+            }
+          }
+        } catch {
+        }
         toast({
           title: "Produtos importados!",
           description: `${mappedProducts.length} produtos foram importados com sucesso.`,
@@ -457,6 +522,29 @@ export function ProductProvider({ children }: { children: ReactNode }) {
       }));
 
       setProducts(current => [...mappedProducts, ...current]);
+      try {
+        for (const row of data || []) {
+          const ribbons = Array.isArray(row.tags)
+            ? row.tags
+                .filter((t: any) => typeof t === 'string' && t.startsWith('badge:'))
+                .map((t: string) => t.replace(/^badge:/, '').trim())
+                .filter((t: string) => t.length > 0)
+            : [];
+          if (ribbons.length > 0) {
+            await supabase
+              .from('product_ribbons')
+              .upsert(
+                ribbons.map((r) => ({
+                  product_id: row.id,
+                  ribbon_type: r,
+                  is_active: true,
+                })),
+                { onConflict: 'product_id,ribbon_type' }
+              );
+          }
+        }
+      } catch {
+      }
 
       toast({
         title: "Produtos importados!",
