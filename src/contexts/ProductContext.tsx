@@ -583,13 +583,28 @@ export function ProductProvider({ children }: { children: ReactNode }) {
           // Check if error is duplicate key
           const isDuplicate = singleError?.code === '23505'; // PostgreSQL unique_violation code
           
-          if (isDuplicate && item.source_url) {
-             // Attempt to update the existing product
-             const { data: existingProduct } = await supabase
-               .from('products')
-               .select('id')
-               .eq('source_url', item.source_url)
-               .maybeSingle();
+          if (isDuplicate) {
+             let existingProduct = null;
+
+             // Try to find by source_url
+             if (item.source_url) {
+               const { data } = await supabase
+                 .from('products')
+                 .select('id')
+                 .eq('source_url', item.source_url)
+                 .maybeSingle();
+               existingProduct = data;
+             }
+
+             // If not found by URL, try by name
+             if (!existingProduct && item.name) {
+               const { data } = await supabase
+                 .from('products')
+                 .select('id')
+                 .eq('name', item.name)
+                 .maybeSingle();
+               existingProduct = data;
+             }
 
              if (existingProduct) {
                const updatePayload = {
@@ -609,7 +624,11 @@ export function ProductProvider({ children }: { children: ReactNode }) {
                if (!updateError) {
                  successCount++; // Count update as success
                  continue; // Skip fallback
+               } else {
+                 console.error('Error updating existing product:', item.name, updateError);
                }
+             } else {
+               console.error('Duplicate error but could not find existing product to update:', item.name);
              }
           }
 
