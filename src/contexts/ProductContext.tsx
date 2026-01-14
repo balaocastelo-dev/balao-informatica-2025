@@ -580,6 +580,39 @@ export function ProductProvider({ children }: { children: ReactNode }) {
           
           setProducts(current => [newProduct, ...current]);
         } else {
+          // Check if error is duplicate key
+          const isDuplicate = singleError?.code === '23505'; // PostgreSQL unique_violation code
+          
+          if (isDuplicate && item.source_url) {
+             // Attempt to update the existing product
+             const { data: existingProduct } = await supabase
+               .from('products')
+               .select('id')
+               .eq('source_url', item.source_url)
+               .maybeSingle();
+
+             if (existingProduct) {
+               const updatePayload = {
+                 name: item.name,
+                 price: item.price,
+                 category: item.category,
+                 tags: item.tags,
+                 // Only update fields that might have improved
+                 image: item.image || undefined, 
+               };
+
+               const { error: updateError } = await supabase
+                 .from('products')
+                 .update(updatePayload)
+                 .eq('id', existingProduct.id);
+
+               if (!updateError) {
+                 successCount++; // Count update as success
+                 continue; // Skip fallback
+               }
+             }
+          }
+
           console.error('Error importing item:', item.name, singleError);
           // Tenta fallback simples se falhar
           const simpleItem = {
